@@ -2239,6 +2239,21 @@ async function init(){
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+  /* 测试接口：暴露渲染函数与状态（evaluate_js 可测，不参与业务） */
+  window.__app = {
+    state: state,
+    renderAll: renderAll,
+    renderDashboard: renderDashboard,
+    renderAppearance: renderAppearance,
+    dashCardHtml: dashCardHtml,
+    balanceCardHtml: balanceCardHtml,
+    todayText: todayText,
+    speedChips: speedChips,
+    fmtTokens: fmtTokens,
+    isPeakNow: isPeakNow,
+    fetchView: fetchView,
+  };
 })();
 </script>
 </body>

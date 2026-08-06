@@ -316,8 +316,7 @@ class ApiProvider(Provider):
             store.append(self.id, result)
         try:
             result["meta"]["speed"] = self._speed_meta(float(amount), int(time.time()))
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"api_provider.py 异常: {_e}")
 
     def _speed_meta(self, balance: float, now: int) -> dict:
         """余额消耗速度：按日取当日最小余额，相邻日差值（消耗为正）取日均，

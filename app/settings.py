@@ -83,11 +83,83 @@ def _read_file() -> dict:
         return {}
 
 
+"""DPAPI 加密/解密（Windows 当前用户级）；非 Windows 或失败退化为明文。"""
+_SECRET_KEYS = {"api_key", "auth_cookie"}
+_DPAPI_PREFIX = "DPAPI:"
+
+
+def _dblob(data: bytes):
+    import ctypes
+    import ctypes.wintypes
+
+    class _BLOB(ctypes.Structure):
+        _fields_ = [("cbData", ctypes.wintypes.DWORD),
+                    ("pbData", ctypes.POINTER(ctypes.c_byte))]
+
+    buf = ctypes.create_string_buffer(data, len(data))
+    return _BLOB(len(data), ctypes.cast(buf, ctypes.POINTER(ctypes.c_byte)))
+
+
+def _dpapi_encrypt(plain: str) -> str:
+    """CryptProtectData 加密；失败返回原明文（不阻塞功能）。"""
+    if os.name != "nt":
+        return plain
+    try:
+        import base64
+        import ctypes
+        blob_in = _dblob(plain.encode("utf-8"))
+        blob_out = _dblob(b"")
+        ok = ctypes.windll.crypt32.CryptProtectData(
+            ctypes.byref(blob_in), None, None, None, None, 0, ctypes.byref(blob_out))
+        if ok and blob_out.cbData:
+            data = ctypes.string_at(blob_out.pbData, blob_out.cbData)
+            ctypes.windll.kernel32.LocalFree(blob_out.pbData)
+            return _DPAPI_PREFIX + base64.b64encode(data).decode()
+    except Exception:
+        pass
+    return plain
+
+
+def _dpapi_decrypt(value: str):
+    """解密 DPAPI 密文；非 DPAPI 前缀原样返回；解密失败返回 None。"""
+    if not isinstance(value, str) or not value.startswith(_DPAPI_PREFIX):
+        return value
+    if os.name != "nt":
+        return value
+    try:
+        import base64
+        import ctypes
+        raw = base64.b64decode(value[len(_DPAPI_PREFIX):])
+        blob_in = _dblob(raw)
+        blob_out = _dblob(b"")
+        ok = ctypes.windll.crypt32.CryptUnprotectData(
+            ctypes.byref(blob_in), None, None, None, None, 0, ctypes.byref(blob_out))
+        if ok and blob_out.cbData:
+            data = ctypes.string_at(blob_out.pbData, blob_out.cbData)
+            ctypes.windll.kernel32.LocalFree(blob_out.pbData)
+            return data.decode("utf-8")
+    except Exception:
+        pass
+    return None
+
+
+def _walk_secrets(cfg: dict, fn) -> None:
+    """递归遍历所有 dict，对 _SECRET_KEYS 命中的值应用 fn（返回新值并写回）。"""
+    for key, val in list(cfg.items()):
+        if isinstance(val, dict):
+            _walk_secrets(val, fn)
+        elif key in _SECRET_KEYS and isinstance(val, str):
+            cfg[key] = fn(val)
+
+
 def _write_file(cfg: dict) -> None:
-    """写回 config.json（ensure_ascii=False, indent=2）。"""
+    """写回 config.json：敏感字段先加密，原子写防并发撕裂。"""
+    _walk_secrets(cfg, _dpapi_encrypt)
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+    _tmp = CONFIG_PATH.with_suffix(".tmp")
+    with open(_tmp, "w", encoding="utf-8") as f:
         json.dump(cfg, f, ensure_ascii=False, indent=2)
+    os.replace(_tmp, CONFIG_PATH)
 
 
 def _split_path(path: str) -> list[str]:

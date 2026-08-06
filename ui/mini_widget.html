@@ -630,6 +630,12 @@
       window.pywebview.api.drag_start('resize');
     }
   });
+  /* 测试接口（在闭包内：render/pull/viewData 在此作用域） */
+  window.__mini = {
+    render: render,
+    pull: pull,
+    getViewData: function(){ return viewData; },
+  };
   }  /* initInteractions 结束 */
 
   if (document.readyState === 'loading') {
@@ -637,6 +643,7 @@
   } else {
     try { initInteractions(); } catch(e) { window.__initErr = window.__initErr || ('init:' + e.message); }
   }
+
 </script>
 </body>
 </html>

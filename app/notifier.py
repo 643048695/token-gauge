@@ -15,6 +15,9 @@ cookie_valid=False、连续失败 ≥ 3 次。
 from __future__ import annotations
 
 import threading
+import logging
+
+log = logging.getLogger(__name__)
 
 # 事件类型常量（与 config.json 中 notify.events 的键一一对应）
 EV_THRESHOLD = "threshold"      # 月度用量预警
@@ -58,13 +61,11 @@ class Notifier:
             try:
                 self._icon.notify(body, title)
                 return
-            except Exception:
-                pass
+            except Exception as _e: log.debug(f"notifier.py 异常: {_e}")
         # 无 icon / 托盘失败 → 打印兜底（pythonw 无控制台时 print 会抛异常，需防御）
         try:
             print(f"[notify] {title}｜{body}")
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"notifier.py 异常: {_e}")
 
     # ------------------------------------------------------------ 事件判断
 

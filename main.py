@@ -22,6 +22,7 @@ import time
 import webview
 
 from app.kernel import Kernel
+from app.window_ops import DragController, Pusher
 from app.settings import load as load_settings
 
 # 主面板用 CSS 拖拽区（#titlebar），迷你窗用顶部拖拽区，避免 easy_drag 拦截滑条/把手等交互控件
@@ -120,7 +121,7 @@ class _Api:
                                     settings.get("opacity", {}).get("mini", 0.92))
         # 主题/供应商变化后立即推送给迷你窗，让悬浮窗即时跟随
         if any(k in patch for k in ("theme", "providers")):
-            self._app._push_mini_once()
+            self._app.pusher.push_once()
         return {"ok": True, "settings": settings}
 
     def remove_provider(self, pid):
@@ -200,15 +201,15 @@ class _Api:
 
     def drag_start(self, kind):
         """JS mousedown：启动 Python 鼠标轮询拖拽（kind: move/resizeX/resizeY/resize）。"""
-        return self._app.drag_start(kind)
+        return self._app.drag.drag_start(kind)
 
     def drag_stop(self):
         """JS mouseup：停止轮询拖拽并写回配置。"""
-        return self._app.drag_stop()
+        return self._app.drag.drag_stop()
 
     def native_drag(self, hit):
         """JS mousedown：启动 Win32 原生系统拖拽（hit: caption/right/bottom/bottomright）。"""
-        return self._app.native_drag(hit)
+        return self._app.drag.native_drag(hit)
 
     def open_url(self, url):
         """用系统默认浏览器打开官网链接。"""
@@ -235,6 +236,8 @@ class DashboardApp:
         self.tray_icon = None
         self.api = _Api(self)
         self._stop_push = threading.Event()
+        self.drag = DragController(self)
+        self.pusher = Pusher(self)
         self._test_threads = {}   # pid -> True（测试线程运行中）
         self._test_results = {}   # pid -> {ok, message}
         self._mini_hwnd = None    # 迷你窗句柄（loaded 时在主窗口线程获取，供外部使用）
@@ -253,14 +256,12 @@ class DashboardApp:
         )
         try:  # 关闭按钮（含 Alt+F4）统一走隐藏到托盘
             self.main_window.events.closing += self._on_main_closing
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     def _on_main_closing(self, event):
         try:
             event.preventDefault()
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
         self.hide_main()
 
     def hide_main(self):
@@ -282,8 +283,7 @@ class DashboardApp:
         except Exception:
             try:
                 self.main_window.show()
-            except Exception:
-                pass
+            except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     # ---------- 迷你窗 ----------
     def create_mini_window(self, settings=None):
@@ -304,13 +304,11 @@ class DashboardApp:
         try:
             self.mini_window.events.loaded += lambda: (
                 self._on_mini_loaded(settings))
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
         try:
             self.mini_window.events.loaded += lambda: self.apply_opacity(
                 self.mini_window, settings.get("opacity", {}).get("mini", 0.92))
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     def _monitor_work(self, hwnd):
         """窗口所在显示器的工作区（绝对坐标 left/top/width/height）。"""
@@ -333,8 +331,7 @@ class DashboardApp:
             if user32.GetMonitorInfoW(hmon, ctypes.byref(mi)):
                 r = mi.rcWork
                 return (r.left, r.top, r.right - r.left, r.bottom - r.top)
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
         return None
 
     def _mini_position(self, settings, w=None, h=None):
@@ -353,8 +350,7 @@ class DashboardApp:
                 user32.GetWindowRect(ctypes.c_void_p(hwnd), ctypes.byref(rect))
                 cw = rect.right - rect.left
                 ch = rect.bottom - rect.top
-            except Exception:
-                pass
+            except Exception as _e: log.debug(f"main.py 异常: {_e}")
         if cw <= 0:
             cw, ch = 300, 170
         # 所在显示器物理工作区
@@ -411,8 +407,7 @@ class DashboardApp:
             return
         try:
             ctypes.windll.user32.ShowWindow(ctypes.c_void_p(hwnd), 5 if show else 0)
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     @staticmethod
     def _get_scale(hwnd):
@@ -466,13 +461,11 @@ class DashboardApp:
                     self.mini_window.show()
         except Exception as e:
             log.warning(f"mini 定位异常: {e}")
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
         try:  # 仅角落变化时重新定位
             x, y = self._mini_position(settings)
             self.mini_window.move(x, y)
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     def resize_mini(self, w, h, save=False):
         """迷你窗实时改尺寸（拖拽条/把手用）；支持单维度（w 或 h 传 0 表示不改变）。
@@ -497,8 +490,7 @@ class DashboardApp:
             if not self._win32_resize(self.mini_window, tw, th):
                 try:
                     self.mini_window.resize(tw, th)
-                except Exception:
-                    pass
+                except Exception as _e: log.debug(f"main.py 异常: {_e}")
             if save:
                 settings = self.kernel.get_settings()
                 win = dict(settings.get("window") or {})
@@ -531,8 +523,7 @@ class DashboardApp:
             if not self._win32_resize(self.mini_window, tw, th):
                 try:
                     self.mini_window.resize(tw, th)
-                except Exception:
-                    pass
+                except Exception as _e: log.debug(f"main.py 异常: {_e}")
             if save:
                 settings = self.kernel.get_settings()
                 win = dict(settings.get("window") or {})
@@ -562,92 +553,6 @@ class DashboardApp:
             return {"ok": bool(ok)}
         except Exception as e:
             return {"ok": False, "message": str(e)}
-
-    # ---------- 鼠标轮询拖拽（WebView2 拖动事件流会断，改用 Python 读真实鼠标位置） ----------
-    def drag_start(self, kind):
-        if self.mini_window is None or kind not in ("move", "resizeX", "resizeY", "resize"):
-            return {"ok": False, "message": "参数错误"}
-        try:
-            hwnd = self._window_hwnd(self.mini_window)
-            if not hwnd:
-                return {"ok": False, "message": "无句柄"}
-            pt = ctypes.wintypes.POINT()
-            ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
-            rect = ctypes.wintypes.RECT()
-            ctypes.windll.user32.GetWindowRect(ctypes.c_void_p(hwnd), ctypes.byref(rect))
-            self._drag_stop_ev = threading.Event()
-            self._drag = {
-                "kind": kind, "hwnd": hwnd,
-                "cx": pt.x, "cy": pt.y,           # 按下时鼠标物理位置
-                "x0": rect.left, "y0": rect.top,   # 按下时窗口物理位置
-                "w0": rect.right - rect.left, "h0": rect.bottom - rect.top,
-            }
-            log.info(f"drag_start: kind={kind} cursor=({pt.x},{pt.y}) rect=({rect.left},{rect.top},{rect.right-rect.left}x{rect.bottom-rect.top})")
-            threading.Thread(target=self._drag_loop, daemon=True).start()
-            return {"ok": True}
-        except Exception as e:
-            return {"ok": False, "message": str(e)}
-
-    def _drag_loop(self):
-        d = self._drag
-        SWP_NOSIZE, SWP_NOMOVE = 0x0001, 0x0002
-        SWP_NOZORDER, SWP_NOACTIVATE = 0x0004, 0x0010
-        SWP_NOZORDER2 = 0x0004 | 0x0010
-        VK_LBUTTON = 0x01
-        frames = 0
-        while not self._drag_stop_ev.wait(0.02):
-            if not (ctypes.windll.user32.GetAsyncKeyState(VK_LBUTTON) & 0x8000):
-                break
-            try:
-                pt = ctypes.wintypes.POINT()
-                ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
-                dx = pt.x - d["cx"]
-                dy = pt.y - d["cy"]
-                kind = d["kind"]
-                if kind == "move":
-                    ctypes.windll.user32.SetWindowPos(
-                        ctypes.c_void_p(d["hwnd"]), None,
-                        d["x0"] + dx, d["y0"] + dy, 0, 0,
-                        SWP_NOSIZE | SWP_NOZORDER2)
-                else:
-                    w, h = d["w0"], d["h0"]
-                    if kind == "resizeX":
-                        w = max(160, min(600, d["w0"] + dx))
-                    elif kind == "resizeY":
-                        h = max(100, min(400, d["h0"] + dy))
-                    else:
-                        w = max(160, min(600, d["w0"] + dx))
-                        h = max(100, min(400, d["h0"] + dy))
-                    ctypes.windll.user32.SetWindowPos(
-                        ctypes.c_void_p(d["hwnd"]), None, 0, 0, w, h,
-                        SWP_NOMOVE | SWP_NOZORDER2)
-            except Exception as e:
-                import traceback as _tb
-                log.warning('drag_loop 异常: %s\\n%s' % (e, _tb.format_exc()))
-            frames += 1
-        log.info("drag_loop 结束: kind=%s frames=%d" % (d["kind"], frames))
-
-    def drag_stop(self):
-        ev = getattr(self, "_drag_stop_ev", None)
-        if ev:
-            ev.set()
-        # 写回最终尺寸到配置（若发生 resize）
-        d = getattr(self, "_drag", None)
-        if d and d.get("kind") != "move":
-            try:
-                rect = ctypes.wintypes.RECT()
-                ctypes.windll.user32.GetWindowRect(ctypes.c_void_p(d["hwnd"]), ctypes.byref(rect))
-                w = rect.right - rect.left
-                h = rect.bottom - rect.top
-                scale = self._get_scale(d["hwnd"]) or 1.0
-                settings = self.kernel.get_settings()
-                win = dict(settings.get("window") or {})
-                win["mini_width"] = int(round(w / scale))
-                win["mini_height"] = int(round(h / scale))
-                self.kernel.save_settings({"window": win})
-            except Exception:
-                pass
-        return {"ok": True}
 
     def resize_mini_main(self, width):
         """主窗口尺寸滑条：逻辑宽度 → 物理像素，高度按当前宽高比等比，SetWindowPos + 写回配置。"""
@@ -682,29 +587,12 @@ class DashboardApp:
     # ---------- Win32 原生系统拖拽（绕开 WebView2 事件流，系统级拖动/缩放） ----------
     HITS = {"caption": 2, "right": 11, "bottom": 15, "bottomright": 17}  # HTCAPTION/HTRIGHT/HTBOTTOM/HTBOTTOMRIGHT
 
-    def native_drag(self, hit):
-        if self.mini_window is None or hit not in self.HITS:
-            return {"ok": False, "message": "参数错误"}
-        try:
-            hwnd = self._window_hwnd(self.mini_window)
-            if not hwnd:
-                return {"ok": False, "message": "无句柄"}
-            WM_NCLBUTTONDOWN = 0x00A1
-            log.info(f'native_drag: hit={hit} hwnd={hwnd}')
-            r = ctypes.windll.user32.SendMessageW(
-                ctypes.c_void_p(hwnd), WM_NCLBUTTONDOWN, self.HITS[hit], 0)
-            log.info(f'native_drag: SendMessage 返回 {r}')
-            return {"ok": True}
-        except Exception as e:
-            return {"ok": False, "message": str(e)}
-
     def _on_mini_loaded(self, settings):
         """迷你窗 loaded 时（窗口线程）记录 hwnd 并定位到角落。"""
         try:
             self._mini_hwnd = self._window_hwnd(self.mini_window)
             log.info(f"迷你窗 loaded, hwnd={self._mini_hwnd}")
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
         self._move_mini_to_corner(settings)
 
     def _move_mini_to_corner(self, settings):
@@ -714,15 +602,13 @@ class DashboardApp:
         try:
             x, y = self._mini_position(settings)
             self.mini_window.move(x, y)
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     def destroy_mini(self):
         if self.mini_window is not None:
             try:
                 self.mini_window.destroy()
-            except Exception:
-                pass
+            except Exception as _e: log.debug(f"main.py 异常: {_e}")
             self.mini_window = None
 
     def show_mini(self):
@@ -757,8 +643,7 @@ class DashboardApp:
                                       style | WS_EX_LAYERED)
             user32.SetLayeredWindowAttributes(
                 ctypes.c_void_p(hwnd), 0, int(round(alpha * 255)), 0x02)
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     @staticmethod
     def _window_hwnd(window):
@@ -832,8 +717,7 @@ class DashboardApp:
                 if w is not None:
                     try:
                         w.destroy()
-                    except Exception:
-                        pass
+                    except Exception as _e: log.debug(f"main.py 异常: {_e}")
             time.sleep(0.3)
             os._exit(0)
 
@@ -853,22 +737,6 @@ class DashboardApp:
         self.kernel.set_tray_icon(self.tray_icon)  # 注入给通知层（气泡用）
         self.tray_icon.run()
 
-    def _mini_push_loop(self):
-        """主动向迷你窗推送视图数据（绕开 mini 侧 js_api，多窗口下更可靠）。"""
-        while not self._stop_push.wait(8):
-            self._push_mini_once()
-
-    def _push_mini_once(self):
-        try:
-            if self.mini_window is not None:
-                import json as _json
-                v = self.kernel.get_view()
-                js = _json.dumps(v, ensure_ascii=False)
-                self.mini_window.evaluate_js(
-                    "window.__pushView && window.__pushView(%s)" % js)
-        except Exception:
-            pass
-
     def _ui_state_loop(self):
         """轮询界面状态文件，响应 main_hidden / mini_hidden 变化。
         读取失败时保持现状，绝不回退默认导致窗口弹回。"""
@@ -884,25 +752,20 @@ class DashboardApp:
                 if cur["mini_hidden"] and self.mini_window is not None:
                     try:
                         self.mini_window.hide()
-                    except Exception:
-                        pass
+                    except Exception as _e: log.debug(f"main.py 异常: {_e}")
                 elif not cur["mini_hidden"] and self.mini_window is not None:
                     try:
                         self.mini_window.show()
-                    except Exception:
-                        pass
+                    except Exception as _e: log.debug(f"main.py 异常: {_e}")
                 if cur["main_hidden"] and self.main_window is not None:
                     try:
                         self.main_window.hide()
-                    except Exception:
-                        pass
+                    except Exception as _e: log.debug(f"main.py 异常: {_e}")
                 elif not cur["main_hidden"] and self.main_window is not None:
                     try:
                         self.main_window.show()
-                    except Exception:
-                        pass
-            except Exception:
-                pass
+                    except Exception as _e: log.debug(f"main.py 异常: {_e}")
+            except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     # ---------- 启动 ----------
     def run(self):
@@ -917,10 +780,9 @@ class DashboardApp:
         if not self.cfg.get("mini_widget_enabled", True) or st.get("mini_hidden"):
             try:
                 self.mini_window.hide()
-            except Exception:
-                pass
+            except Exception as _e: log.debug(f"main.py 异常: {_e}")
         threading.Thread(target=self.start_tray, daemon=True).start()
-        threading.Thread(target=self._mini_push_loop, daemon=True).start()
+        self.pusher.start()
         threading.Thread(target=self._ui_state_loop, daemon=True).start()
         webview.start()  # 阻塞主线程；窗口隐藏时 WebView 继续运行（默认行为）
 
@@ -951,8 +813,7 @@ def main():
     if not single_instance():
         try:
             print("已有实例在运行，本进程退出。")
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
         return
 
     config = load_settings()

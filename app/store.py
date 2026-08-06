@@ -69,8 +69,12 @@ def append(provider_id: str, result: dict) -> None:
     cutoff = int(time.time()) - KEEP_HOURS * 3600
     snaps = [s for s in snaps if s["ts"] >= cutoff]
     os.makedirs(DATA_DIR, exist_ok=True)
-    with open(_path(provider_id), "w", encoding="utf-8") as f:
+    # 原子写：临时文件 + rename，避免并发读写下文件撕裂
+    _p = _path(provider_id)
+    _tmp = _p + ".tmp"
+    with open(_tmp, "w", encoding="utf-8") as f:
         json.dump({"snapshots": snaps}, f, ensure_ascii=False)
+    os.replace(_tmp, _p)
 
 
 def snapshots(provider_id: str, hours: int = 720) -> list:

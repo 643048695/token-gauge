@@ -19,6 +19,9 @@ from __future__ import annotations
 
 import importlib
 import threading
+import logging
+
+log = logging.getLogger(__name__)
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -116,8 +119,7 @@ class Kernel:
             registry = getattr(pkg, "PROVIDERS", None)
             if isinstance(registry, dict) and pid in registry:
                 return registry[pid]
-        except Exception:
-            pass
+        except Exception as _e: log.debug(f"kernel.py 异常: {_e}")
         # 2) 模块扫描
         mod_name = "app.providers." + pid.replace("-", "_")
         try:
@@ -164,8 +166,7 @@ class Kernel:
         if self._executor:
             try:
                 self._executor.shutdown(wait=False, cancel_futures=True)
-            except Exception:
-                pass
+            except Exception as _e: log.debug(f"kernel.py 异常: {_e}")
             self._executor = None
 
     def _scheduler_loop(self) -> None:
