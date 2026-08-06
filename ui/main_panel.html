@@ -198,7 +198,7 @@ main{display:flex; height:calc(100% - 36px);}
 .status-msg.err{color:var(--danger);}
 
 .grid{
-  display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--gap);
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:var(--gap);
 }
 @media (max-width:640px){.grid{grid-template-columns:1fr;}}
 
@@ -217,7 +217,7 @@ main{display:flex; height:calc(100% - 36px);}
 .peak-bar{margin:2px 0 8px; padding:6px 10px; font-size:11px; border-radius:6px; background:rgba(255,196,0,.12); color:var(--warn); border:1px solid rgba(255,196,0,.35); font-weight:600;}
 .btn-site{font-size:11px; padding:3px 9px; border-radius:6px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; transition:all .15s;}
 .btn-site:hover{color:var(--accent); border-color:var(--accent);}
-.token-est{margin:8px 0 4px; padding:8px 10px; border:1px dashed var(--line); border-radius:8px;}
+.token-est{margin:10px 0 4px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03);}
 .te-head{font-size:10px; color:var(--muted); margin-bottom:6px; display:flex; justify-content:space-between;}
 .te-note{font-size:9px; opacity:.8;}
 .te-row{display:flex; align-items:center; justify-content:space-between; font-size:12px; padding:3px 0;}
@@ -233,7 +233,7 @@ main{display:flex; height:calc(100% - 36px);}
 .bal-avail.bad{color:var(--danger); font-weight:600;}
 .sparkline{display:flex; align-items:flex-end; gap:4px; height:36px; margin:8px 0 4px; padding:0 2px;}
 /* SVG 柱状图 */
-.spark-chart{width:100%; height:auto; display:block; margin:4px 0 2px;}
+.spark-chart{width:100%; height:auto; display:block; margin:8px 0 2px;}
 .spark-bar{fill:var(--accent); opacity:.72; transition:opacity .15s;}
 .spark-bar:hover{opacity:1;}
 .spark-bar.today{fill:var(--accent); opacity:1; filter:drop-shadow(0 0 4px var(--glow));}
@@ -242,7 +242,7 @@ main{display:flex; height:calc(100% - 36px);}
 .spark-day{font-size:8px; fill:var(--muted); font-family:Consolas,monospace;}
 .spark-day.today{fill:var(--accent); font-weight:600;}
 .spark-grid{stroke:rgba(255,255,255,.06); stroke-width:1;}
-.spark-title{font-size:10px; color:var(--muted); margin:6px 0 2px;}
+.spark-title{font-size:10px; color:var(--muted); margin:10px 0 4px;}
 .btn-refresh-all{margin-left:auto;}
 .btn:disabled{opacity:.5; cursor:default;}
 .btn-del-prov{color:var(--danger); border-color:rgba(255,77,109,.4);}
@@ -296,7 +296,7 @@ main{display:flex; height:calc(100% - 36px);}
 }
 .cookie-bar svg{width:13px;height:13px;flex:none;}
 
-.lim{margin-bottom:9px;}
+.lim{padding:8px 10px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; background:rgba(255,255,255,.02);}
 .lim:last-child{margin-bottom:0;}
 .lim-top{display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px;}
 .lim-top .lbl{color:var(--text);}
@@ -309,8 +309,9 @@ main{display:flex; height:calc(100% - 36px);}
 .lim-reset{font-size:10px; color:var(--muted); margin-top:3px; font-family:Consolas,monospace;}
 
 .card-meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; padding-top:9px; border-top:1px dashed var(--border);}
-.meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; width:100%;}
-.meta-cell{min-width:0;}
+.meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; margin-top:4px;}
+.meta-grid.tri{grid-template-columns:repeat(3,1fr);}
+.meta-cell{min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03);}
 .meta-k{font-size:9px; color:var(--muted); letter-spacing:.5px;}
 .meta-v{font-size:12px; font-weight:600; color:var(--text); font-family:Consolas,monospace; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .meta-s{font-size:9px; color:var(--muted); font-weight:400; margin-left:4px;}
@@ -547,6 +548,16 @@ input[type=range]:disabled{opacity:.4;}
   color:var(--accent); border-color:var(--accent);
   background:rgba(0,255,156,0.1); box-shadow:0 0 10px rgba(0,255,156,0.15);
 }
+
+/* DIY 模块开关：两列紧凑网格 + 开关格子化 */
+.diy-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.diy-sec{font-size:10px; color:var(--muted); letter-spacing:1.5px; margin:6px 0 8px; padding-top:6px; border-top:1px dashed var(--line);}
+.diy-sec:first-child{border-top:none; padding-top:0; margin-top:0;}
+.diy-row{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03); min-width:0;}
+.diy-lbl{font-size:12px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.diy-row select{max-width:60%;}
+.diy-empty{display:flex; align-items:center; justify-content:center; padding:24px 0 20px; opacity:.35;}
+.diy-empty svg{width:34px; height:34px;}
 .opt-btn:disabled{opacity:.45; cursor:default;}
 
 /* ============ 通知页 ============ */
@@ -831,7 +842,8 @@ var ICONS = {
   zap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>',
   bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg>',
   tray: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 18h18M9 21h6"/></svg>',
-  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><path d="M12 8v.5" stroke-linecap="round"/></svg>'
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><path d="M12 8v.5" stroke-linecap="round"/></svg>',
+  gridOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/><path d="M6 6l12 12"/></svg>'
 };
 
 /* ================= 预置主题预览（仅用于外观页色块，实际主题以 get_theme_css 为准） ================= */
@@ -1484,7 +1496,7 @@ function balanceCardHtml(pv, dm){
       { k:'日均消耗', v: sp.data_ready ? money(sp.daily_amount, cur) : '积累中', small:'' },
       { k:'还能撑', v: sp.data_ready ? sp.days_left_text : '积累中', small:'' },
     ];
-    h += '<div class="meta-grid">'+cells.map(function(c){
+    h += '<div class="meta-grid tri">'+cells.map(function(c){
       return '<div class="meta-cell"><div class="meta-k">'+esc(c.k)+'</div><div class="meta-v">'+esc(c.v)+(c.small?'<span class="meta-s">'+esc(c.small)+'</span>':'')+'</div></div>';
     }).join('')+'</div>';
   }
@@ -1516,6 +1528,9 @@ function balanceCardHtml(pv, dm){
   }
   if(pv.ok === false){
     h = '<div class="card-meta"><span class="chip danger">抓取失败'+(pv.error?': '+esc(pv.error):'')+'</span></div>';
+  }
+  if(!h){
+    h = '<div class="diy-empty">'+ICONS.gridOff+'</div>';
   }
   return h;
 }
@@ -1982,14 +1997,18 @@ function renderAppearance(){
     '<div class="set-group"><div class="set-title">仪表盘显示</div>'+
       '<div class="card">'+
         '<div class="diy-sec">余额卡（DeepSeek/Kimi 等）</div>'+
+        '<div class="diy-grid">'+
         '<div class="diy-row"><span class="diy-lbl">余额大卡</span><label class="switch"><input type="checkbox" id="diyBalMain" '+(diyMods.balance.bal_main?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         '<div class="diy-row"><span class="diy-lbl">消耗指标（今日/日均/还能撑）</span><label class="switch"><input type="checkbox" id="diyBalGrid" '+(diyMods.balance.meta_grid?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         '<div class="diy-row"><span class="diy-lbl">Token 预估</span><label class="switch"><input type="checkbox" id="diyBalTok" '+(diyMods.balance.token_est?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         '<div class="diy-row"><span class="diy-lbl">趋势图（近7日）</span><label class="switch"><input type="checkbox" id="diyBalChart" '+(diyMods.balance.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '</div>'+
         '<div class="diy-sec">订阅卡（OpenCode Go）</div>'+
+        '<div class="diy-grid">'+
         '<div class="diy-row"><span class="diy-lbl">进度条组</span><label class="switch"><input type="checkbox" id="diyQuaProg" '+(diyMods.quota.progress?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         '<div class="diy-row"><span class="diy-lbl">Token 指标</span><label class="switch"><input type="checkbox" id="diyQuaTok" '+(diyMods.quota.tokens?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         '<div class="diy-row"><span class="diy-lbl">趋势图（近5日）</span><label class="switch"><input type="checkbox" id="diyQuaChart" '+(diyMods.quota.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '</div>'+
       '</div>'+
     '</div>'+
 
