@@ -240,6 +240,7 @@
   .drow .reset { width: 46px; text-align: right; flex: none; font-size: 8px; }
   .dempty { font-size: 9px; color: var(--muted); opacity: 0.7; text-align: center; margin-top: 12px; }
 </style>
+<script src="i18n.js"></script>
 </head>
 <body>
   <div class="hud" id="hud">
@@ -248,13 +249,13 @@
       <div class="logo"><span class="dot"></span><b>OC-GO</b>&nbsp;MONITOR</div>
       <div class="topbtns">
         <span class="live" id="live"><span class="dot"></span>LIVE</span>
-        <button class="refresh" id="refresh" title="立即刷新">↻</button>
+        <button class="refresh" id="refresh" data-i18n-title="立即刷新" title="立即刷新">↻</button>
       </div>
     </div>
 
     <div class="today">
       <span class="big" id="todayBig">—</span>
-      <span class="meta" id="todayMeta">等待数据</span>
+      <span class="meta" id="todayMeta" data-i18n="等待数据">等待数据</span>
     </div>
 
     <div class="barwrap">
@@ -265,32 +266,32 @@
       <div class="bar"><div class="fill" id="monthlyFill" style="width:0%"></div></div>
       <div class="barfoot">
         <span id="monthlyMoney">--</span>
-        <span>重置 <b id="resetText">--</b></span>
+        <span data-i18n="重置">重置 <b id="resetText">--</b></span>
       </div>
     </div>
 
     <div class="subrow">
-      <div class="item"><span>还能撑</span><b class="good" id="daysLeft">—</b></div>
-      <div class="item"><span>滚动</span><b id="rollVal">--%</b></div>
-      <div class="item"><span>每周</span><b id="weekVal">--%</b></div>
+      <div class="item"><span data-i18n="还能撑">还能撑</span><b class="good" id="daysLeft">—</b></div>
+      <div class="item"><span data-i18n="滚动">滚动</span><b id="rollVal">--%</b></div>
+      <div class="item"><span data-i18n="每周">每周</span><b id="weekVal">--%</b></div>
     </div>
 
-    <div class="foot" id="foot">更新时间 --</div>
+    <div class="foot" id="foot" data-i18n="更新时间 --">更新时间 --</div>
 
     <div class="detail-overlay" id="detail">
-      <div class="detail-head"><span>LIMITS</span><span class="hint">点击收起</span></div>
+      <div class="detail-head"><span>LIMITS</span><span class="hint" data-i18n="点击收起">点击收起</span></div>
       <div class="dstats">
-        <div class="dstat"><span>今日用量</span><b id="dToday">—</b></div>
-        <div class="dstat"><span>余额</span><b id="dBal">—</b></div>
-        <div class="dstat"><span>当前速度</span><b id="dCur">—</b></div>
-        <div class="dstat"><span>3日趋势</span><b id="dAvg">—</b></div>
+        <div class="dstat"><span data-i18n="今日用量">今日用量</span><b id="dToday">—</b></div>
+        <div class="dstat"><span data-i18n="余额">余额</span><b id="dBal">—</b></div>
+        <div class="dstat"><span data-i18n="当前速度">当前速度</span><b id="dCur">—</b></div>
+        <div class="dstat"><span data-i18n="3日趋势">3日趋势</span><b id="dAvg">—</b></div>
       </div>
       <div class="dlist" id="dlist"></div>
     </div>
 
-    <div class="resize-x" id="resizeX" title="左右拖动改宽度"></div>
-    <div class="resize-y" id="resizeY" title="上下拖动改高度"></div>
-    <div class="resize-handle" id="resizeHandle" title="拖动调整大小"></div>
+    <div class="resize-x" id="resizeX" data-i18n-title="左右拖动改宽度" title="左右拖动改宽度"></div>
+    <div class="resize-y" id="resizeY" data-i18n-title="上下拖动改高度" title="上下拖动改高度"></div>
+    <div class="resize-handle" id="resizeHandle" data-i18n-title="拖动调整大小" title="拖动调整大小"></div>
   </div>
 
 <script>
@@ -337,9 +338,9 @@
     const d = Math.floor(sec / 86400);
     const h = Math.floor((sec % 86400) / 3600);
     const m = Math.floor((sec % 3600) / 60);
-    if (d > 0) return d + '天' + h + '时';
-    if (h > 0) return h + '时' + m + '分';
-    return m + '分钟';
+    if (d > 0) return d + I18N.t('天') + h + I18N.t('时');
+    if (h > 0) return h + I18N.t('时') + m + I18N.t('分');
+    return m + I18N.t('分钟');
   }
 
   function firstProvider(v) {
@@ -357,7 +358,7 @@
     const box = $('dlist');
     box.innerHTML = '';
     if (!list.length) {
-      box.innerHTML = '<div class="dempty">暂无额度数据</div>';
+      box.innerHTML = I18N.t('<div class="dempty">暂无额度数据</div>');
       return;
     }
     list.forEach(l => {
@@ -379,6 +380,10 @@
 
   function render(v) {
     viewData = v;
+    if (v && v.settings && v.settings.ui && v.settings.ui.lang) {
+      I18N.setLang(v.settings.ui.lang);
+    }
+    I18N.apply();
     try {
       if (v && v.settings && v.settings.theme) {
         document.body.setAttribute('data-style', v.settings.theme.id || 'paper');
@@ -395,8 +400,8 @@
     if (!p) {
       setLive('dead');
       $('todayBig').textContent = '—';
-      $('todayMeta').textContent = '等待数据';
-      $('foot').textContent = '请打开主面板配置';
+      $('todayMeta').textContent = I18N.t('等待数据');
+      $('foot').textContent = I18N.t('请打开主面板配置');
       return;
     }
 
@@ -406,8 +411,8 @@
 
     if (!p.ok) {
       $('todayBig').textContent = '—';
-      $('todayMeta').textContent = esc(p.error || '数据异常');
-      $('foot').textContent = '更新时间 ' + new Date().toLocaleTimeString();
+      $('todayMeta').textContent = esc(p.error || I18N.t('数据异常'));
+      $('foot').textContent = I18N.t('更新时间 ') + new Date().toLocaleTimeString();
       return;
     }
 
@@ -420,18 +425,18 @@
     // 中部大数字：余额型显示可用余额；否则今日 delta / monthly
     if (pvBal && p.balance && p.balance.amount != null) {
       $('todayBig').textContent = fmtMoney(p.balance.amount, p.balance.currency);
-      $('todayMeta').textContent = (p.balance.currency || '') + ' 可用余额'
-        + (isPeakNow() ? ' · 高峰贵一倍' : '');
+      $('todayMeta').textContent = (p.balance.currency || '') + I18N.t(' 可用余额')
+        + (isPeakNow() ? I18N.t(' · 高峰贵一倍') : '');
     } else if (t && t.delta_pct != null) {
       $('todayBig').textContent = (t.delta_pct > 0 ? '+' : '') + Number(t.delta_pct).toFixed(1) + '%';
       const since = t.since_midnight ? '00:00' : (t.base_label || '');
-      $('todayMeta').textContent = '今日 ' + fmtUsd(t.delta_usd) + (since ? ' · 自 ' + since : '') + ' 起算';
+      $('todayMeta').textContent = I18N.t('今日 ') + fmtUsd(t.delta_usd) + (since ? I18N.t(' · 自 ') + since : '') + I18N.t(' 起算');
     } else if (monthly && monthly.used_pct != null) {
       $('todayBig').textContent = Math.round(monthly.used_pct) + '%';
-      $('todayMeta').textContent = '月度用量 · ' + esc(monthly.label || '每月');
+      $('todayMeta').textContent = I18N.t('月度用量 · ') + esc(monthly.label || I18N.t('每月'));
     } else {
       $('todayBig').textContent = '—';
-      $('todayMeta').textContent = '暂无用量数据';
+      $('todayMeta').textContent = I18N.t('暂无用量数据');
     }
 
     const meta = p.meta || {};
@@ -439,14 +444,14 @@
     if (pvBal) {
       // 余额型：卡片显示 还能撑 / 日均消耗
       $('barLabel').textContent = 'BALANCE';
-      $('monthlyVal').textContent = balSpeed.data_ready ? balSpeed.days_left_text : '积累中';
+      $('monthlyVal').textContent = balSpeed.data_ready ? balSpeed.days_left_text : I18N.t('积累中');
       const fill2 = $('monthlyFill');
       fill2.style.width = '0%';
       fill2.className = 'fill';
       $('monthlyMoney').textContent = balSpeed.data_ready
-        ? '日均 ' + fmtMoney(balSpeed.daily_amount, p.balance && p.balance.currency) + ' · 近' + balSpeed.sample_days + '日'
-        : '消耗数据积累中';
-      $('resetText').textContent = '可用余额';
+        ? I18N.t('日均 ') + fmtMoney(balSpeed.daily_amount, p.balance && p.balance.currency) + I18N.t(' · 近') + balSpeed.sample_days + I18N.t('日')
+        : I18N.t('消耗数据积累中');
+      $('resetText').textContent = I18N.t('可用余额');
     } else {
       // 月度进度条
       const mp = monthly && monthly.used_pct != null ? Math.min(100, monthly.used_pct) : 0;
@@ -465,17 +470,17 @@
     // 还能撑 / 滚动 / 每周
     const speed = meta.speed || {};
     if (pvBal) {
-      $('daysLeft').textContent = balSpeed.data_ready ? balSpeed.days_left_text : '积累中';
+      $('daysLeft').textContent = balSpeed.data_ready ? balSpeed.days_left_text : I18N.t('积累中');
       $('rollVal').textContent = balSpeed.data_ready
-        ? fmtMoney(balSpeed.daily_amount, p.balance && p.balance.currency) + '/天' : '--';
+        ? fmtMoney(balSpeed.daily_amount, p.balance && p.balance.currency) + I18N.t('/天') : '--';
       $('weekVal').textContent = balSpeed.data_ready
-        ? '近' + balSpeed.sample_days + '日' : '--';
+        ? I18N.t('近') + balSpeed.sample_days + I18N.t('日') : '--';
     } else {
       // 优先科学日均（近 N 天），否则数据不足显示积累中，再否则当前烧速
       if (speed.avg_days_left_text && speed.avg_days_left_text !== '—') {
         $('daysLeft').textContent = speed.avg_days_left_text;
       } else if (speed.data_ready === false) {
-        $('daysLeft').textContent = '积累中';
+        $('daysLeft').textContent = I18N.t('积累中');
       } else {
         $('daysLeft').textContent = speed.days_left_text || '—';
       }
@@ -512,7 +517,7 @@
       }
       // 当前速度
       const curTxt = (speed.days_left_text && speed.days_left_text !== '—') ? '~' + speed.days_left_text : '—';
-      const curSrc = speed.source === 'today' ? '今日' : speed.source === 'short' ? '近1h' : speed.source === 'trend' ? '趋势' : (speed.source || '');
+      const curSrc = speed.source === 'today' ? I18N.t('今日') : speed.source === 'short' ? I18N.t('近1h') : speed.source === 'trend' ? I18N.t('趋势') : (speed.source || '');
       $('dCur').textContent = curTxt + (curSrc ? ' · ' + curSrc : '');
       $('dCur').className = (speed.days_left_text && speed.days_left_text !== '—') ? 'good' : 'dim';
       // 3日趋势
@@ -520,12 +525,12 @@
         $('dAvg').textContent = '~' + speed.avg_days_left_text + ' · ' + (speed.avg_source || '');
         $('dAvg').className = 'good';
       } else {
-        $('dAvg').textContent = '积累中';
+        $('dAvg').textContent = I18N.t('积累中');
         $('dAvg').className = 'dim';
       }
     } catch (e) { }
 
-    $('foot').textContent = '更新 ' + new Date(p.fetched_at * 1000).toLocaleTimeString() + (stale ? ' · 延迟' : '');
+    $('foot').textContent = I18N.t('更新 ') + new Date(p.fetched_at * 1000).toLocaleTimeString() + (stale ? I18N.t(' · 延迟') : '');
   }
 
   async function pull() {
@@ -534,7 +539,7 @@
       render(v);
     } catch (e) {
       setLive('dead');
-      $('foot').textContent = '连接中断';
+      $('foot').textContent = I18N.t('连接中断');
     }
   }
 

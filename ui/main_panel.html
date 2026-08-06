@@ -641,19 +641,28 @@ input[type=range]:disabled{opacity:.4;}
   border:1px solid rgba(255,196,0,0.4); background:rgba(20,16,6,0.9);
   padding:10px 18px; border-radius:8px;
 }
+/* 语言切换（中/英） */
+.lang-switch{display:flex; align-items:center; gap:2px; margin-right:2px; flex:none;}
+.lang-btn{
+  background:none; border:1px solid transparent; border-radius:6px; cursor:pointer;
+  font-size:13px; line-height:1; padding:3px 5px; opacity:.55; transition:all .15s;
+}
+.lang-btn:hover{opacity:.9;}
+.lang-btn.active{opacity:1; border-color:var(--line); background:rgba(255,255,255,.06);}
 </style>
+<script src="i18n.js"></script>
 </head>
 <body data-density="compact">
 
 <!-- 标题栏 -->
 <header id="titlebar">
   <div class="logo-dot"></div>
-  <button id="btnRefresh" class="icon-btn no-drag" title="手动刷新全部供应商">
+  <button id="btnRefresh" class="icon-btn no-drag" data-i18n-title="手动刷新全部供应商" title="手动刷新全部供应商">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg>
   </button>
   <span class="tb-title">OC-GO <span class="accent">DASHBOARD</span></span>
-  <span class="tb-sub" id="tbStatus">连接中…</span>
-  <div class="ring-wrap no-drag" title="自动刷新倒计时">
+  <span class="tb-sub" id="tbStatus" data-i18n="连接中…">连接中…</span>
+  <div class="ring-wrap no-drag" data-i18n-title="自动刷新倒计时" title="自动刷新倒计时">
     <svg class="ring" width="30" height="30" viewBox="0 0 30 30">
       <circle class="bg" cx="15" cy="15" r="11"/>
       <circle class="fg" id="ringFg" cx="15" cy="15" r="11"/>
@@ -661,7 +670,11 @@ input[type=range]:disabled{opacity:.4;}
     </svg>
     <span id="ringLabel" style="display:none">s</span>
   </div>
-  <button id="btnClose" class="icon-btn close no-drag" title="隐藏到托盘">
+  <div class="lang-switch no-drag" id="langSwitch">
+    <button class="lang-btn active" data-lang="zh" title="中文">🇨🇳</button>
+    <button class="lang-btn" data-lang="en" title="English">🇬🇧</button>
+  </div>
+  <button id="btnClose" class="icon-btn close no-drag" data-i18n-title="隐藏到托盘" title="隐藏到托盘">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
   </button>
 </header>
@@ -669,23 +682,23 @@ input[type=range]:disabled{opacity:.4;}
 <main>
   <!-- 导航 -->
   <nav id="nav">
-    <button class="nav-item active" data-page="dashboard">
+    <button class="nav-item active" data-page="dashboard" data-i18n="仪表盘">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       仪表盘
     </button>
-    <button class="nav-item" data-page="providers">
+    <button class="nav-item" data-page="providers" data-i18n="供应商">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><circle cx="7" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="7" cy="16.5" r="1" fill="currentColor" stroke="none"/><path d="M11 7.5h6M11 16.5h6"/></svg>
       供应商
     </button>
-    <button class="nav-item" data-page="appearance">
+    <button class="nav-item" data-page="appearance" data-i18n="外观">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3a9 9 0 1 0 0 18c1.7 0 2.5-1.2 2.5-2.5 0-1.5-1.3-2-1.3-3.5 0-1.2 1-2.2 2.5-2.2H17a4 4 0 0 0 4-4c0-3-4-5.8-9-5.8z"/><circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1" fill="currentColor" stroke="none"/></svg>
       外观
     </button>
-    <button class="nav-item" data-page="notify">
+    <button class="nav-item" data-page="notify" data-i18n="通知">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg>
       通知
     </button>
-    <button class="nav-item" data-page="about">
+    <button class="nav-item" data-page="about" data-i18n="关于">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><path d="M12 8v.5" stroke-linecap="round"/></svg>
       关于
     </button>
@@ -698,8 +711,8 @@ input[type=range]:disabled{opacity:.4;}
     <!-- 仪表盘 -->
     <div class="page active" id="page-dashboard">
       <div class="page-head">
-        <h1>仪表盘</h1><span class="sub">实时用量总览</span>
-        <span class="badge" id="dataBadge">示例数据</span>
+        <h1 data-i18n="仪表盘">仪表盘</h1><span class="sub" data-i18n="实时用量总览">实时用量总览</span>
+        <span class="badge" id="dataBadge" data-i18n="示例数据">示例数据</span>
       </div>
       <div id="dashStatus"></div>
       <div class="grid" id="dashGrid"></div>
@@ -708,32 +721,32 @@ input[type=range]:disabled{opacity:.4;}
     <!-- 供应商 -->
     <div class="page" id="page-providers">
       <div class="page-head">
-        <h1>供应商</h1><span class="sub">启用、凭据与连接测试</span>
-        <button class="add-provider-btn" id="btnAddProvider">＋ 添加供应商</button>
+        <h1 data-i18n="供应商">供应商</h1><span class="sub" data-i18n="启用、凭据与连接测试">启用、凭据与连接测试</span>
+        <button class="add-provider-btn" id="btnAddProvider" data-i18n="＋ 添加供应商">＋ 添加供应商</button>
       </div>
       <div id="addProviderPanel" class="add-panel" style="display:none">
         <div class="add-row">
-          <label>类型</label>
+          <label data-i18n="类型">类型</label>
           <select id="apType" style="display:none"></select>
           <div class="cs-wrap" id="apTypeWrap">
             <button type="button" class="cs-trigger" id="apTypeBtn">
               <span class="cs-icon" id="apTypeIcon"></span>
-              <span class="cs-label" id="apTypeLabel">选择供应商</span>
+              <span class="cs-label" id="apTypeLabel" data-i18n="选择供应商">选择供应商</span>
               <span class="cs-arrow">▾</span>
             </button>
             <div class="cs-list" id="apTypeList" style="display:none"></div>
           </div>
-          <label>备注名</label>
-          <input id="apName" placeholder="如：主力订阅" autocomplete="off">
+          <label data-i18n="备注名">备注名</label>
+          <input id="apName" data-i18n-ph="如：主力订阅" placeholder="如：主力订阅" autocomplete="off">
         </div>
         <div class="add-row" id="apKeyRow" style="display:none">
-          <label>标识</label>
-          <input id="apKey" placeholder="唯一标识，如 deepseek-main（API 导入多实例用）" autocomplete="off">
+          <label data-i18n="标识">标识</label>
+          <input id="apKey" data-i18n-ph="唯一标识，如 deepseek-main（API 导入多实例用）" placeholder="唯一标识，如 deepseek-main（API 导入多实例用）" autocomplete="off">
         </div>
         <div id="apFields" class="add-fields"></div>
         <div class="add-actions">
-          <button class="btn-primary" id="apSave">保存并启用</button>
-          <button id="apCancel">取消</button>
+          <button class="btn-primary" id="apSave" data-i18n="保存并启用">保存并启用</button>
+          <button id="apCancel" data-i18n="取消">取消</button>
         </div>
       </div>
       <div id="providersList"></div>
@@ -742,7 +755,7 @@ input[type=range]:disabled{opacity:.4;}
     <!-- 外观 -->
     <div class="page" id="page-appearance">
       <div class="page-head">
-        <h1>外观</h1><span class="sub">主题、透明度与界面偏好</span>
+        <h1 data-i18n="外观">外观</h1><span class="sub" data-i18n="主题、透明度与界面偏好">主题、透明度与界面偏好</span>
       </div>
       <div id="appearanceBody"></div>
     </div>
@@ -750,7 +763,7 @@ input[type=range]:disabled{opacity:.4;}
     <!-- 通知 -->
     <div class="page" id="page-notify">
       <div class="page-head">
-        <h1>通知</h1><span class="sub">用量阈值与事件提醒</span>
+        <h1 data-i18n="通知">通知</h1><span class="sub" data-i18n="用量阈值与事件提醒">用量阈值与事件提醒</span>
       </div>
       <div id="notifyBody"></div>
     </div>
@@ -758,7 +771,7 @@ input[type=range]:disabled{opacity:.4;}
     <!-- 关于 -->
     <div class="page" id="page-about">
       <div class="page-head">
-        <h1>关于</h1><span class="sub">项目信息</span>
+        <h1 data-i18n="关于">关于</h1><span class="sub" data-i18n="项目信息">项目信息</span>
       </div>
       <div class="about-hero">
         <div class="about-logo">
@@ -766,24 +779,24 @@ input[type=range]:disabled{opacity:.4;}
         </div>
         <div class="about-title">OC-GO <span class="a">DASHBOARD</span></div>
         <div><span class="about-ver">v0.2</span></div>
-        <p class="about-desc">OpenCode 用量额度监控面板。多供应商实时抓取、阈值预警、速度推算，一切数据都收在托盘里的这一块霓虹屏上。</p>
+        <p class="about-desc" data-i18n="OpenCode 用量额度监控面板。多供应商实时抓取、阈值预警、速度推算，一切数据都收在托盘里的这一块霓虹屏上。">OpenCode 用量额度监控面板。多供应商实时抓取、阈值预警、速度推算，一切数据都收在托盘里的这一块霓虹屏上。</p>
       </div>
       <div class="about-tips">
         <div class="tip-row">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/><path d="M12 8v4l3 2"/></svg>
-          <div><span class="k">双击托盘</span><span class="d">打开或收起主面板；关闭按钮仅隐藏到托盘，不会退出程序</span></div>
+          <div><span class="k" data-i18n="双击托盘">双击托盘</span><span class="d" data-i18n="打开或收起主面板；关闭按钮仅隐藏到托盘，不会退出程序">打开或收起主面板；关闭按钮仅隐藏到托盘，不会退出程序</span></div>
         </div>
         <div class="tip-row warn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 9v4"/><path d="M12 17v.5"/><path d="M10.3 3.8 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0z"/></svg>
-          <div><span class="k">Cookie 失效</span><span class="d">界面会亮红色告警条，及时到供应商页更新凭据</span></div>
+          <div><span class="k" data-i18n="Cookie 失效">Cookie 失效</span><span class="d" data-i18n="界面会亮红色告警条，及时到供应商页更新凭据">界面会亮红色告警条，及时到供应商页更新凭据</span></div>
         </div>
         <div class="tip-row">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8v.5"/></svg>
-          <div><span class="k">仪表盘</span><span class="d">进度条按阈值自动变色：越过预警线转黄，越过紧急线转红</span></div>
+          <div><span class="k" data-i18n="仪表盘">仪表盘</span><span class="d" data-i18n="进度条按阈值自动变色：越过预警线转黄，越过紧急线转红">进度条按阈值自动变色：越过预警线转黄，越过紧急线转红</span></div>
         </div>
       </div>
       <div class="about-guide" style="text-align:center;margin-top:14px;">
-        <button id="btnReplayGuide" style="background:none;border:1px solid var(--accent);color:var(--accent);font-size:11px;padding:6px 16px;border-radius:6px;cursor:pointer;letter-spacing:1px;">重新查看开屏引导</button>
+        <button id="btnReplayGuide" style="background:none;border:1px solid var(--accent);color:var(--accent);font-size:11px;padding:6px 16px;border-radius:6px;cursor:pointer;letter-spacing:1px;" data-i18n="重新查看开屏引导">重新查看开屏引导</button>
       </div>
       <div class="about-foot">HANA AGENT · OC-GO DASHBOARD · 2026</div>
     </div>
@@ -815,13 +828,13 @@ function fmtClock(t){
 }
 function fmtInterval(sec){
   if(sec==null) return '--';
-  if(sec < 60) return sec+' 秒';
-  if(sec % 60 === 0) return (sec/60)+' 分钟';
-  return (Math.floor(sec/60))+' 分 '+(sec%60)+' 秒';
+  if(sec < 60) return sec+I18N.t(' 秒');
+  if(sec % 60 === 0) return (sec/60)+I18N.t(' 分钟');
+  return (Math.floor(sec/60))+I18N.t(' 分 ')+(sec%60)+I18N.t(' 秒');
 }
 function fmtReset(sec){
   if(sec==null) return '';
-  if(sec <= 0) return '即将重置';
+  if(sec <= 0) return I18N.t('即将重置');
   if(sec < 60) return sec+'s';
   if(sec < 3600) return Math.floor(sec/60)+'m '+(sec%60)+'s';
   if(sec < 86400) return Math.floor(sec/3600)+'h '+Math.floor((sec%3600)/60)+'m';
@@ -851,34 +864,34 @@ var ICONS = {
 
 /* ================= 预置主题预览（仅用于外观页色块，实际主题以 get_theme_css 为准） ================= */
 var THEMES = {
-  'paper':    { name:'纸面极简', accent:'#537d96', accent2:'#6f9cb5', bg:'#f5efe4' },
-  '8bit':     { name:'8位像素',  accent:'#ffd54f', accent2:'#4fc3f7', bg:'#1a237e' },
-  'matrix':   { name:'黑客帝国', accent:'#00ff41', accent2:'#00e5a0', bg:'#000000' },
-  'brutal':   { name:'粗野主义', accent:'#111111', accent2:'#ffeb3b', bg:'#f5f0e6' },
-  'redacted': { name:'机密档案', accent:'#8b2c1f', accent2:'#5a4632', bg:'#e8dcc8' }
+  'paper':    { name:I18N.t('纸面极简'), accent:'#537d96', accent2:'#6f9cb5', bg:'#f5efe4' },
+  '8bit':     { name:I18N.t('8位像素'),  accent:'#ffd54f', accent2:'#4fc3f7', bg:'#1a237e' },
+  'matrix':   { name:I18N.t('黑客帝国'), accent:'#00ff41', accent2:'#00e5a0', bg:'#000000' },
+  'brutal':   { name:I18N.t('粗野主义'), accent:'#111111', accent2:'#ffeb3b', bg:'#f5f0e6' },
+  'redacted': { name:I18N.t('机密档案'), accent:'#8b2c1f', accent2:'#5a4632', bg:'#e8dcc8' }
 };
 var STYLE_DESC = {
-  'paper':'白纸清单 · 表格化', '8bit':'像素方块 · 复古机台',
-  'matrix':'矩阵绿屏 · 数字雨', 'brutal':'纯黑白 · 硬边框宣言',
-  'redacted':'米色档案纸 · 红章涂黑'
+  'paper':I18N.t('白纸清单 · 表格化'), '8bit':I18N.t('像素方块 · 复古机台'),
+  'matrix':I18N.t('矩阵绿屏 · 数字雨'), 'brutal':I18N.t('纯黑白 · 硬边框宣言'),
+  'redacted':I18N.t('米色档案纸 · 红章涂黑')
 };
 var STYLE_PALETTES = {
   '8bit': [
-    { id:'nes', name:'红白机', colors:['#1a237e','#ffd54f','#e53935'] },
-    { id:'gameboy', name:'掌机绿', colors:['#0f380f','#9bbc0f','#e0e6c3'] },
-    { id:'sega', name:'世嘉红', colors:['#1a1a1a','#e60012','#ffdd00'] }
+    { id:'nes', name:I18N.t('红白机'), colors:['#1a237e','#ffd54f','#e53935'] },
+    { id:'gameboy', name:I18N.t('掌机绿'), colors:['#0f380f','#9bbc0f','#e0e6c3'] },
+    { id:'sega', name:I18N.t('世嘉红'), colors:['#1a1a1a','#e60012','#ffdd00'] }
   ],
   'matrix': [
-    { id:'matrix', name:'经典矩阵绿', colors:['#000000','#00ff41','#00e5a0'] },
-    { id:'phosphor', name:'磷光青绿', colors:['#020d08','#1fff9e','#00b37e'] },
-    { id:'venom', name:'毒绿', colors:['#0a1200','#8aff2e','#ccff00'] }
+    { id:'matrix', name:I18N.t('经典矩阵绿'), colors:['#000000','#00ff41','#00e5a0'] },
+    { id:'phosphor', name:I18N.t('磷光青绿'), colors:['#020d08','#1fff9e','#00b37e'] },
+    { id:'venom', name:I18N.t('毒绿'), colors:['#0a1200','#8aff2e','#ccff00'] }
   ]
 };
 
 /* schema 兜底（get_view 未携带 schema 时使用） */
 var FALLBACK_SCHEMA = [
-  { key:'workspace_id', label:'工作区 ID', type:'text',   secret:false },
-  { key:'auth_cookie',  label:'认证 Cookie', type:'text', secret:true }
+  { key:'workspace_id', label:I18N.t('工作区 ID'), type:'text',   secret:false },
+  { key:'auth_cookie',  label:I18N.t('认证 Cookie'), type:'text', secret:true }
 ];
 
 /* 供应商品牌徽章：provider id → logo 文件（ui/icons/ 下，真实品牌图标） */
@@ -900,7 +913,7 @@ var BRAND_ICONS = {
 };
 /* 无真实 logo 的品牌用字母徽章兜底 */
 var BRAND_BADGES = {
-  'detect': { c:'#6B7280', t:'探' },
+  'detect': { c:'#6B7280', t:I18N.t('探') },
 };
 function brandBadgeHtml(pid){
   var f = BRAND_ICONS[pid];
@@ -922,39 +935,39 @@ var MOCK = {
       provider:'opencode-go', ok:true, fetched_at:NOW, cookie_valid:true,
       plan_name:'Go',
       limits:[
-        { id:'rolling', label:'5h 滚动', used_pct:34, reset_in_sec:2100 },
-        { id:'weekly',  label:'每周',    used_pct:58, reset_in_sec:385200 },
-        { id:'monthly', label:'每月',    used_pct:72, reset_in_sec:1450000 }
+        { id:'rolling', label:I18N.t('5h 滚动'), used_pct:34, reset_in_sec:2100 },
+        { id:'weekly',  label:I18N.t('每周'),    used_pct:58, reset_in_sec:385200 },
+        { id:'monthly', label:I18N.t('每月'),    used_pct:72, reset_in_sec:1450000 }
       ],
       balance:{ currency:'USD', amount:16.8 },
       meta:{
         today:{ delta_pct:4.2, delta_usd:2.5, base_label:'19:38', since_midnight:false },
-        speed:{ hourly_pct:0.52, days_left:5.3, days_left_text:'5.3 天', source:'today' },
+        speed:{ hourly_pct:0.52, days_left:5.3, days_left_text:I18N.t('5.3 天'), source:'today' },
         monthly_limit_usd:60, used_usd:43.2
       }
     },
     'opencode-zen': {
       provider:'opencode-zen', ok:true, fetched_at:NOW-7200, cookie_valid:true, stale:true,
       plan_name:'Zen',
-      limits:[ { id:'monthly', label:'每月', used_pct:22, reset_in_sec:152000 } ],
+      limits:[ { id:'monthly', label:I18N.t('每月'), used_pct:22, reset_in_sec:152000 } ],
       balance:{ currency:'USD', amount:12.0 },
       meta:{
-        speed:{ hourly_pct:0.1, days_left:21.0, days_left_text:'21 天', source:'monthly' },
+        speed:{ hourly_pct:0.1, days_left:21.0, days_left_text:I18N.t('21 天'), source:'monthly' },
         monthly_limit_usd:50, used_usd:11.0
       }
     },
     'anthropic': {
       provider:'anthropic', ok:false, fetched_at:NOW-9000, cookie_valid:false,
-      plan_name:'Claude Pro', error:'Cookie 失效，请更新认证信息',
+      plan_name:'Claude Pro', error:I18N.t('Cookie 失效，请更新认证信息'),
       limits:[], balance:{ currency:'USD', amount:0 },
       meta:{}
     },
     'opencode-lite': {
       provider:'opencode-lite', ok:true, fetched_at:NOW-1800, cookie_valid:true,
       plan_name:'Lite',
-      limits:[ { id:'monthly', label:'每月', used_pct:8, reset_in_sec:864000 } ],
+      limits:[ { id:'monthly', label:I18N.t('每月'), used_pct:8, reset_in_sec:864000 } ],
       balance:{ currency:'USD', amount:8.4 },
-      meta:{ speed:{ hourly_pct:0.02, days_left:28.0, days_left_text:'28 天', source:'monthly' }, monthly_limit_usd:20, used_usd:1.6 }
+      meta:{ speed:{ hourly_pct:0.02, days_left:28.0, days_left_text:I18N.t('28 天'), source:'monthly' }, monthly_limit_usd:20, used_usd:1.6 }
     }
   },
   settings: {
@@ -1001,7 +1014,7 @@ function call(name){
   var a = currentApi();
   return new Promise(function(resolve, reject){
     if(!a || typeof a[name] !== 'function'){
-      reject(new Error('pywebview 接口不可用: '+name));
+      reject(new Error(I18N.t('pywebview 接口不可用: ')+name));
       return;
     }
     Promise.resolve(a[name].apply(a, args)).then(resolve, reject);
@@ -1043,7 +1056,7 @@ function applyBgOpacity(alpha){
 
 /* ================= 数据状态判定 ================= */
 function statusOf(pv, cfg){
-  if(!pv) return { key:'off', label:'未抓取' };
+  if(!pv) return { key:'off', label:I18N.t('未抓取') };
   if(cfg && cfg.enabled === false) return { key:'off', label:'OFF' };
   if(pv.ok && !pv.stale) return { key:'live', label:'LIVE' };
   if(pv.ok && pv.stale) return { key:'stale', label:'STALE' };
@@ -1096,7 +1109,7 @@ function speedText(p){
   var m = p.meta || {};
   var sp = m.speed || {};
   if(sp.days_left_text) return sp.days_left_text;
-  if(sp.days_left != null) return Number(sp.days_left).toFixed(1)+' 天';
+  if(sp.days_left != null) return Number(sp.days_left).toFixed(1)+I18N.t(' 天');
   return null;
 }
 function speedChips(p){
@@ -1106,23 +1119,23 @@ function speedChips(p){
   // 余额型（按量）：消耗速度 + 还能撑
   if(m.kind === 'balance' || m.kind === 'relay'){
     if(sp.data_ready){
-      out.push({ text:'还能撑 '+sp.days_left_text, main:true });
-      out.push({ text:'日均消耗 '+(p.balance&&p.balance.currency?money(sp.daily_amount,p.balance.currency):sp.daily_text)+(sp.sample_days?'·近'+sp.sample_days+'日':''), main:false });
+      out.push({ text:I18N.t('还能撑 ')+sp.days_left_text, main:true });
+      out.push({ text:I18N.t('日均消耗 ')+(p.balance&&p.balance.currency?money(sp.daily_amount,p.balance.currency):sp.daily_text)+(sp.sample_days?I18N.t('·近')+sp.sample_days+I18N.t('日'):''), main:false });
     } else {
-      out.push({ text:'消耗速度积累中·需3天', main:true });
+      out.push({ text:I18N.t('消耗速度积累中·需3天'), main:true });
     }
     return out;
   }
   // 主：科学日均（近 N 天），来源内联
   if(sp.avg_days_left_text && sp.avg_days_left_text !== '—'){
-    out.push({ text:'还能撑 '+sp.avg_days_left_text+(sp.avg_source?'·'+sp.avg_source:''), main:true });
+    out.push({ text:I18N.t('还能撑 ')+sp.avg_days_left_text+(sp.avg_source?'·'+sp.avg_source:''), main:true });
   } else if(sp.data_ready === false){
-    out.push({ text:'日均积累中·需3天', main:true });
+    out.push({ text:I18N.t('日均积累中·需3天'), main:true });
   }
   // 副：当前烧速，来源内联
   if(sp.days_left_text && sp.days_left_text !== '—'){
-    var srcName = sp.source === 'today' ? '今日' : sp.source === 'short' ? '近1h' : sp.source === 'trend' ? '趋势' : (sp.source || '');
-    out.push({ text:'当前 ~'+sp.days_left_text+(srcName?'·'+srcName:''), main:false });
+    var srcName = sp.source === 'today' ? I18N.t('今日') : sp.source === 'short' ? I18N.t('近1h') : sp.source === 'trend' ? I18N.t('趋势') : (sp.source || '');
+    out.push({ text:I18N.t('当前 ~')+sp.days_left_text+(srcName?'·'+srcName:''), main:false });
   }
   return out;
 }
@@ -1130,7 +1143,7 @@ function todayText(p){
   var m = p.meta || {};
   var t = m.today || {};
   if(t.delta_pct == null) return null;
-  var s = '今日 +'+Number(t.delta_pct).toFixed(1)+'%';
+  var s = I18N.t('今日 +')+Number(t.delta_pct).toFixed(1)+'%';
   if(t.today_tokens != null) s += ' · ≈'+fmtTokens(t.today_tokens)+' token';
   else if(state.settings.currency === 'usd' && t.delta_usd != null){
     s += ' (+$'+Number(t.delta_usd).toFixed(2)+')';
@@ -1158,7 +1171,7 @@ async function fetchView(){
 }
 async function refreshView(){
   try { await fetchView(); }
-  catch(e){ toast('视图刷新失败: '+e.message, 'err'); }
+  catch(e){ toast(I18N.t('视图刷新失败: ')+e.message, 'err'); }
 }
 async function manualRefresh(){
   if(state.refreshing) return;
@@ -1167,9 +1180,9 @@ async function manualRefresh(){
   btn.classList.add('spinning');
   try {
     await call('refresh_now');
-    toast('已触发后端刷新', 'ok');
+    toast(I18N.t('已触发后端刷新'), 'ok');
   } catch(e){
-    toast('刷新失败: '+e.message, 'err');
+    toast(I18N.t('刷新失败: ')+e.message, 'err');
   }
   setTimeout(function(){
     state.refreshing = false;
@@ -1186,17 +1199,17 @@ async function save(patch, opts){
       try {
         var t = await call('get_theme_css');
         if(t && t.css) injectTheme(t.css);
-      } catch(e2){ toast('主题刷新失败', 'warn'); }
+      } catch(e2){ toast(I18N.t('主题刷新失败'), 'warn'); }
       applyStyleAttr();
     }
     applyBgOpacity();
-    toast('设置已保存', 'ok');
+    toast(I18N.t('设置已保存'), 'ok');
     renderAll();
     // 立即拉一次最新视图，避免 30 秒定时器的旧数据覆盖刚保存的主题/供应商状态
     fetchView().catch(function(){});
     return true;
   } catch(e){
-    toast('保存失败: '+e.message, 'err');
+    toast(I18N.t('保存失败: ')+e.message, 'err');
     return false;
   }
 }
@@ -1235,33 +1248,33 @@ function renderDashboard(){
     healthHtml += '<span class="health-dot '+st.key+'" title="'+esc(cfg.name||pid)+': '+st.label+'"></span>';
   });
   var msg, msgCls = 'ok';
-  if(isMock()){ msg = '示例数据 · 未连接后端'; msgCls='warn'; }
-  else if(health.failed > 0){ msg = health.failed+' 个供应商异常'; msgCls='err'; }
-  else if(health.stale > 0){ msg = health.stale+' 个供应商数据过期'; msgCls='warn'; }
-  else if(pidList.length === 0){ msg = '暂无供应商'; msgCls='warn'; }
-  else { msg = '全部正常'; }
+  if(isMock()){ msg = I18N.t('示例数据 · 未连接后端'); msgCls='warn'; }
+  else if(health.failed > 0){ msg = health.failed+I18N.t(' 个供应商异常'); msgCls='err'; }
+  else if(health.stale > 0){ msg = health.stale+I18N.t(' 个供应商数据过期'); msgCls='warn'; }
+  else if(pidList.length === 0){ msg = I18N.t('暂无供应商'); msgCls='warn'; }
+  else { msg = I18N.t('全部正常'); }
 
   $('#dashStatus').innerHTML =
     '<div class="status-row">'+
-      '<span class="status-item">数据时间 <span class="val">'+fmtClock(fetched)+'</span></span>'+
-      '<span class="status-item">刷新间隔 <span class="val">'+fmtInterval(v.refresh_interval_sec)+'</span></span>'+
-      '<span class="status-item">供应商 <span class="val">'+pidList.length+'</span></span>'+
+      I18N.t('<span class="status-item">数据时间 <span class="val">')+fmtClock(fetched)+'</span></span>'+
+      I18N.t('<span class="status-item">刷新间隔 <span class="val">')+fmtInterval(v.refresh_interval_sec)+'</span></span>'+
+      I18N.t('<span class="status-item">供应商 <span class="val">')+pidList.length+'</span></span>'+
       '<span class="status-item" style="gap:4px">'+healthHtml+'</span>'+
       '<span class="status-msg '+msgCls+'">'+msg+'</span>'+
-      '<button class="btn sm btn-refresh-all" id="btnRefreshAll" '+(disabled?'disabled':'')+'>'+ICONS.zap+'全部刷新</button>'+
+      '<button class="btn sm btn-refresh-all" id="btnRefreshAll" '+(disabled?'disabled':'')+'>'+ICONS.zap+I18N.t('全部刷新</button>')+
     '</div>';
 
   /* 卡片 */
   var grid = $('#dashGrid');
   if(!pidList.length){
-    grid.innerHTML = '<div class="empty-box"><b>暂无供应商</b><br>请在 config.json 中配置 providers，或在「供应商」页查看配置入口。</div>';
+    grid.innerHTML = I18N.t('<div class="empty-box"><b>暂无供应商</b><br>请在 config.json 中配置 providers，或在「供应商」页查看配置入口。</div>');
     return;
   }
   var html = pidList.map(function(pid){
     try {
       return dashCardHtml(pid, s.providers[pid], v.providers ? v.providers[pid] : null);
     } catch(e) {
-      return '<div class="card pcard failed"><div class="card-meta"><span class="chip danger">渲染异常: '+esc(e.message)+'</span></div></div>';
+      return I18N.t('<div class="card pcard failed"><div class="card-meta"><span class="chip danger">渲染异常: ')+esc(e.message)+'</span></div></div>';
     }
   }).join('');
   grid.innerHTML = html;
@@ -1322,20 +1335,20 @@ function dashCardHtml(pid, cfg, pv){
   if(!off && pvKind === 'balance'){
     limitsHtml = balanceCardHtml(pv, dmBal);
   } else if(off){
-    limitsHtml = '<div class="card-meta"><span class="chip neutral">已停用 · 可在供应商页启用</span></div>';
+    limitsHtml = I18N.t('<div class="card-meta"><span class="chip neutral">已停用 · 可在供应商页启用</span></div>');
   } else if(limits.length && dmQuota.progress){
     limitsHtml = limits.map(function(l){
       return '<div class="lim">'+
-        '<div class="lim-top"><span class="lbl">'+esc(l.label)+'</span>'+
+        '<div class="lim-top"><span class="lbl">'+esc(I18N.t(l.label))+'</span>'+
         '<span class="pct">'+l.used_pct+'%</span></div>'+
         '<div class="bar"><div class="fill" style="width:'+Math.min(100,Math.max(0,l.used_pct))+'%;'+pctFillStyle(l.used_pct)+'"></div></div>'+
-        '<div class="lim-reset">'+fmtReset(l.reset_in_sec)+' 后重置</div>'+
+        '<div class="lim-reset">'+fmtReset(l.reset_in_sec)+I18N.t(' 后重置</div>')+
       '</div>';
     }).join('');
   } else if(pv && pv.ok === false){
-    limitsHtml = '<div class="card-meta"><span class="chip danger">抓取失败'+(errMsg?': '+errMsg:'')+'</span></div>';
+    limitsHtml = I18N.t('<div class="card-meta"><span class="chip danger">抓取失败')+(errMsg?': '+errMsg:'')+'</span></div>';
   } else {
-    limitsHtml = '<div class="card-meta"><span class="chip neutral">暂无用量数据</span></div>';
+    limitsHtml = I18N.t('<div class="card-meta"><span class="chip neutral">暂无用量数据</span></div>');
   }
 
   var metaChips = '';
@@ -1345,7 +1358,7 @@ function dashCardHtml(pid, cfg, pv){
     var wt = pv && pv.meta && pv.meta.week_tokens;
     if(dmQuota.chart && wp && wp.length){
       var series = (wt && wt.length) ? wt : wp;
-      limitsHtml += '<div class="spark-title">近5日每日消耗'+(wt?'（token）':'（%）')+'</div>'+
+      limitsHtml += I18N.t('<div class="spark-title">近5日每日消耗')+(wt?'（token）':'（%）')+'</div>'+
         sparkChartHtml(series, {fmt: wt ? fmtTokens : function(v){ return v+'%'; }});
     }
     var cells = [];
@@ -1355,34 +1368,34 @@ function dashCardHtml(pid, cfg, pv){
     var ut = pv && pv.meta && pv.meta.used_tokens;
     var estP = pv && pv.meta && pv.meta.est_price_per_mtok;
     var estLbl = pv && pv.meta && pv.meta.est_model_label;
-    if(rt != null && at == null) cells.push({ k:'剩余 token', v: fmtTokens(rt), small:'' });
-    if(at != null) cells.push({ k:'可用 token', v: fmtTokens(at), small: estLbl ? '按'+estLbl+'估' : (estP ? '按$'+estP+'/百万估' : '估算') });
-    if(ut != null) cells.push({ k:'已用 token', v: fmtTokens(ut), small:'' });
+    if(rt != null && at == null) cells.push({ k:I18N.t('剩余 token'), v: fmtTokens(rt), small:'' });
+    if(at != null) cells.push({ k:I18N.t('可用 token'), v: fmtTokens(at), small: estLbl ? I18N.t('按')+estLbl+I18N.t('估') : (estP ? I18N.t('按$')+estP+I18N.t('/百万估') : I18N.t('估算')) });
+    if(ut != null) cells.push({ k:I18N.t('已用 token'), v: fmtTokens(ut), small:'' });
     // 中转站型（OpenRouter/one-api）：余额按估算单价折 token
     if(pvKind === 'relay'){
       var price = parseFloat((cfg.config && cfg.config.est_price_per_mtok) || 3);
       var balAmt = pv && pv.balance && pv.balance.amount;
-      if(balAmt != null) cells.push({ k:'可用 token', v: fmtTokens(balAmt / price * 1000000), small: '按$'+price+'/百万估' });
+      if(balAmt != null) cells.push({ k:I18N.t('可用 token'), v: fmtTokens(balAmt / price * 1000000), small: I18N.t('按$')+price+I18N.t('/百万估') });
       var tc = pv && pv.meta && pv.meta.speed && pv.meta.speed.total_consumed;
-      if(tc != null) cells.push({ k:'已用 token', v: fmtTokens(tc / price * 1000000), small:'' });
+      if(tc != null) cells.push({ k:I18N.t('已用 token'), v: fmtTokens(tc / price * 1000000), small:'' });
     }
     var sc = speedChips(pv);
     // 排序：今日 → 已用 → 当前烧速 → 还能撑
     var td = todayText(pv);
-    if(td) cells.push({ k:'今日', v: td, small:'' });
+    if(td) cells.push({ k:I18N.t('今日'), v: td, small:'' });
     var bal = fmtBalance(pv);
     if(bal !== '--'){
-      var balK = (state.settings.currency === 'pct') ? '已用' : '余额';
+      var balK = (state.settings.currency === 'pct') ? I18N.t('已用') : I18N.t('余额');
       cells.push({ k: balK, v: bal, small:'' });
     }
-    if(sc.length >= 2) cells.push({ k:'当前烧速', v: sc[1].text, small:'' });
-    if(sc.length >= 1) cells.push({ k:'还能撑', v: sc[0].text, small:'' });
+    if(sc.length >= 2) cells.push({ k:I18N.t('当前烧速'), v: sc[1].text, small:'' });
+    if(sc.length >= 1) cells.push({ k:I18N.t('还能撑'), v: sc[0].text, small:'' });
     metaChips = '<div class="meta-grid">'+cells.map(function(c){
       return '<div class="meta-cell"><div class="meta-k">'+esc(c.k)+'</div><div class="meta-v">'+esc(c.v)+(c.small?'<span class="meta-s">'+esc(c.small)+'</span>':'')+'</div></div>';
     }).join('')+'</div>';
   }
 
-  var trHtml = tr ? '<div class="test-result '+(tr.ok===null?'running':(tr.ok?'ok':'fail'))+'">'+(tr.ok===null?'测试中':(tr.ok?'连接成功':'失败'))+' · '+esc(tr.message)+'</div>' : '';
+  var trHtml = tr ? '<div class="test-result '+(tr.ok===null?'running':(tr.ok?'ok':'fail'))+'">'+(tr.ok===null?I18N.t('测试中'):(tr.ok?I18N.t('连接成功'):I18N.t('失败')))+' · '+esc(tr.message)+'</div>' : '';
 
   return '<div class="card pcard '+st.key+'">'+
     '<div class="pcard-head">'+
@@ -1390,18 +1403,18 @@ function dashCardHtml(pid, cfg, pv){
       brandBadgeHtml(pid)+
       '<span class="pcard-name">'+name+'</span>'+
       (plan ? '<span class="pcard-plan">'+plan+'</span>' : '')+
-      ((pv && pv.meta && pv.meta.demo) ? '<span class="demo-tag">演示数据</span>' : '')+
+      ((pv && pv.meta && pv.meta.demo) ? I18N.t('<span class="demo-tag">演示数据</span>') : '')+
       (note ? '<span class="pcard-note" title="'+note+'">'+note+'</span>' : '')+
       '<span class="status-pill '+st.key+'"><span class="health-dot '+st.key+'"></span>'+st.label+'</span>'+
     '</div>'+
-    (cookieBad ? '<div class="cookie-bar">'+ICONS.warn+'Cookie 已失效，请到「供应商」页更新凭据</div>' : '')+
+    (cookieBad ? '<div class="cookie-bar">'+ICONS.warn+I18N.t('Cookie 已失效，请到「供应商」页更新凭据</div>') : '')+
     limitsHtml+
     metaChips+
     '<div class="card-foot">'+
-      '<span class="muted">最后更新 '+fmtClock(pv ? pv.fetched_at : null)+'</span>'+
-      (pv && pv.site ? '<button class="btn-site" data-site="'+esc(pv.site)+'" title="打开官网">官网</button>' : '')+
-      '<button class="btn sm btn-refresh-one" data-pid="'+esc(pid)+'" '+(disabled?'disabled':'')+'>刷新</button>'+
-      '<button class="btn sm btn-test" data-pid="'+esc(pid)+'">'+ICONS.zap+'测试连接</button>'+
+      I18N.t('<span class="muted">最后更新 ')+fmtClock(pv ? pv.fetched_at : null)+'</span>'+
+      (pv && pv.site ? '<button class="btn-site" data-site="'+esc(pv.site)+I18N.t('" title="打开官网">官网</button>') : '')+
+      '<button class="btn sm btn-refresh-one" data-pid="'+esc(pid)+'" '+(disabled?'disabled':'')+I18N.t('>刷新</button>')+
+      '<button class="btn sm btn-test" data-pid="'+esc(pid)+'">'+ICONS.zap+I18N.t('测试连接</button>')+
     '</div>'+
     trHtml+
   '</div>';
@@ -1419,9 +1432,9 @@ function peakInfo(){
   return { on:false };
 }
 function fmtTokens(n){
-  if(n >= 100000000) return (n/100000000).toFixed(1)+' 亿';
-  if(n >= 1000000) return (n/1000000).toFixed(1)+' 百万';
-  if(n >= 10000) return Math.round(n/10000)+' 万';
+  if(n >= 100000000) return (n/100000000).toFixed(1)+I18N.t(' 亿');
+  if(n >= 1000000) return (n/1000000).toFixed(1)+I18N.t(' 百万');
+  if(n >= 10000) return Math.round(n/10000)+I18N.t(' 万');
   return Math.round(n)+'';
 }
 /* SVG 柱状图：柱顶数值 + 日期标签 + 今天高亮 + 网格线 */
@@ -1467,18 +1480,18 @@ function balanceCardHtml(pv, dm){
   var h = '';
   if(dm.bal_main){
     if(hasPeak && pk.on){
-      h += '<div class="peak-bar">高峰时段现在跑贵一倍 · '+pk.until+' 点后恢复</div>';
+      h += I18N.t('<div class="peak-bar">高峰时段现在跑贵一倍 · ')+pk.until+I18N.t(' 点后恢复</div>');
     }
     h += '<div class="bal-main">'+
       '<span class="bal-amount">'+(amt!=null?money(amt,cur):'—')+'</span>'+
-      '<span class="bal-cur">'+(cur?esc(cur):'')+' 可用余额</span>'+
+      '<span class="bal-cur">'+(cur?esc(cur):'')+I18N.t(' 可用余额</span>')+
     '</div>';
   }
   if(dm.bal_main){
     // 余额拆分：充值 + 赠金
     var parts = [];
-    if(m.topped_up != null) parts.push('充值 '+money(m.topped_up,cur));
-    if(m.granted != null) parts.push('赠金 '+money(m.granted,cur));
+    if(m.topped_up != null) parts.push(I18N.t('充值 ')+money(m.topped_up,cur));
+    if(m.granted != null) parts.push(I18N.t('赠金 ')+money(m.granted,cur));
     if(parts.length) h += '<div class="bal-sub">'+parts.join(' · ')+'</div>';
     // 电量条（余额分档）+ 状态灯文字
     var barPct = 100, barCls = 'full';
@@ -1488,16 +1501,16 @@ function balanceCardHtml(pv, dm){
       else if(amt < 10){ barPct = 60; barCls = 'mid'; }
     }
     var availTxt = '';
-    if(m.available === false) availTxt = '<div class="bal-avail bad">余额不足 · 请充值</div>';
-    else if(m.available === true) availTxt = '<div class="bal-avail">余额充足 · 可正常调用</div>';
+    if(m.available === false) availTxt = I18N.t('<div class="bal-avail bad">余额不足 · 请充值</div>');
+    else if(m.available === true) availTxt = I18N.t('<div class="bal-avail">余额充足 · 可正常调用</div>');
     h += '<div class="bal-bar"><div class="bal-fill '+barCls+'" style="width:'+barPct+'%"></div></div>'+availTxt;
   }
   // 三格指标：今日消耗 / 日均消耗 / 还能撑
   if(dm.meta_grid){
     var cells = [
-      { k:'今日消耗', v: sp.today_amount != null ? money(sp.today_amount, cur) : '积累中', small:'' },
-      { k:'日均消耗', v: sp.data_ready ? money(sp.daily_amount, cur) : '积累中', small:'' },
-      { k:'还能撑', v: sp.data_ready ? sp.days_left_text : '积累中', small:'' },
+      { k:I18N.t('今日消耗'), v: sp.today_amount != null ? money(sp.today_amount, cur) : I18N.t('积累中'), small:'' },
+      { k:I18N.t('日均消耗'), v: sp.data_ready ? money(sp.daily_amount, cur) : I18N.t('积累中'), small:'' },
+      { k:I18N.t('还能撑'), v: sp.data_ready ? sp.days_left_text : I18N.t('积累中'), small:'' },
     ];
     h += '<div class="meta-grid tri">'+cells.map(function(c){
       return '<div class="meta-cell"><div class="meta-k">'+esc(c.k)+'</div><div class="meta-v">'+esc(c.v)+(c.small?'<span class="meta-s">'+esc(c.small)+'</span>':'')+'</div></div>';
@@ -1510,27 +1523,27 @@ function balanceCardHtml(pv, dm){
     var sinceTxt = '';
     if(sp.since_ts){
       var dd = new Date(sp.since_ts * 1000);
-      sinceTxt = '自 ' + (dd.getMonth()+1) + '-' + dd.getDate() + ' 接入起';
+      sinceTxt = I18N.t('自 ') + (dd.getMonth()+1) + '-' + dd.getDate() + I18N.t(' 接入起');
     }
     h += '<div class="token-est">'+
-      '<div class="te-head"><span>还能调用 · 预估</span><span class="te-note">按输出价'+((hasPeak && pk.on)?' · 高峰×2':'')+(sinceTxt?' · '+sinceTxt:'')+'</span></div>'+
+      I18N.t('<div class="te-head"><span>还能调用 · 预估</span><span class="te-note">按输出价')+((hasPeak && pk.on)?I18N.t(' · 高峰×2'):'')+(sinceTxt?' · '+sinceTxt:'')+'</span></div>'+
       models.map(function(x){
         var outP = x.output * mul;
         var est = amt / outP * 1000000;
         return '<div class="te-row'+(pk.on?' peak':'')+'"><span>'+esc(x.name)+'</span><b>≈ '+fmtTokens(est)+' tokens</b></div>';
       }).join('')+
-      (sp.today_amount != null ? '<div class="te-row"><span>今日消耗</span><b>≈ '+fmtTokens(sp.today_amount / (models[0].output * mul) * 1000000)+' tokens</b></div>' : '')+
-      (sp.total_consumed != null ? '<div class="te-row"><span>接入以来已用</span><b>≈ '+fmtTokens(sp.total_consumed / (models[0].output * mul) * 1000000)+' tokens</b></div>' : '')+
+      (sp.today_amount != null ? I18N.t('<div class="te-row"><span>今日消耗</span><b>≈ ')+fmtTokens(sp.today_amount / (models[0].output * mul) * 1000000)+' tokens</b></div>' : '')+
+      (sp.total_consumed != null ? I18N.t('<div class="te-row"><span>接入以来已用</span><b>≈ ')+fmtTokens(sp.total_consumed / (models[0].output * mul) * 1000000)+' tokens</b></div>' : '')+
     '</div>';
   }
   // 近 7 日消耗柱状图（SVG）
   var week = sp.week || [];
   if(dm.chart && week.length){
-    h += '<div class="spark-title">近7日每日消耗（'+cur+'）</div>'+
+    h += I18N.t('<div class="spark-title">近7日每日消耗（')+cur+'）</div>'+
       sparkChartHtml(week, {fmt: function(v){ return money(v, cur); }});
   }
   if(pv.ok === false){
-    h = '<div class="card-meta"><span class="chip danger">抓取失败'+(pv.error?': '+esc(pv.error):'')+'</span></div>';
+    h = I18N.t('<div class="card-meta"><span class="chip danger">抓取失败')+(pv.error?': '+esc(pv.error):'')+'</span></div>';
   }
   if(!h){
     h = '<div class="diy-empty">'+ICONS.gridOff+'</div>';
@@ -1593,9 +1606,9 @@ function selectType(tid){
 }
 
 async function openAddProvider(){
-  if(isMock()){ toast('示例数据模式，无法添加供应商', 'warn'); return; }
+  if(isMock()){ toast(I18N.t('示例数据模式，无法添加供应商'), 'warn'); return; }
   var types = await ensureProviderTypes();
-  if(!types.length){ toast('暂无可添加的供应商类型', 'warn'); return; }
+  if(!types.length){ toast(I18N.t('暂无可添加的供应商类型'), 'warn'); return; }
   var sel = $('#apType');
   sel.innerHTML = types.map(function(t){
     return '<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';
@@ -1607,12 +1620,12 @@ async function openAddProvider(){
   renderTypeDropdown(types);
   $('#apName').value = '';
   $('#addProviderPanel').style.display = 'flex';
-  $('#btnAddProvider').textContent = '收起';
+  $('#btnAddProvider').textContent = I18N.t('收起');
 }
 
 function closeAddProvider(){
   $('#addProviderPanel').style.display = 'none';
-  $('#btnAddProvider').textContent = '＋ 添加供应商';
+  $('#btnAddProvider').textContent = I18N.t('＋ 添加供应商');
 }
 
 /* API 导入：模板 id → 额外需要填写的字段（来自 schema options 的 needs） */
@@ -1627,12 +1640,12 @@ function renderApFields(type){
     /* select 类型（如 API 导入的模板下拉） */
     if(f.type === 'select' && f.options && f.options.length){
       var opts = f.options.map(function(o){
-        return '<option value="'+esc(o.value)+'">'+esc(o.label)+'</option>';
+        return '<option value="'+esc(o.value)+'">'+esc(I18N.t(o.label))+'</option>';
       }).join('');
-      return '<div class="field"><label>'+esc(f.label)+'</label>'+
+      return '<div class="field"><label>'+esc(I18N.t(f.label))+'</label>'+
         '<select data-key="'+esc(f.key)+'">'+opts+'</select></div>';
     }
-    return '<div class="field"><label>'+esc(f.label)+'</label>'+
+    return '<div class="field"><label>'+esc(I18N.t(f.label))+'</label>'+
       '<input type="'+(f.secret?'password':'text')+'" data-key="'+esc(f.key)+'" autocomplete="off"></div>';
   }).join('');
   /* API 导入：有 api_key 字段的类型显示唯一标识输入框（支持多实例） */
@@ -1645,13 +1658,13 @@ function renderApFields(type){
 function renderApiAddFields(type){
   var box = $('#apFields');
   var tplField = (type.schema || []).find(function(f){ return f.key === 'template'; });
-  tplField = tplField || { label:'查询模板', options:[] };
+  tplField = tplField || { label:I18N.t('查询模板'), options:[] };
   apiTplNeeds = {};
   var opts = tplField.options || [];
   opts.forEach(function(o){ apiTplNeeds[o.value] = o.needs || []; });
-  var selHtml = '<div class="field"><label>'+esc(tplField.label)+'</label>'+
+  var selHtml = '<div class="field"><label>'+esc(I18N.t(tplField.label))+'</label>'+
     '<select id="apTemplate">'+
-      opts.map(function(o){ return '<option value="'+esc(o.value)+'">'+esc(o.label)+'</option>'; }).join('')+
+      opts.map(function(o){ return '<option value="'+esc(o.value)+'">'+esc(I18N.t(o.label))+'</option>'; }).join('')+
     '</select></div>';
   box.innerHTML = selHtml + '<div id="apApiFields"></div>';
   var sel = $('#apTemplate');
@@ -1673,7 +1686,7 @@ function renderApiFieldsFor(tid){
       '<input type="text" data-key="base_url" placeholder="https://api.example.com"></div>';
   }
   if(needs.indexOf('user_id') >= 0){
-    html += '<div class="field"><label>User ID（one-api 中转站可选）</label>'+
+    html += I18N.t('<div class="field"><label>User ID（one-api 中转站可选）</label>')+
       '<input type="text" data-key="user_id" placeholder="123456"></div>';
   }
   $('#apApiFields').innerHTML = html;
@@ -1681,14 +1694,14 @@ function renderApiFieldsFor(tid){
 
 async function saveAddProvider(){
   var typeId = $('#apType').value;
-  if(!typeId){ toast('请选择供应商类型', 'warn'); return; }
+  if(!typeId){ toast(I18N.t('请选择供应商类型'), 'warn'); return; }
   /* API 类（schema 含 api_key）：标识即 config 的 key，允许一个模板多个实例 */
   var typeObj = (providerTypesCache || []).find(function(t){ return t.id === typeId; });
   var isApi = !!(typeObj && (typeObj.schema || []).some(function(f){ return f.key === 'api_key'; }));
   var key = isApi ? ($('#apKey').value.trim() || typeId) : typeId;
   var providers = deepCopy(state.settings.providers || {});
   if(providers[key]){
-    toast('该标识的供应商已存在，可直接在下方列表编辑', 'warn');
+    toast(I18N.t('该标识的供应商已存在，可直接在下方列表编辑'), 'warn');
     closeAddProvider();
     return;
   }
@@ -1701,10 +1714,10 @@ async function saveAddProvider(){
   try {
     await save(patchTop('providers', providers));
     closeAddProvider();
-    toast('已添加供应商：'+name, 'ok');
+    toast(I18N.t('已添加供应商：')+name, 'ok');
     renderAll();
   } catch(e){
-    toast('添加失败: '+e.message, 'err');
+    toast(I18N.t('添加失败: ')+e.message, 'err');
   }
 }
 
@@ -1714,7 +1727,7 @@ async function renderProviders(){
   var pids = Object.keys(s.providers || {});
   var box = $('#providersList');
   if(!pids.length){
-    box.innerHTML = '<div class="empty-box"><b>暂无供应商</b><br>点击右上角「添加供应商」开始配置。</div>';
+    box.innerHTML = I18N.t('<div class="empty-box"><b>暂无供应商</b><br>点击右上角「添加供应商」开始配置。</div>');
     return;
   }
   box.innerHTML = pids.map(function(pid){
@@ -1751,13 +1764,13 @@ async function renderProviders(){
     btn.addEventListener('click', function(){
       if(btn.dataset.arm === '1'){
         call('remove_provider', btn.dataset.pid).then(function(){
-          toast('已删除 '+btn.dataset.pid, 'ok');
+          toast(I18N.t('已删除 ')+btn.dataset.pid, 'ok');
           fetchView();
         });
       } else {
         btn.dataset.arm = '1';
         var orig = btn.textContent;
-        btn.textContent = '确认删除？';
+        btn.textContent = I18N.t('确认删除？');
         setTimeout(function(){ btn.dataset.arm = ''; btn.textContent = orig; }, 4000);
       }
     });
@@ -1800,30 +1813,30 @@ function providerRowHtml(pid, cfg){
       /* select 类型（如 API 导入的模板下拉） */
       if(f.type === 'select' && f.options && f.options.length){
         var opts = f.options.map(function(o){
-          return '<option value="'+esc(o.value)+'"'+(String(val)===String(o.value)?' selected':'')+'>'+esc(o.label)+'</option>';
+          return '<option value="'+esc(o.value)+'"'+(String(val)===String(o.value)?' selected':'')+'>'+esc(I18N.t(o.label))+'</option>';
         }).join('');
         return '<div class="field">'+
-          '<label>'+esc(f.label)+'</label>'+
+          '<label>'+esc(I18N.t(f.label))+'</label>'+
           '<select data-pid="'+esc(pid)+'" data-key="'+esc(f.key)+'" '+(disabled?'disabled':'')+'>'+opts+'</select>'+
         '</div>';
       }
       return '<div class="field">'+
-        '<label>'+esc(f.label)+'</label>'+
+        '<label>'+esc(I18N.t(f.label))+'</label>'+
         '<input type="'+(f.secret?'password':'text')+'" data-pid="'+esc(pid)+'" data-key="'+esc(f.key)+'" value="'+esc(val)+'" autocomplete="off" '+(disabled?'disabled':'')+'>'+
       '</div>';
     }).join('');
   }
 
   var statusTxt = st.label;
-  var dataTxt = (pv && pv.fetched_at) ? '抓取于 '+fmtClock(pv.fetched_at) : '暂无数据';
-  var trHtml = tr ? '<div class="test-result '+(tr.ok?'ok':'fail')+'">'+(tr.ok?'连接成功':'连接失败')+' · '+esc(tr.message)+'</div>' : '';
+  var dataTxt = (pv && pv.fetched_at) ? I18N.t('抓取于 ')+fmtClock(pv.fetched_at) : I18N.t('暂无数据');
+  var trHtml = tr ? '<div class="test-result '+(tr.ok?'ok':'fail')+'">'+(tr.ok?I18N.t('连接成功'):I18N.t('连接失败'))+' · '+esc(tr.message)+'</div>' : '';
 
   return '<div class="card prow-card '+(cfg.enabled===false?'off':'')+'">'+
     '<div class="prow-head">'+
       '<label class="switch"><input type="checkbox" class="sw-enabled" data-pid="'+esc(pid)+'" '+(cfg.enabled?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label>'+
       brandBadgeHtml(pid)+
       '<div>'+
-        '<input class="prow-name-input" data-pid="'+esc(pid)+'" value="'+esc(cfg.name||pid)+'" '+(disabled?'disabled':'')+' title="编辑备注名，回车或失焦保存">'+
+        '<input class="prow-name-input" data-pid="'+esc(pid)+'" value="'+esc(cfg.name||pid)+'" '+(disabled?'disabled':'')+I18N.t(' title="编辑备注名，回车或失焦保存">')+
         '<div class="prow-id">'+esc(pid)+'</div>'+
       '</div>'+
       '<div class="prow-right">'+
@@ -1833,11 +1846,11 @@ function providerRowHtml(pid, cfg){
     '</div>'+
     '<div class="schema-grid">'+fields+'</div>'+
     '<div class="prow-actions">'+
-      '<button class="btn sm btn-del-prov" data-pid="'+esc(pid)+'" '+(disabled?'disabled':'')+'>删除</button>'+
-      '<button class="btn btn-test" data-pid="'+esc(pid)+'" '+(disabled?'disabled':'')+'>'+ICONS.zap+'测试连接</button>'+
-      '<button class="btn sm btn-save-config" data-pid="'+esc(pid)+'" '+(disabled?'disabled':'')+'>保存凭据</button>'+
+      '<button class="btn sm btn-del-prov" data-pid="'+esc(pid)+'" '+(disabled?'disabled':'')+I18N.t('>删除</button>')+
+      '<button class="btn btn-test" data-pid="'+esc(pid)+'" '+(disabled?'disabled':'')+'>'+ICONS.zap+I18N.t('测试连接</button>')+
+      '<button class="btn sm btn-save-config" data-pid="'+esc(pid)+'" '+(disabled?'disabled':'')+I18N.t('>保存凭据</button>')+
       '<span class="spacer"></span>'+
-      '<span class="hint">secret 字段已加密显示</span>'+
+      I18N.t('<span class="hint">secret 字段已加密显示</span>')+
     '</div>'+
     trHtml+
   '</div>';
@@ -1851,14 +1864,14 @@ function apiNeedsOf(schema, tid){
 }
 function apiEditFieldsHtml(pid, cfg, schema, disabled){
   var tf = (schema || []).find(function(f){ return f.key === 'template'; });
-  tf = tf || { label:'查询模板', options:[] };
+  tf = tf || { label:I18N.t('查询模板'), options:[] };
   var curTpl = (cfg.config && cfg.config.template) ||
     ((tf.options[0] && tf.options[0].value) || '');
   var selHtml = '<div class="field">'+
-    '<label>'+esc(tf.label)+'</label>'+
+    '<label>'+esc(I18N.t(tf.label))+'</label>'+
     '<select class="api-tpl-select" data-pid="'+esc(pid)+'" data-key="template" '+(disabled?'disabled':'')+'>'+
       tf.options.map(function(o){
-        return '<option value="'+esc(o.value)+'"'+(String(curTpl)===String(o.value)?' selected':'')+'>'+esc(o.label)+'</option>';
+        return '<option value="'+esc(o.value)+'"'+(String(curTpl)===String(o.value)?' selected':'')+'>'+esc(I18N.t(o.label))+'</option>';
       }).join('')+
     '</select></div>';
   var keyVal = (cfg.config && cfg.config.api_key != null) ? cfg.config.api_key : '';
@@ -1881,7 +1894,7 @@ function apiEditRestHtml(pid, cfg, schema, tid, disabled){
       '</div>';
   }
   if(needs.indexOf('user_id') >= 0){
-    html += '<div class="field"><label>User ID（one-api 中转站可选）</label>'+
+    html += I18N.t('<div class="field"><label>User ID（one-api 中转站可选）</label>')+
       '<input type="text" data-pid="'+esc(pid)+'" data-key="user_id" value="'+esc(val('user_id'))+'" placeholder="123456" '+(disabled?'disabled':'')+'>'+
       '</div>';
   }
@@ -1891,7 +1904,7 @@ function apiEditRestHtml(pid, cfg, schema, tid, disabled){
 async function runTest(pid){
   try {
     await call('test_provider', pid);          // 立即返回，后端异步测试
-    state.testResults[pid] = { ok:null, message:'测试中…' };
+    state.testResults[pid] = { ok:null, message:I18N.t('测试中…') };
     renderAll();
     for(var i=0; i<20; i++){                  // 轮询结果（最长 10 秒）
       await new Promise(function(r){ setTimeout(r, 500); });
@@ -1900,16 +1913,16 @@ async function runTest(pid){
         state.testResults[pid] = { ok: !!res.ok, message: res.message || '' };
         var ms = res.latency_ms != null ? res.latency_ms+' ms' : '';
         if(res.ok){
-          toast(ms || '连接成功', 'ok');   // 成功只显示延迟
+          toast(ms || I18N.t('连接成功'), 'ok');   // 成功只显示延迟
         } else {
-          toast('连接失败'+(ms?' · '+ms:''), 'err');
+          toast(I18N.t('连接失败')+(ms?' · '+ms:''), 'err');
         }
         break;
       }
     }
   } catch(e){
     state.testResults[pid] = { ok:false, message:e.message };
-    toast('测试失败: '+e.message, 'err');
+    toast(I18N.t('测试失败: ')+e.message, 'err');
   }
   renderAll();
 }
@@ -1933,8 +1946,8 @@ function renderAppearance(){
     var active = (th.id === id);
     return '<button class="theme-card'+(active?' active':'')+'" data-theme="'+id+'" '+(disabled?'disabled':'')+'>'+
       '<div class="theme-preview" style="--tp-a:'+t.accent+';--tp-b:'+t.accent2+';--tp-bg:'+t.bg+'"></div>'+
-      '<div class="theme-name">'+esc(t.name)+(active?'<span class="tag">ACTIVE</span>':'')+'</div>'+
-      '<div class="theme-desc">'+esc(STYLE_DESC[id]||'')+'</div>'+
+      '<div class="theme-name">'+esc(I18N.t(t.name))+(active?'<span class="tag">ACTIVE</span>':'')+'</div>'+
+      '<div class="theme-desc">'+esc(I18N.t(STYLE_DESC[id]||''))+'</div>'+
     '</button>';
   }).join('');
 
@@ -1942,51 +1955,51 @@ function renderAppearance(){
   var curVariant = th.variant || null;
   var paletteHtml = palettes.length ?
     '<div class="palette-row" style="margin-top:12px">'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">换色</div>'+
+      I18N.t('<div style="font-size:11px;color:var(--muted);margin-bottom:6px">换色</div>')+
       '<div class="palette-grid">'+
         palettes.map(function(pal){
           var act = (curVariant === pal.id);
           return '<button class="palette-btn'+(act?' active':'')+'" data-variant="'+pal.id+'" '+(disabled?'disabled':'')+'>'+
             '<span class="palette-dots">'+pal.colors.map(function(c){ return '<i style="background:'+c+'"></i>'; }).join('')+'</span>'+
-            '<span class="palette-name">'+esc(pal.name)+(act?'<span class="tag">使用中</span>':'')+'</span>'+
+            '<span class="palette-name">'+esc(I18N.t(pal.name))+(act?I18N.t('<span class="tag">使用中</span>'):'')+'</span>'+
           '</button>';
         }).join('')+
       '</div>'+
     '</div>' : '';
 
   $('#appearanceBody').innerHTML =
-    '<div class="set-group"><div class="set-title">主题</div>'+
+    I18N.t('<div class="set-group"><div class="set-title">主题</div>')+
       '<div class="theme-grid">'+themeCards+'</div>'+paletteHtml+
     '</div>'+
 
-    '<div class="set-group"><div class="set-title">透明度</div>'+
+    I18N.t('<div class="set-group"><div class="set-title">透明度</div>')+
       '<div class="card"><div class="slider-row">'+
-        '<div class="slider-top"><span>迷你窗</span><span class="v" id="opMiniV">'+Math.round(op.mini*100)+'%</span></div>'+
+        I18N.t('<div class="slider-top"><span>迷你窗</span><span class="v" id="opMiniV">')+Math.round(op.mini*100)+'%</span></div>'+
         '<input type="range" id="opMini" min="40" max="100" value="'+Math.round(op.mini*100)+'" '+(disabled?'disabled':'')+'>'+
       '</div></div>'+
     '</div>'+
 
-    '<div class="set-group"><div class="set-title">迷你窗</div>'+
+    I18N.t('<div class="set-group"><div class="set-title">迷你窗</div>')+
       '<div class="card">'+
         '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
           '<label class="switch"><input type="checkbox" id="miniSwitch" '+(s.mini_widget_enabled?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label>'+
-          '<span style="font-size:12px">启用迷你悬浮窗</span>'+
+          I18N.t('<span style="font-size:12px">启用迷你悬浮窗</span>')+
           '<span class="spacer" style="flex:1"></span>'+
-          '<span class="desc" style="font-size:11px;color:var(--muted)">右下角霓虹 HUD</span>'+
+          I18N.t('<span class="desc" style="font-size:11px;color:var(--muted)">右下角霓虹 HUD</span>')+
         '</div>'+
         '<div class="size-presets">'+
-          '<button class="size-btn'+( (w.mini_width||300)===240 ? ' active':'')+'" data-sw="240" data-sh="140" '+(disabled?'disabled':'')+'>小</button>'+
-          '<button class="size-btn'+( (w.mini_width||300)===300 ? ' active':'')+'" data-sw="300" data-sh="170" '+(disabled?'disabled':'')+'>中</button>'+
-          '<button class="size-btn'+( (w.mini_width||300)===380 ? ' active':'')+'" data-sw="380" data-sh="210" '+(disabled?'disabled':'')+'>大</button>'+
-          '<span style="margin-left:auto;font-size:10px;color:var(--muted)">也可在迷你窗边缘拖动微调</span>'+
+          '<button class="size-btn'+( (w.mini_width||300)===240 ? ' active':'')+'" data-sw="240" data-sh="140" '+(disabled?'disabled':'')+I18N.t('>小</button>')+
+          '<button class="size-btn'+( (w.mini_width||300)===300 ? ' active':'')+'" data-sw="300" data-sh="170" '+(disabled?'disabled':'')+I18N.t('>中</button>')+
+          '<button class="size-btn'+( (w.mini_width||300)===380 ? ' active':'')+'" data-sw="380" data-sh="210" '+(disabled?'disabled':'')+I18N.t('>大</button>')+
+          I18N.t('<span style="margin-left:auto;font-size:10px;color:var(--muted)">也可在迷你窗边缘拖动微调</span>')+
         '</div>'+
         '<div class="slider-row" style="margin-top:10px">'+
-          '<div class="slider-top"><span>大小（拖动精确控制）</span><span class="v" id="miniSizeV">'+(w.mini_width||300)+'px</span></div>'+
+          I18N.t('<div class="slider-top"><span>大小（拖动精确控制）</span><span class="v" id="miniSizeV">')+(w.mini_width||300)+'px</span></div>'+
           '<input type="range" id="miniSize" min="160" max="600" step="5" value="'+(w.mini_width||300)+'" '+(disabled?'disabled':'')+'>'+
         '</div>'+
-        '<div class="diy-row" style="margin-top:10px"><span class="diy-lbl">迷你窗显示</span>'+
+        I18N.t('<div class="diy-row" style="margin-top:10px"><span class="diy-lbl">迷你窗显示</span>')+
           '<select id="miniProvider" '+(disabled?'disabled':'')+'>'+
-            '<option value="">自动（第一个启用）</option>'+
+            I18N.t('<option value="">自动（第一个启用）</option>')+
             Object.keys(s.providers||{}).map(function(pid){
               var cfg2 = s.providers[pid];
               var sel2 = (diyMini===(pid)) ? ' selected' : '';
@@ -1997,43 +2010,43 @@ function renderAppearance(){
       '</div>'+
     '</div>'+
 
-    '<div class="set-group"><div class="set-title">仪表盘显示</div>'+
+    I18N.t('<div class="set-group"><div class="set-title">仪表盘显示</div>')+
       '<div class="card">'+
-        '<div class="diy-sec">余额卡（DeepSeek/Kimi 等）</div>'+
+        I18N.t('<div class="diy-sec">余额卡（DeepSeek/Kimi 等）</div>')+
         '<div class="diy-grid">'+
-        '<div class="diy-row"><span class="diy-lbl">余额大卡</span><label class="switch"><input type="checkbox" id="diyBalMain" '+(diyMods.balance.bal_main?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
-        '<div class="diy-row"><span class="diy-lbl">消耗指标（今日/日均/还能撑）</span><label class="switch"><input type="checkbox" id="diyBalGrid" '+(diyMods.balance.meta_grid?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
-        '<div class="diy-row"><span class="diy-lbl">Token 预估</span><label class="switch"><input type="checkbox" id="diyBalTok" '+(diyMods.balance.token_est?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
-        '<div class="diy-row"><span class="diy-lbl">趋势图（近7日）</span><label class="switch"><input type="checkbox" id="diyBalChart" '+(diyMods.balance.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        I18N.t('<div class="diy-row"><span class="diy-lbl">余额大卡</span><label class="switch"><input type="checkbox" id="diyBalMain" ')+(diyMods.balance.bal_main?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        I18N.t('<div class="diy-row"><span class="diy-lbl">消耗指标（今日/日均/还能撑）</span><label class="switch"><input type="checkbox" id="diyBalGrid" ')+(diyMods.balance.meta_grid?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        I18N.t('<div class="diy-row"><span class="diy-lbl">Token 预估</span><label class="switch"><input type="checkbox" id="diyBalTok" ')+(diyMods.balance.token_est?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        I18N.t('<div class="diy-row"><span class="diy-lbl">趋势图（近7日）</span><label class="switch"><input type="checkbox" id="diyBalChart" ')+(diyMods.balance.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         '</div>'+
-        '<div class="diy-sec">订阅卡（OpenCode Go）</div>'+
+        I18N.t('<div class="diy-sec">订阅卡（OpenCode Go）</div>')+
         '<div class="diy-grid">'+
-        '<div class="diy-row"><span class="diy-lbl">进度条组</span><label class="switch"><input type="checkbox" id="diyQuaProg" '+(diyMods.quota.progress?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
-        '<div class="diy-row"><span class="diy-lbl">Token 指标</span><label class="switch"><input type="checkbox" id="diyQuaTok" '+(diyMods.quota.tokens?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
-        '<div class="diy-row"><span class="diy-lbl">趋势图（近5日）</span><label class="switch"><input type="checkbox" id="diyQuaChart" '+(diyMods.quota.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        I18N.t('<div class="diy-row"><span class="diy-lbl">进度条组</span><label class="switch"><input type="checkbox" id="diyQuaProg" ')+(diyMods.quota.progress?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        I18N.t('<div class="diy-row"><span class="diy-lbl">Token 指标</span><label class="switch"><input type="checkbox" id="diyQuaTok" ')+(diyMods.quota.tokens?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        I18N.t('<div class="diy-row"><span class="diy-lbl">趋势图（近5日）</span><label class="switch"><input type="checkbox" id="diyQuaChart" ')+(diyMods.quota.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         '</div>'+
       '</div>'+
     '</div>'+
 
-    '<div class="set-group"><div class="set-title">界面</div>'+
+    I18N.t('<div class="set-group"><div class="set-title">界面</div>')+
       '<div class="row-2col">'+
-        '<div class="card"><div style="font-size:11px;color:var(--muted);margin-bottom:8px">界面密度</div>'+
+        I18N.t('<div class="card"><div style="font-size:11px;color:var(--muted);margin-bottom:8px">界面密度</div>')+
           '<div class="opt-group">'+
-            '<button class="opt-btn'+(s.density==='compact'?' active':'')+'" data-density="compact" '+(disabled?'disabled':'')+'>紧凑</button>'+
-            '<button class="opt-btn'+(s.density==='comfortable'?' active':'')+'" data-density="comfortable" '+(disabled?'disabled':'')+'>舒适</button>'+
+            '<button class="opt-btn'+(s.density==='compact'?' active':'')+'" data-density="compact" '+(disabled?'disabled':'')+I18N.t('>紧凑</button>')+
+            '<button class="opt-btn'+(s.density==='comfortable'?' active':'')+'" data-density="comfortable" '+(disabled?'disabled':'')+I18N.t('>舒适</button>')+
           '</div>'+
         '</div>'+
-        '<div class="card"><div style="font-size:11px;color:var(--muted);margin-bottom:8px">货币显示</div>'+
+        I18N.t('<div class="card"><div style="font-size:11px;color:var(--muted);margin-bottom:8px">货币显示</div>')+
           '<div class="opt-group">'+
-            '<button class="opt-btn'+(s.currency==='usd'?' active':'')+'" data-currency="usd" '+(disabled?'disabled':'')+'>美元</button>'+
-            '<button class="opt-btn'+(s.currency==='pct'?' active':'')+'" data-currency="pct" '+(disabled?'disabled':'')+'>百分比</button>'+
+            '<button class="opt-btn'+(s.currency==='usd'?' active':'')+'" data-currency="usd" '+(disabled?'disabled':'')+I18N.t('>美元</button>')+
+            '<button class="opt-btn'+(s.currency==='pct'?' active':'')+'" data-currency="pct" '+(disabled?'disabled':'')+I18N.t('>百分比</button>')+
           '</div>'+
         '</div>'+
-        '<div class="card"><div style="font-size:11px;color:var(--muted);margin-bottom:8px">更新间隔</div>'+
+        I18N.t('<div class="card"><div style="font-size:11px;color:var(--muted);margin-bottom:8px">更新间隔</div>')+
           '<div class="opt-group">'+
             [1,2,5,10,15,30].map(function(m){
               var active = (s.refresh_interval_sec === m*60);
-              return '<button class="opt-btn'+(active?' active':'')+'" data-interval="'+m+'" '+(disabled?'disabled':'')+'>'+m+'分钟</button>';
+              return '<button class="opt-btn'+(active?' active':'')+'" data-interval="'+m+'" '+(disabled?'disabled':'')+'>'+m+I18N.t('分钟</button>');
             }).join('')+
           '</div>'+
         '</div>'+
@@ -2155,7 +2168,7 @@ function renderAppearance(){
 async function applyTheme(id, variant){
   var ok = await save(patchTop('theme', { id:id, variant:variant || null }), { theme:true });
   if(ok && variant){
-    toast('配色已切换', 'ok');
+    toast(I18N.t('配色已切换'), 'ok');
   }
 }
 
@@ -2167,9 +2180,9 @@ function renderNotify(){
   var disabled = isMock();
 
   var methods = [
-    { id:'tray', name:'托盘气泡', desc:'零依赖，默认', icon:'tray' },
-    { id:'system', name:'系统通知', desc:'winotify 弹窗', icon:'bell' },
-    { id:'off', name:'关闭', desc:'静默记录', icon:'info' }
+    { id:'tray', name:I18N.t('托盘气泡'), desc:I18N.t('零依赖，默认'), icon:'tray' },
+    { id:'system', name:I18N.t('系统通知'), desc:I18N.t('winotify 弹窗'), icon:'bell' },
+    { id:'off', name:I18N.t('关闭'), desc:I18N.t('静默记录'), icon:'info' }
   ];
   var methodHtml = methods.map(function(m){
     return '<button class="method-card'+(n.method===m.id?' active':'')+'" data-method="'+m.id+'" '+(disabled?'disabled':'')+'>'+
@@ -2180,10 +2193,10 @@ function renderNotify(){
   }).join('');
 
   var evs = [
-    { id:'threshold',  name:'用量预警',        desc:'达到阈值 '+n.threshold+'% 时提醒' },
-    { id:'urgent',     name:'用量紧急',        desc:'达到紧急线 '+n.urgent+'% 时提醒' },
-    { id:'cookie_fail',name:'Cookie 失效',     desc:'凭据过期立即提醒' },
-    { id:'fetch_fail', name:'抓取失败',        desc:'连续抓取失败提醒' }
+    { id:'threshold',  name:I18N.t('用量预警'),        desc:I18N.t('达到阈值 ')+n.threshold+I18N.t('% 时提醒') },
+    { id:'urgent',     name:I18N.t('用量紧急'),        desc:I18N.t('达到紧急线 ')+n.urgent+I18N.t('% 时提醒') },
+    { id:'cookie_fail',name:I18N.t('Cookie 失效'),     desc:I18N.t('凭据过期立即提醒') },
+    { id:'fetch_fail', name:I18N.t('抓取失败'),        desc:I18N.t('连续抓取失败提醒') }
   ];
   var evHtml = evs.map(function(e){
     return '<div class="ev-row">'+
@@ -2193,19 +2206,19 @@ function renderNotify(){
   }).join('');
 
   $('#notifyBody').innerHTML =
-    '<div class="set-group"><div class="set-title">通知方式</div><div class="method-grid">'+methodHtml+'</div></div>'+
-    '<div class="set-group"><div class="set-title">阈值</div>'+
+    I18N.t('<div class="set-group"><div class="set-title">通知方式</div><div class="method-grid">')+methodHtml+'</div></div>'+
+    I18N.t('<div class="set-group"><div class="set-title">阈值</div>')+
       '<div class="card"><div class="threshold-row">'+
-        '<div class="num-row" style="flex:1"><label>预警阈值</label>'+
+        I18N.t('<div class="num-row" style="flex:1"><label>预警阈值</label>')+
           '<input type="number" id="thNorm" min="1" max="100" value="'+(n.threshold!=null?n.threshold:80)+'" '+(disabled?'disabled':'')+'><span class="unit">%</span></div>'+
-        '<div class="num-row" style="flex:1"><label>紧急阈值</label>'+
+        I18N.t('<div class="num-row" style="flex:1"><label>紧急阈值</label>')+
           '<input type="number" id="thUrgent" min="1" max="100" value="'+(n.urgent!=null?n.urgent:95)+'" '+(disabled?'disabled':'')+'><span class="unit">%</span></div>'+
       '</div></div>'+
     '</div>'+
-    '<div class="set-group"><div class="set-title">事件开关</div>'+evHtml+'</div>'+
+    I18N.t('<div class="set-group"><div class="set-title">事件开关</div>')+evHtml+'</div>'+
     '<div class="set-group" style="margin-bottom:0">'+
-      '<button class="btn" id="btnTestNotify" '+(disabled?'disabled':'')+'>'+ICONS.bell+'发送测试通知</button>'+
-      '<span style="font-size:10px;color:var(--muted);margin-left:10px">会立即触发一条通知验证链路</span>'+
+      '<button class="btn" id="btnTestNotify" '+(disabled?'disabled':'')+'>'+ICONS.bell+I18N.t('发送测试通知</button>')+
+      I18N.t('<span style="font-size:10px;color:var(--muted);margin-left:10px">会立即触发一条通知验证链路</span>')+
     '</div>';
 
   $$('#notifyBody .method-card').forEach(function(card){
@@ -2234,9 +2247,9 @@ function renderNotify(){
   if(btnTest) btnTest.addEventListener('click', async function(){
     try {
       await call('notify_test');
-      toast('测试通知已发送', 'ok');
+      toast(I18N.t('测试通知已发送'), 'ok');
     } catch(e){
-      toast('发送失败: '+e.message, 'err');
+      toast(I18N.t('发送失败: ')+e.message, 'err');
     }
   });
 }
@@ -2258,16 +2271,16 @@ function updateHeader(){
   var v = state.view || {};
   var t = v.fetched_at;
   var parts = [];
-  if(isMock()) parts.push('示例数据');
-  else parts.push('实时');
+  if(isMock()) parts.push(I18N.t('示例数据'));
+  else parts.push(I18N.t('实时'));
   if(t) parts.push(fmtClock(t));
-  parts.push('每 '+fmtInterval(v.refresh_interval_sec||s.refresh_interval_sec));
+  parts.push(I18N.t('每 ')+fmtInterval(v.refresh_interval_sec||s.refresh_interval_sec));
   $('#tbStatus').textContent = parts.join(' · ');
 
   var badge = $('#dataBadge');
   if(badge){
-    if(isMock()){ badge.textContent = '示例数据'; badge.className = 'badge'; }
-    else { badge.textContent = '实时数据'; badge.className = 'badge real'; }
+    if(isMock()){ badge.textContent = I18N.t('示例数据'); badge.className = 'badge'; }
+    else { badge.textContent = I18N.t('实时数据'); badge.className = 'badge real'; }
   }
   if(s.density) document.body.setAttribute('data-density', s.density);
 }
@@ -2287,18 +2300,41 @@ function renderAll(){
     renderNotify();
     updateHeader();
   } catch(e){
-    toast('渲染异常: '+e.message, 'err');
+    toast(I18N.t('渲染异常: ')+e.message, 'err');
   }
+}
+
+/* 语言切换：国旗按钮 + 持久化 ui.lang */
+function bindLangSwitch(){
+  var btns = $$('#langSwitch .lang-btn');
+  btns.forEach(function(btn){
+    if(btn.dataset.lang === I18N.getLang()) btn.classList.add('active');
+    btn.addEventListener('click', function(){
+      var l = btn.dataset.lang;
+      if(l === I18N.getLang()) return;
+      I18N.setLang(l);
+      btns.forEach(function(b){ b.classList.toggle('active', b.dataset.lang === l); });
+      state.settings.ui = state.settings.ui || {};
+      state.settings.ui.lang = l;
+      /* 立即生效（不依赖保存成功）；保存失败也不阻断切换 */
+      renderAll();
+      I18N.apply();
+      save(patchTop('ui', state.settings.ui)).catch(function(){});
+    });
+  });
 }
 
 /* ================= 初始化 ================= */
 async function init(){
+  /* 语言初始化（首次渲染前生效） */
+  I18N.setLang((state.settings.ui || {}).lang);
   /* 初始布局 + mock 渲染 */
   document.body.setAttribute('data-density', state.settings.density || 'compact');
   applyStyleAttr();
   applyBgOpacity();
   updateCountdownUI();
   renderAll();
+  I18N.apply();
 
   /* 导航 */
   $$('#nav .nav-item').forEach(function(btn){
@@ -2313,6 +2349,9 @@ async function init(){
     });
   });
 
+  /* 语言切换 */
+  bindLangSwitch();
+
   /* 手动刷新 */
   $('#btnRefresh').addEventListener('click', manualRefresh);
 
@@ -2321,7 +2360,7 @@ async function init(){
     try {
       await call('hide_window');
     } catch(e){
-      toast('隐藏失败: '+e.message, 'err');
+      toast(I18N.t('隐藏失败: ')+e.message, 'err');
     }
   });
 
@@ -2343,7 +2382,7 @@ async function init(){
   try {
     await fetchView();
   } catch(e){
-    toast('后端未连接，当前展示示例数据', 'warn');
+    toast(I18N.t('后端未连接，当前展示示例数据'), 'warn');
     state.mode = 'mock';
     renderAll();
   }
