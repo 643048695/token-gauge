@@ -346,6 +346,9 @@
     if (!v || !v.providers) return null;
     const keys = Object.keys(v.providers);   // 对象键顺序 = config 顺序
     if (!keys.length) return null;
+    // DIY：迷你窗指定供应商（diy.mini_provider，空 = 自动取第一个启用）
+    const diyPid = v.settings && v.settings.diy && v.settings.diy.mini_provider;
+    if (diyPid && v.providers[diyPid]) return v.providers[diyPid];
     return v.providers[keys[0]];
   }
 

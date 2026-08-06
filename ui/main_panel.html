@@ -1300,12 +1300,15 @@ function dashCardHtml(pid, cfg, pv){
   var tr = state.testResults[pid];
 
   var pvKind = (pv && pv.meta && pv.meta.kind) || '';
+  var dm = (state.settings.diy && state.settings.diy.modules) || {};
+  var dmBal = dm.balance || { bal_main:true, meta_grid:true, token_est:true, chart:true };
+  var dmQuota = dm.quota || { progress:true, tokens:true, chart:true };
   var limitsHtml = '';
   if(!off && pvKind === 'balance'){
-    limitsHtml = balanceCardHtml(pv);
+    limitsHtml = balanceCardHtml(pv, dmBal);
   } else if(off){
     limitsHtml = '<div class="card-meta"><span class="chip neutral">已停用 · 可在供应商页启用</span></div>';
-  } else if(limits.length){
+  } else if(limits.length && dmQuota.progress){
     limitsHtml = limits.map(function(l){
       return '<div class="lim">'+
         '<div class="lim-top"><span class="lbl">'+esc(l.label)+'</span>'+
@@ -1325,7 +1328,7 @@ function dashCardHtml(pid, cfg, pv){
     // opencode 近5日消耗柱状图（SVG）
     var wp = pv && pv.meta && pv.meta.week_pct;
     var wt = pv && pv.meta && pv.meta.week_tokens;
-    if(wp && wp.length){
+    if(dmQuota.chart && wp && wp.length){
       var series = (wt && wt.length) ? wt : wp;
       limitsHtml += '<div class="spark-title">近5日每日消耗'+(wt?'（token）':'（%）')+'</div>'+
         sparkChartHtml(series, {fmt: wt ? fmtTokens : function(v){ return v+'%'; }});
@@ -1437,7 +1440,8 @@ function sparkChartHtml(series, opts){
   svg += '</svg>';
   return svg;
 }
-function balanceCardHtml(pv){
+function balanceCardHtml(pv, dm){
+  dm = dm || { bal_main:true, meta_grid:true, token_est:true, chart:true };
   var b = pv.balance || {};
   var m = pv.meta || {};
   var sp = m.speed || {};
@@ -1446,41 +1450,47 @@ function balanceCardHtml(pv){
   var pk = peakInfo();
   var hasPeak = pv.peak === true;   // 峰谷定价平台（DeepSeek 等）
   var h = '';
-  if(hasPeak && pk.on){
-    h += '<div class="peak-bar">高峰时段现在跑贵一倍 · '+pk.until+' 点后恢复</div>';
+  if(dm.bal_main){
+    if(hasPeak && pk.on){
+      h += '<div class="peak-bar">高峰时段现在跑贵一倍 · '+pk.until+' 点后恢复</div>';
+    }
+    h += '<div class="bal-main">'+
+      '<span class="bal-amount">'+(amt!=null?money(amt,cur):'—')+'</span>'+
+      '<span class="bal-cur">'+(cur?esc(cur):'')+' 可用余额</span>'+
+    '</div>';
   }
-  h += '<div class="bal-main">'+
-    '<span class="bal-amount">'+(amt!=null?money(amt,cur):'—')+'</span>'+
-    '<span class="bal-cur">'+(cur?esc(cur):'')+' 可用余额</span>'+
-  '</div>';
-  // 余额拆分：充值 + 赠金
-  var parts = [];
-  if(m.topped_up != null) parts.push('充值 '+money(m.topped_up,cur));
-  if(m.granted != null) parts.push('赠金 '+money(m.granted,cur));
-  if(parts.length) h += '<div class="bal-sub">'+parts.join(' · ')+'</div>';
-  // 电量条（余额分档）+ 状态灯文字
-  var barPct = 100, barCls = 'full';
-  if(amt != null){
-    if(amt < 0.5){ barPct = 10; barCls = 'danger'; }
-    else if(amt < 2){ barPct = 30; barCls = 'low'; }
-    else if(amt < 10){ barPct = 60; barCls = 'mid'; }
+  if(dm.bal_main){
+    // 余额拆分：充值 + 赠金
+    var parts = [];
+    if(m.topped_up != null) parts.push('充值 '+money(m.topped_up,cur));
+    if(m.granted != null) parts.push('赠金 '+money(m.granted,cur));
+    if(parts.length) h += '<div class="bal-sub">'+parts.join(' · ')+'</div>';
+    // 电量条（余额分档）+ 状态灯文字
+    var barPct = 100, barCls = 'full';
+    if(amt != null){
+      if(amt < 0.5){ barPct = 10; barCls = 'danger'; }
+      else if(amt < 2){ barPct = 30; barCls = 'low'; }
+      else if(amt < 10){ barPct = 60; barCls = 'mid'; }
+    }
+    var availTxt = '';
+    if(m.available === false) availTxt = '<div class="bal-avail bad">余额不足 · 请充值</div>';
+    else if(m.available === true) availTxt = '<div class="bal-avail">余额充足 · 可正常调用</div>';
+    h += '<div class="bal-bar"><div class="bal-fill '+barCls+'" style="width:'+barPct+'%"></div></div>'+availTxt;
   }
-  var availTxt = '';
-  if(m.available === false) availTxt = '<div class="bal-avail bad">余额不足 · 请充值</div>';
-  else if(m.available === true) availTxt = '<div class="bal-avail">余额充足 · 可正常调用</div>';
-  h += '<div class="bal-bar"><div class="bal-fill '+barCls+'" style="width:'+barPct+'%"></div></div>'+availTxt;
   // 三格指标：今日消耗 / 日均消耗 / 还能撑
-  var cells = [
-    { k:'今日消耗', v: sp.today_amount != null ? money(sp.today_amount, cur) : '积累中', small:'' },
-    { k:'日均消耗', v: sp.data_ready ? money(sp.daily_amount, cur) : '积累中', small:'' },
-    { k:'还能撑', v: sp.data_ready ? sp.days_left_text : '积累中', small:'' },
-  ];
-  h += '<div class="meta-grid">'+cells.map(function(c){
-    return '<div class="meta-cell"><div class="meta-k">'+esc(c.k)+'</div><div class="meta-v">'+esc(c.v)+(c.small?'<span class="meta-s">'+esc(c.small)+'</span>':'')+'</div></div>';
-  }).join('')+'</div>';
+  if(dm.meta_grid){
+    var cells = [
+      { k:'今日消耗', v: sp.today_amount != null ? money(sp.today_amount, cur) : '积累中', small:'' },
+      { k:'日均消耗', v: sp.data_ready ? money(sp.daily_amount, cur) : '积累中', small:'' },
+      { k:'还能撑', v: sp.data_ready ? sp.days_left_text : '积累中', small:'' },
+    ];
+    h += '<div class="meta-grid">'+cells.map(function(c){
+      return '<div class="meta-cell"><div class="meta-k">'+esc(c.k)+'</div><div class="meta-v">'+esc(c.v)+(c.small?'<span class="meta-s">'+esc(c.small)+'</span>':'')+'</div></div>';
+    }).join('')+'</div>';
+  }
   // 还能调用（token 预估）：余额 ÷ 输出单价 × 百万，按当前时段费率
   var models = m.models || [];
-  if(models.length && amt != null){
+  if(dm.token_est && models.length && amt != null){
     var mul = (hasPeak && pk.on) ? 2 : 1;
     var sinceTxt = '';
     if(sp.since_ts){
@@ -1500,7 +1510,7 @@ function balanceCardHtml(pv){
   }
   // 近 7 日消耗柱状图（SVG）
   var week = sp.week || [];
-  if(week.length){
+  if(dm.chart && week.length){
     h += '<div class="spark-title">近7日每日消耗（'+cur+'）</div>'+
       sparkChartHtml(week, {fmt: function(v){ return money(v, cur); }});
   }
@@ -1893,6 +1903,11 @@ function renderAppearance(){
   var op = s.opacity || { main:0.95, mini:0.92 };
   var w = s.window || {};
   var disabled = isMock();
+  var diy = s.diy || {};
+  var diyMini = diy.mini_provider || '';
+  var diyMods = diy.modules || { balance:{bal_main:true,meta_grid:true,token_est:true,chart:true}, quota:{progress:true,tokens:true,chart:true} };
+  diyMods.balance = Object.assign({bal_main:true,meta_grid:true,token_est:true,chart:true}, diyMods.balance||{});
+  diyMods.quota = Object.assign({progress:true,tokens:true,chart:true}, diyMods.quota||{});
   var curTheme = THEMES[th.id] || THEMES['paper'];
 
   var themeCards = Object.keys(THEMES).map(function(id){
@@ -1951,6 +1966,30 @@ function renderAppearance(){
           '<div class="slider-top"><span>大小（拖动精确控制）</span><span class="v" id="miniSizeV">'+(w.mini_width||300)+'px</span></div>'+
           '<input type="range" id="miniSize" min="160" max="600" step="5" value="'+(w.mini_width||300)+'" '+(disabled?'disabled':'')+'>'+
         '</div>'+
+        '<div class="diy-row" style="margin-top:10px"><span class="diy-lbl">迷你窗显示</span>'+
+          '<select id="miniProvider" '+(disabled?'disabled':'')+'>'+
+            '<option value="">自动（第一个启用）</option>'+
+            Object.keys(s.providers||{}).map(function(pid){
+              var cfg2 = s.providers[pid];
+              var sel2 = (diyMini===(pid)) ? ' selected' : '';
+              return '<option value="'+esc(pid)+'"'+sel2+'>'+esc(cfg2.name||pid)+'</option>';
+            }).join('')+
+          '</select>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="set-group"><div class="set-title">仪表盘显示</div>'+
+      '<div class="card">'+
+        '<div class="diy-sec">余额卡（DeepSeek/Kimi 等）</div>'+
+        '<div class="diy-row"><span class="diy-lbl">余额大卡</span><label class="switch"><input type="checkbox" id="diyBalMain" '+(diyMods.balance.bal_main?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '<div class="diy-row"><span class="diy-lbl">消耗指标（今日/日均/还能撑）</span><label class="switch"><input type="checkbox" id="diyBalGrid" '+(diyMods.balance.meta_grid?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '<div class="diy-row"><span class="diy-lbl">Token 预估</span><label class="switch"><input type="checkbox" id="diyBalTok" '+(diyMods.balance.token_est?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '<div class="diy-row"><span class="diy-lbl">趋势图（近7日）</span><label class="switch"><input type="checkbox" id="diyBalChart" '+(diyMods.balance.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '<div class="diy-sec">订阅卡（OpenCode Go）</div>'+
+        '<div class="diy-row"><span class="diy-lbl">进度条组</span><label class="switch"><input type="checkbox" id="diyQuaProg" '+(diyMods.quota.progress?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '<div class="diy-row"><span class="diy-lbl">Token 指标</span><label class="switch"><input type="checkbox" id="diyQuaTok" '+(diyMods.quota.tokens?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '<div class="diy-row"><span class="diy-lbl">趋势图（近5日）</span><label class="switch"><input type="checkbox" id="diyQuaChart" '+(diyMods.quota.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
       '</div>'+
     '</div>'+
 
@@ -2040,6 +2079,35 @@ function renderAppearance(){
       mini_height: (state.settings.window||{}).mini_height,
       mini_corner:(state.settings.window||{}).mini_corner
     }));
+  });
+
+  /* DIY：保存 diy 配置 */
+  function saveDiy(patch){
+    var d = state.settings.diy || {};
+    var nd = Object.assign({}, d, patch);
+    save(patchTop('diy', nd));
+  }
+  var miniProvider = $('#miniProvider');
+  if(miniProvider) miniProvider.addEventListener('change', function(){
+    saveDiy({ mini_provider: miniProvider.value });
+  });
+  var DIY_MAP = [
+    ['diyBalMain',   'balance', 'bal_main'],
+    ['diyBalGrid',   'balance', 'meta_grid'],
+    ['diyBalTok',    'balance', 'token_est'],
+    ['diyBalChart',  'balance', 'chart'],
+    ['diyQuaProg',   'quota',   'progress'],
+    ['diyQuaTok',    'quota',   'tokens'],
+    ['diyQuaChart',  'quota',   'chart'],
+  ];
+  DIY_MAP.forEach(function(item){
+    var el = $('#'+item[0]);
+    if(el) el.addEventListener('change', function(){
+      var mods = JSON.parse(JSON.stringify((state.settings.diy && state.settings.diy.modules) || {}));
+      mods[item[1]] = mods[item[1]] || {};
+      mods[item[1]][item[2]] = el.checked;
+      saveDiy({ modules: mods });
+    });
   });
 
   $$('#appearanceBody .opt-btn[data-density]').forEach(function(btn){

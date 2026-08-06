@@ -36,6 +36,13 @@ DEFAULTS: dict = {
         "mini_corner": "bottom-right",
     },
     "mini_widget_enabled": True,
+    "diy": {
+        "mini_provider": "",
+        "modules": {
+            "balance": {"bal_main": True, "meta_grid": True, "token_est": True, "chart": True},
+            "quota": {"progress": True, "tokens": True, "chart": True},
+        },
+    },
     "density": "compact",
     "currency": "usd",
     "notify": {
