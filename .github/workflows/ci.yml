@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: Python 语法检查
+        run: |
+          python -m py_compile main.py
+          python -m compileall -q app
+
+      - name: 单元测试（纯逻辑，不起 GUI）
+        run: python -m unittest test_unit -v
+
+  build:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: PyInstaller 打包
+        run: |
+          pyinstaller --noconfirm --clean --onefile --windowed `
+            --name "OC-GO-Dashboard" `
+            --add-data "ui;ui" `
+            --hidden-import webview `
+            --hidden-import webview.platforms.winforms `
+            --hidden-import webview.platforms.edgechromium `
+            --hidden-import pystray `
+            --hidden-import PIL `
+            main.py
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: OC-GO-Dashboard-windows
+          path: dist/OC-GO-Dashboard.exe

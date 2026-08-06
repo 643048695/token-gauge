@@ -41,6 +41,7 @@ _logging.basicConfig(
     filename=os.path.join(_LOG_DIR, "app.log"),
     level=_logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
+    encoding="utf-8",
 )
 log = _logging.getLogger("oc-go")
 
