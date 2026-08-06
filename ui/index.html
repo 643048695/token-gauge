@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OC-GO Dashboard · 开屏引导</title>
+<style>
+/* ============ 兜底变量（与 main_panel 一致，主题 CSS 注入后覆盖） ============ */
+:root{
+  --accent:#00ff9c; --accent2:#00c9ff;
+  --bg:rgba(8,14,12,0.94);
+  --text:#d8ffef; --muted:#7fa896;
+  --glow:rgba(0,255,156,0.55);
+  --danger:#ff4d6d; --danger-glow:rgba(255,77,109,0.5);
+  --warn:#ffc400;  --warn-glow:rgba(255,196,0,0.45);
+  --card:rgba(255,255,255,0.035);
+  --card-hi:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.09);
+  --line:rgba(255,255,255,0.14);
+  --panel:rgba(255,255,255,0.05);
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+  font-size:13px;
+  color:var(--text);
+  background:var(--bg);
+  user-select:none;-webkit-user-select:none;
+  display:flex;flex-direction:column;
+}
+.mono{font-family:Consolas,"Courier New",monospace;}
+
+/* ============ 标题栏（拖动区） ============ */
+#topbar{
+  height:44px; flex:none;
+  display:flex; align-items:center; gap:10px;
+  padding:0 12px 0 16px;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,0.22);
+  -webkit-app-region:drag;
+}
+#topbar .no-drag{-webkit-app-region:no-drag;}
+.logo-dot{
+  width:9px;height:9px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 8px var(--glow),0 0 2px var(--accent);
+  flex:none;
+}
+.brand{
+  font-size:12px;font-weight:700;letter-spacing:1.6px;
+  font-family:Consolas,monospace;color:var(--text);
+}
+.brand b{color:var(--accent);font-weight:700;}
+#btnSkip{
+  margin-left:auto;
+  background:none;border:none;color:var(--muted);
+  font-size:11px;cursor:pointer;padding:6px 10px;border-radius:6px;
+  transition:color .15s ease;
+}
+#btnSkip:hover{color:var(--text);background:var(--card-hi);}
+
+/* ============ 主舞台 ============ */
+#stage{
+  flex:1; display:flex; align-items:center; justify-content:center;
+  padding:18px 44px 8px;
+}
+.step{width:100%; max-width:820px;}
+.step.hidden{display:none;}
+.fade-in{animation:fi .28s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+.step-tag{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:Consolas,monospace; font-size:10px; letter-spacing:2px;
+  color:var(--accent); border:1px solid var(--accent);
+  padding:3px 10px; border-radius:20px; margin-bottom:12px;
+  opacity:0.9;
+}
+h1.title{font-size:25px; letter-spacing:1px; font-weight:700;}
+.sub{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.7;}
+
+/* ---- Step1 左右分栏 ---- */
+.step1{display:flex; gap:34px; align-items:stretch;}
+.s1-left{flex:1.15; min-width:0;}
+.s1-right{flex:1; display:flex; align-items:center; justify-content:center; min-width:0;}
+.steps-list{list-style:none; margin-top:16px;}
+.steps-list li{
+  display:flex; gap:12px; padding:9px 0;
+  border-bottom:1px dashed var(--border);
+  line-height:1.55;
+}
+.steps-list li:last-child{border-bottom:none;}
+.step-no{
+  flex:none; width:22px; height:22px; border-radius:6px;
+  border:1px solid var(--line); color:var(--accent);
+  font-family:Consolas,monospace; font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--card);
+}
+.steps-list .t{font-weight:600;}
+.steps-list .d{color:var(--muted); font-size:11.5px;}
+.hint{
+  margin-top:12px; padding:9px 12px; border-radius:8px;
+  background:rgba(255,196,0,0.07); border:1px solid rgba(255,196,0,0.35);
+  color:var(--warn); font-size:11.5px; line-height:1.6;
+}
+.hint svg{width:13px;height:13px;vertical-align:-2px;margin-right:6px;}
+
+/* ---- 仿界面示意图（迷你添加供应商面板） ---- */
+.mock-panel{
+  width:100%; max-width:300px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+}
+.mock-head{
+  padding:9px 14px; font-size:12px; font-weight:700;
+  border-bottom:1px solid var(--border);
+  background:var(--card-hi); color:var(--accent);
+  font-family:Consolas,monospace; letter-spacing:1px;
+}
+.mock-body{padding:12px 14px 14px;}
+.mock-row{
+  display:flex; align-items:center; gap:10px;
+  padding:7px 0;
+}
+.mock-row label{font-size:11px; color:var(--muted); width:64px; flex:none;}
+.mock-select{
+  flex:1; font-size:11.5px; color:var(--text);
+  border:1px solid var(--line); border-radius:6px;
+  padding:5px 10px; background:var(--panel);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.mock-select .arr{color:var(--muted); font-size:10px;}
+.mock-input{
+  flex:1; font-size:11.5px; color:var(--muted);
+  border:1px dashed var(--line); border-radius:6px;
+  padding:5px 10px; font-family:Consolas,monospace;
+}
+.mock-row .sw{
+  width:30px; height:16px; border-radius:10px; background:var(--accent);
+  position:relative; opacity:0.9;
+}
+.mock-row .sw::after{
+  content:""; position:absolute; top:2px; right:2px;
+  width:12px; height:12px; border-radius:50%; background:#fff;
+}
+.mock-btn{
+  margin-top:10px; text-align:center;
+  border:1px solid var(--accent); color:var(--accent);
+  padding:7px 0; border-radius:7px; font-size:12px; font-weight:700;
+  letter-spacing:2px; cursor:default;
+  background:rgba(0,255,156,0.06);
+}
+.mock-arrow{
+  position:absolute; font-size:20px; color:var(--accent);
+}
+.s1-right{position:relative;}
+
+/* ---- Step2 垂直清单 ---- */
+.step2{max-width:640px; margin:0 auto; text-align:center;}
+.checks{list-style:none; margin-top:20px; text-align:left;}
+.checks li{
+  display:flex; align-items:flex-start; gap:12px;
+  padding:11px 14px; margin-bottom:9px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; line-height:1.55; font-size:12.5px;
+}
+.checks .ic{
+  flex:none; width:20px; height:20px; border-radius:50%;
+  border:1px solid var(--accent); color:var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; margin-top:1px;
+}
+.checks b{color:var(--accent); font-weight:600;}
+.finish{
+  margin-top:18px; font-size:13px; color:var(--text);
+  border-left:3px solid var(--accent);
+  padding:8px 0 8px 14px; text-align:left;
+  font-family:Consolas,monospace; letter-spacing:0.5px;
+  color:var(--muted);
+}
+
+/* ============ 底部：步骤条 + 导航 ============ */
+#foot{
+  flex:none; height:62px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 44px 12px;
+}
+.dots{display:flex; gap:8px;}
+.dots i{
+  width:8px; height:8px; border-radius:50%;
+  background:var(--border); transition:all .2s ease;
+}
+.dots i.on{background:var(--accent); box-shadow:0 0 8px var(--glow);}
+.nav-btns{display:flex; gap:10px;}
+.nav-btns button{
+  background:none; border:1px solid var(--line); color:var(--text);
+  font-size:12px; padding:8px 22px; border-radius:8px; cursor:pointer;
+  transition:all .15s ease;
+}
+.nav-btns button:hover{background:var(--card-hi);}
+.nav-btns .primary{
+  border-color:var(--accent); color:var(--accent);
+  font-weight:700; letter-spacing:1px;
+  background:rgba(0,255,156,0.06);
+}
+.nav-btns .primary:hover{box-shadow:0 0 14px rgba(0,255,156,0.25);}
+.nav-btns .ghost{visibility:hidden;}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <span class="logo-dot"></span>
+  <span class="brand">OC-GO <b>DASHBOARD</b></span>
+  <button id="btnSkip" class="no-drag" title="跳过引导，直接进入">跳过引导</button>
+</div>
+
+<main id="stage">
+
+  <!-- Step 1：先喂饱数据源 -->
+  <section class="step step1 fade-in" id="step1">
+    <div class="s1-left">
+      <span class="step-tag">STEP 1 · 配置供应商</span>
+      <h1 class="title">先喂饱数据源</h1>
+      <p class="sub">没有供应商，仪表盘就是一块空屏。三步接通第一个额度源：</p>
+      <ol class="steps-list">
+        <li>
+          <span class="step-no">01</span>
+          <div><div class="t">左侧导航切到「供应商」页</div>
+          <div class="d">所有额度源都在这里统一管理。</div></div>
+        </li>
+        <li>
+          <span class="step-no">02</span>
+          <div><div class="t">点「＋ 添加供应商」，选类型</div>
+          <div class="d">DeepSeek / Kimi / OpenRouter / opencode-go…… 13 种预设，余额型 / 中转站 / 订阅配额自动适配显示形态。</div></div>
+        </li>
+        <li>
+          <span class="step-no">03</span>
+          <div><div class="t">填凭据（API Key / Cookie），保存即启用</div>
+          <div class="d">凭据存在本机，加密保管，只有你能看到。</div></div>
+        </li>
+      </ol>
+      <div class="hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.5"/><path d="M12 11v5"/></svg>
+        没有 Key？把「演示模式」开关打开，不用 Key 也有模拟数据，先看界面再补凭据。
+      </div>
+    </div>
+    <div class="s1-right">
+      <div class="mock-panel">
+        <div class="mock-head">＋ 添加供应商</div>
+        <div class="mock-body">
+          <div class="mock-row">
+            <label>类型</label>
+            <div class="mock-select">DeepSeek<span class="arr">▾</span></div>
+          </div>
+          <div class="mock-row">
+            <label>API Key</label>
+            <div class="mock-input">sk-••••••••••</div>
+          </div>
+          <div class="mock-row">
+            <label>演示模式</label>
+            <div class="sw"></div>
+          </div>
+          <div class="mock-btn">保存并启用</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 2：看它活过来 -->
+  <section class="step step2 fade-in hidden" id="step2">
+    <span class="step-tag">STEP 2 · 验证与接管</span>
+    <h1 class="title">看它活过来</h1>
+    <p class="sub">配置完成后，三件事依次发生：</p>
+    <ol class="checks">
+      <li>
+        <span class="ic">✓</span>
+        <div><b>测试连接</b> —— 供应商页点「测试连接」，延迟数字蹦出来就是通了。</div>
+      </li>
+      <li>
+        <span class="ic">✓</span>
+        <div><b>数据上屏</b> —— 仪表盘出现余额卡 / 进度条，7 日趋势开始爬坡。</div>
+      </li>
+      <li>
+        <span class="ic">✓</span>
+        <div><b>自动接管</b> —— 迷你窗实时悬浮，80% / 95% 两级阈值，超额之前先提醒你。</div>
+      </li>
+    </ol>
+    <div class="finish">数据会说话。别让额度静悄悄烧光。</div>
+  </section>
+
+</main>
+
+<footer id="foot">
+  <div class="dots" id="dots"><i class="on"></i><i></i></div>
+  <div class="nav-btns">
+    <button id="btnPrev" class="ghost">上一步</button>
+    <button id="btnNext" class="primary">下一步 →</button>
+    <button id="btnStart" class="primary" style="display:none">开始使用 →</button>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+var $ = function(s){ return document.querySelector(s); };
+var state = { step: 1, booted: false };
+
+function currentApi(){ return (window.pywebview && window.pywebview.api) || null; }
+function call(name){
+  var args = Array.prototype.slice.call(arguments, 1);
+  var a = currentApi();
+  return new Promise(function(resolve, reject){
+    if(!a || typeof a[name] !== 'function'){
+      reject(new Error('pywebview 接口不可用: ' + name));
+      return;
+    }
+    Promise.resolve(a[name].apply(a, args)).then(resolve, reject);
+  });
+}
+
+function injectTheme(css){
+  if(!css) return;
+  var old = document.querySelector('style[data-theme]');
+  if(old) old.parentNode.removeChild(old);
+  var html = /^\s*<style/i.test(css) ? css : '<style data-theme="t">' + css + '</style>';
+  document.head.insertAdjacentHTML('beforeend', html);
+}
+
+function render(){
+  $('#step1').classList.toggle('hidden', state.step !== 1);
+  $('#step2').classList.toggle('hidden', state.step !== 2);
+  var dots = $('#dots').children;
+  for(var i = 0; i < dots.length; i++) dots[i].classList.toggle('on', i === state.step - 1);
+  $('#btnPrev').style.visibility = (state.step === 1) ? 'hidden' : 'visible';
+  $('#btnNext').style.display = (state.step === 1) ? '' : 'none';
+  $('#btnStart').style.display = (state.step === 2) ? '' : 'none';
+  var sec = state.step === 1 ? $('#step1') : $('#step2');
+  sec.classList.remove('fade-in'); void sec.offsetWidth; sec.classList.add('fade-in');
+}
+
+/* 引导完成/跳过：写 onboarded 标记后进主面板 */
+function doneGuide(){
+  call('save_settings', { ui: { onboarded: true } })
+    .catch(function(){})
+    .then(function(){ call('enter_dashboard').catch(function(){}); });
+}
+
+function boot(){
+  if(state.booted) return;
+  state.booted = true;
+  Promise.all([call('get_settings'), call('get_theme_css')])
+    .then(function(res){
+      var settings = res[0] || {};
+      injectTheme(res[1]);
+      var tid = (settings.theme && settings.theme.id) || 'paper';
+      document.body.setAttribute('data-style', tid);
+      /* ?guide=1 = 关于页重看引导，强制显示；onboarded 已真 → 直接进主面板（异常兜底） */
+      var replay = /[?&]guide=1/.test(location.search);
+      var onboarded = !!(settings.ui && settings.ui.onboarded);
+      if(onboarded && !replay){ call('enter_dashboard').catch(function(){}); return; }
+      render();
+    })
+    .catch(function(){ render(); });
+}
+
+$('#btnSkip').addEventListener('click', doneGuide);
+$('#btnNext').addEventListener('click', function(){ state.step = 2; render(); });
+$('#btnPrev').addEventListener('click', function(){ state.step = 1; render(); });
+$('#btnStart').addEventListener('click', doneGuide);
+
+window.addEventListener('pywebviewready', boot);
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 600); });
+})();
+</script>
+</body>
+</html>

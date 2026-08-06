@@ -225,6 +225,26 @@ class _Api:
         self._app.hide_main()
         return {"ok": True}
 
+    def enter_dashboard(self):
+        """引导/索引页 → 主面板（同一窗口加载主面板，js_api 保持不变）。"""
+        try:
+            self._app.main_window.load_url(
+                os.path.join(BASE_DIR, "ui", "main_panel.html"))
+            return {"ok": True}
+        except Exception as e:
+            log.warning(f"enter_dashboard 异常: {e}")
+            return {"ok": False, "message": str(e)}
+
+    def replay_guide(self):
+        """关于页「重看引导」：带 ?guide=1 强制引导页显示教学。"""
+        try:
+            self._app.main_window.load_url(
+                os.path.join(BASE_DIR, "ui", "index.html") + "?guide=1")
+            return {"ok": True}
+        except Exception as e:
+            log.warning(f"replay_guide 异常: {e}")
+            return {"ok": False, "message": str(e)}
+
 
 class DashboardApp:
     """窗口 / 托盘 / 透明度 / JS API 编排。"""
@@ -248,9 +268,16 @@ class DashboardApp:
         win = self.cfg.get("window", {})
         w = int(win.get("main_width", 920))
         h = int(win.get("main_height", 600))
+        # 首次启动（未完成开屏引导）先加载引导页 index.html；
+        # 完成后直接进主面板。后续索引页接入时在此扩展 start_page。
+        ui_cfg = self.cfg.get("ui") or {}
+        if not ui_cfg.get("onboarded"):
+            url = os.path.join(BASE_DIR, "ui", "index.html")
+        else:
+            url = os.path.join(BASE_DIR, "ui", "main_panel.html")
         self.main_window = webview.create_window(
             "OC-GO Dashboard",
-            os.path.join(BASE_DIR, "ui", "main_panel.html"),
+            url,
             width=w, height=h,
             frameless=True,
             js_api=self.api,

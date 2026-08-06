@@ -782,6 +782,9 @@ input[type=range]:disabled{opacity:.4;}
           <div><span class="k">仪表盘</span><span class="d">进度条按阈值自动变色：越过预警线转黄，越过紧急线转红</span></div>
         </div>
       </div>
+      <div class="about-guide" style="text-align:center;margin-top:14px;">
+        <button id="btnReplayGuide" style="background:none;border:1px solid var(--accent);color:var(--accent);font-size:11px;padding:6px 16px;border-radius:6px;cursor:pointer;letter-spacing:1px;">重新查看开屏引导</button>
+      </div>
       <div class="about-foot">HANA AGENT · OC-GO DASHBOARD · 2026</div>
     </div>
 
@@ -2321,6 +2324,9 @@ async function init(){
       toast('隐藏失败: '+e.message, 'err');
     }
   });
+
+  /* 关于页：重看开屏引导 */
+  $('#btnReplayGuide').addEventListener('click', function(){ call('replay_guide').catch(function(){}); });
 
   /* 添加供应商 */
   $('#btnAddProvider').addEventListener('click', function(){
