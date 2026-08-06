@@ -1,0 +1,33 @@
+# ===== 敏感配置（含 API Key / Cookie，绝不提交） =====
+config.json
+config.local.json
+.ui_state.json
+
+# ===== 运行时数据 =====
+logs/
+app/data/
+.webview2_data/
+.wv2test/
+
+# ===== 测试产物 =====
+*_result.txt
+_err.txt
+_out.txt
+
+# ===== 开发残留 / 备份 =====
+_dev-backup/
+_dev_ui/
+_dev_api_provider_test.py
+_dev_integration_check.py
+
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# ===== IDE =====
+.idea/
+.vscode/

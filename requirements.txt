@@ -1,0 +1,4 @@
+pywebview>=6.2
+pystray>=0.19
+requests>=2.31
+Pillow>=10.0

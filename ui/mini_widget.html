@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>OC-GO Mini</title>
+<style>
+  /* 兜底默认主题（neon-green）；pywebviewready 后由 theme_css 覆盖 */
+  :root {
+    --accent: #537d96;
+    --accent2: #6f9cb5;
+    --bg: #f5efe4;
+    --text: #2a2622;
+    --muted: #7a7266;
+    --glow: rgba(83, 125, 150, 0.25);
+    --warn: #d97706;
+    --danger: #b91c1c;
+    --line: rgba(42, 38, 34, 0.12);
+    --panel: rgba(83, 125, 150, 0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+  html, body { background: #080e0c; overflow: hidden; height: 100%; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    color: var(--text);
+  }
+
+  .hud {
+    height: 100vh;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 12px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+    box-shadow: 0 0 18px var(--glow), inset 0 0 24px var(--panel);
+    cursor: pointer;
+  }
+  /* 顶部拖拽区：覆盖整条顶部（topbar 之上一层），右侧按钮组再上一层保证可点 */
+  .drag-top {
+    position: absolute; top: 0; left: 0; right: 0; height: 30px;
+    cursor: move; z-index: 9;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    transition: background .15s ease;
+  }
+  .drag-top:hover { background: rgba(255, 255, 255, 0.08); }
+  /* 右下角 resize 把手 */
+  .resize-handle {
+    position: absolute; right: 2px; bottom: 2px;
+    width: 14px; height: 14px;
+    cursor: nwse-resize; z-index: 7;
+    background: linear-gradient(135deg, transparent 45%, var(--accent) 45%, var(--accent) 55%, transparent 55%),
+                linear-gradient(135deg, transparent 70%, var(--muted) 70%, var(--muted) 80%, transparent 80%);
+    opacity: .7;
+  }
+  .resize-handle:hover { opacity: 1; }
+  /* 尺寸拖拽条：右侧改宽、底部改高 */
+  .resize-x, .resize-y {
+    position: absolute; z-index: 7;
+    background: transparent;
+    transition: background .15s ease;
+  }
+  .resize-x {
+    top: 20px; bottom: 16px; right: 1px; width: 6px;
+    cursor: ew-resize; border-radius: 3px;
+  }
+  .resize-y {
+    left: 2px; right: 16px; bottom: 1px; height: 6px;
+    cursor: ns-resize; border-radius: 3px;
+  }
+  .resize-x:hover, .resize-y:hover { background: rgba(255,255,255,0.12); }
+  .resize-x:active, .resize-y:active { background: rgba(255,255,255,0.2); }
+  .hud::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 10px 10px 0 0;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.8;
+  }
+
+  /* 顶栏 */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    position: relative;
+    z-index: 8;   /* 高于拖拽区，保证按钮可点 */
+  }
+  .logo { display: flex; align-items: center; gap: 6px; }
+  .logo .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .logo b { color: var(--accent); font-weight: 600; letter-spacing: 1px; }
+  .topbtns { display: flex; align-items: center; gap: 7px; position: relative; z-index: 10; }
+  .live {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--accent); font-size: 9px; letter-spacing: 1px;
+  }
+  .live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+  .live.stale { color: var(--warn); }
+  .live.stale .dot { background: var(--warn); box-shadow: 0 0 5px var(--warn); }
+  .live.dead { color: var(--danger); }
+  .live.dead .dot { background: var(--danger); box-shadow: 0 0 5px var(--danger); }
+  .refresh {
+    background: none; border: 1px solid var(--line); color: var(--accent);
+    font-size: 12px; width: 19px; height: 19px; line-height: 17px;
+    border-radius: 4px; cursor: pointer; text-align: center; padding: 0;
+  }
+  .refresh:hover { background: var(--panel); }
+  .refresh.spin { animation: spin 0.6s linear; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 中部大数字 */
+  .today { display: flex; align-items: baseline; gap: 7px; }
+  .today .big {
+    font-family: Consolas, "JetBrains Mono", monospace;
+    font-size: 27px; font-weight: 700;
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--glow);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .today .meta {
+    font-size: 9px; color: var(--muted); line-height: 1.35;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
+  .today .meta b { color: var(--text); font-weight: 400; }
+
+  /* 月度进度条 */
+  .barwrap { display: flex; flex-direction: column; gap: 2px; }
+  .barhead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 8.5px; letter-spacing: 1.5px; color: var(--muted);
+  }
+  .barhead .val { color: var(--accent); font-family: Consolas, monospace; font-size: 10px; }
+  .bar {
+    height: 5px; border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .bar .fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    box-shadow: 0 0 8px var(--glow);
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .bar .fill.warn { background: linear-gradient(90deg, rgba(255,200,87,0.55), var(--warn)); box-shadow: 0 0 8px var(--warn); }
+  .bar .fill.danger { background: linear-gradient(90deg, rgba(255,95,86,0.55), var(--danger)); box-shadow: 0 0 8px var(--danger); }
+  .barfoot {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 8px; color: var(--muted); letter-spacing: 0.5px;
+  }
+  .barfoot b { color: var(--text); font-weight: 600; font-family: Consolas, monospace; font-size: 9px; }
+
+  /* 底部小字 */
+  .subrow {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 8.5px; color: var(--muted);
+    border-top: 1px solid var(--line);
+    padding-top: 4px;
+  }
+  .subrow .item { display: flex; gap: 4px; align-items: baseline; white-space: nowrap; }
+  .subrow b {
+    font-family: Consolas, monospace; font-weight: 600; color: var(--text);
+    font-size: 10px; font-variant-numeric: tabular-nums;
+  }
+  .subrow b.good { color: var(--accent); text-shadow: 0 0 6px var(--glow); }
+  .foot {
+    font-size: 8px; color: var(--muted);
+    text-align: right; letter-spacing: 0.5px;
+    opacity: 0.6;
+    margin-top: auto;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
+
+  /* 详情浮层（点击展开，覆盖主视图，不撑大窗口） */
+  .detail-overlay {
+    position: absolute; inset: 0;
+    border-radius: 10px;
+    background: var(--bg);
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    padding: 9px 12px 7px;
+    z-index: 5;
+  }
+  .hud.detail-on .detail-overlay { display: flex; }
+  .detail-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 9px; letter-spacing: 2px; color: var(--accent);
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--line);
+  }
+  .detail-head .hint { font-size: 8px; color: var(--muted); letter-spacing: 0.5px; opacity: 0.7; }
+  .dstats {
+    display: flex; flex-direction: column; gap: 3px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 5px; margin-bottom: 5px;
+  }
+  .dstat { display: flex; justify-content: space-between; align-items: baseline; font-size: 9px; color: var(--muted); }
+  .dstat b {
+    color: var(--text); font-weight: 600; font-family: Consolas, monospace;
+    font-size: 10px; font-variant-numeric: tabular-nums;
+  }
+  .dstat b.good { color: var(--accent); }
+  .dstat b.dim { color: var(--muted); }
+  .dlist { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow: hidden; }
+  .drow {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 9px; color: var(--muted);
+  }
+  .drow .label { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .drow .mini {
+    width: 90px; height: 4px; border-radius: 2px;
+    background: rgba(255, 255, 255, 0.06); overflow: hidden; flex: none;
+  }
+  .drow .mini i {
+    display: block; height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    box-shadow: 0 0 5px var(--glow);
+  }
+  .drow b {
+    width: 34px; text-align: right; flex: none;
+    color: var(--text); font-weight: 600;
+    font-family: Consolas, monospace; font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .drow .reset { width: 46px; text-align: right; flex: none; font-size: 8px; }
+  .dempty { font-size: 9px; color: var(--muted); opacity: 0.7; text-align: center; margin-top: 12px; }
+</style>
+</head>
+<body>
+  <div class="hud" id="hud">
+    <div class="drag-top pywebview-drag-region"></div>
+    <div class="topbar">
+      <div class="logo"><span class="dot"></span><b>OC-GO</b>&nbsp;MONITOR</div>
+      <div class="topbtns">
+        <span class="live" id="live"><span class="dot"></span>LIVE</span>
+        <button class="refresh" id="refresh" title="立即刷新">↻</button>
+      </div>
+    </div>
+
+    <div class="today">
+      <span class="big" id="todayBig">—</span>
+      <span class="meta" id="todayMeta">等待数据</span>
+    </div>
+
+    <div class="barwrap">
+      <div class="barhead">
+        <span id="barLabel">MONTHLY LIMIT</span>
+        <span class="val" id="monthlyVal">--%</span>
+      </div>
+      <div class="bar"><div class="fill" id="monthlyFill" style="width:0%"></div></div>
+      <div class="barfoot">
+        <span id="monthlyMoney">--</span>
+        <span>重置 <b id="resetText">--</b></span>
+      </div>
+    </div>
+
+    <div class="subrow">
+      <div class="item"><span>还能撑</span><b class="good" id="daysLeft">—</b></div>
+      <div class="item"><span>滚动</span><b id="rollVal">--%</b></div>
+      <div class="item"><span>每周</span><b id="weekVal">--%</b></div>
+    </div>
+
+    <div class="foot" id="foot">更新时间 --</div>
+
+    <div class="detail-overlay" id="detail">
+      <div class="detail-head"><span>LIMITS</span><span class="hint">点击收起</span></div>
+      <div class="dstats">
+        <div class="dstat"><span>今日用量</span><b id="dToday">—</b></div>
+        <div class="dstat"><span>余额</span><b id="dBal">—</b></div>
+        <div class="dstat"><span>当前速度</span><b id="dCur">—</b></div>
+        <div class="dstat"><span>3日趋势</span><b id="dAvg">—</b></div>
+      </div>
+      <div class="dlist" id="dlist"></div>
+    </div>
+
+    <div class="resize-x" id="resizeX" title="左右拖动改宽度"></div>
+    <div class="resize-y" id="resizeY" title="上下拖动改高度"></div>
+    <div class="resize-handle" id="resizeHandle" title="拖动调整大小"></div>
+  </div>
+
+<script>
+  window.__initErr = null;
+  window.addEventListener('error', function(e){ if(!window.__initErr) window.__initErr = 'evt:' + e.message; });
+
+  /* DOM 交互绑定统一延迟到 DOM 就绪（WebView2 解析时序下立即执行可能取不到元素） */
+  function initInteractions(){
+    window.__initErr = window.__initErr || null;
+  let detailOn = false;
+  let viewData = null;
+  const $ = id => document.getElementById(id);
+  const $$ = s => Array.prototype.slice.call(document.querySelectorAll(s));
+
+  function setLive(state) {
+    const el = $('live');
+    el.className = 'live' + (state === 'ok' ? '' : state === 'stale' ? ' stale' : ' dead');
+    el.lastChild.textContent = state === 'ok' ? 'LIVE' : state === 'stale' ? 'STALE' : 'EXPIRED';
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g,
+      c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function fmtUsd(v) {
+    return '$' + (v == null ? 0 : v).toFixed(2);
+  }
+
+  function fmtMoney(v, cur) {
+    if (v == null || isNaN(v)) return '—';
+    if (cur === 'CNY') return '¥' + Number(v).toFixed(2);
+    if (cur === 'USD') return '$' + Number(v).toFixed(2);
+    return (cur ? cur + ' ' : '') + Number(v).toFixed(2);
+  }
+
+  function isPeakNow() {
+    const h = new Date().getHours();
+    return (h >= 9 && h < 12) || (h >= 14 && h < 18);
+  }
+
+  function fmtReset(sec) {
+    if (sec == null || isNaN(sec) || sec < 0) return '--';
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    if (d > 0) return d + '天' + h + '时';
+    if (h > 0) return h + '时' + m + '分';
+    return m + '分钟';
+  }
+
+  function firstProvider(v) {
+    if (!v || !v.providers) return null;
+    const keys = Object.keys(v.providers);   // 对象键顺序 = config 顺序
+    if (!keys.length) return null;
+    return v.providers[keys[0]];
+  }
+
+  function renderDetail(limits) {
+    const list = (limits || []).slice(0, 3);
+    const box = $('dlist');
+    box.innerHTML = '';
+    if (!list.length) {
+      box.innerHTML = '<div class="dempty">暂无额度数据</div>';
+      return;
+    }
+    list.forEach(l => {
+      const pctVal = l.used_pct;
+      const p = Math.min(100, Math.max(0, pctVal == null ? 0 : pctVal));
+      const row = document.createElement('div');
+      row.className = 'drow';
+      const barColor = pctVal != null && pctVal >= 95 ? 'background:var(--danger);box-shadow:0 0 5px var(--danger);'
+                     : pctVal != null && pctVal >= 80 ? 'background:var(--warn);box-shadow:0 0 5px var(--warn);'
+                     : '';
+      row.innerHTML =
+        '<span class="label">' + esc(l.label || l.id) + '</span>' +
+        '<span class="mini"><i style="width:' + p + '%' + (barColor ? ';' + barColor : '') + '"></i></span>' +
+        '<b>' + (pctVal == null ? '--' : Math.round(pctVal) + '%') + '</b>' +
+        '<span class="reset">' + fmtReset(l.reset_in_sec) + '</span>';
+      box.appendChild(row);
+    });
+  }
+
+  function render(v) {
+    viewData = v;
+    try {
+      if (v && v.settings && v.settings.theme) {
+        document.body.setAttribute('data-style', v.settings.theme.id || 'paper');
+      }
+      if (v && v.theme_css) {
+        $$('style[data-theme]').forEach(function(s){ s.parentNode && s.parentNode.removeChild(s); });
+        var html = /^\s*<style/i.test(v.theme_css) ? v.theme_css : '<style data-theme="t">'+v.theme_css+'</style>';
+        document.head.insertAdjacentHTML('beforeend', html);
+      }
+    } catch (e) {
+      // 主题注入失败不阻断数据渲染
+    }
+    const p = firstProvider(v);
+    if (!p) {
+      setLive('dead');
+      $('todayBig').textContent = '—';
+      $('todayMeta').textContent = '等待数据';
+      $('foot').textContent = '请打开主面板配置';
+      return;
+    }
+
+    const age = Date.now() / 1000 - (p.fetched_at || 0);
+    const stale = p.stale || (age > 600);
+    setLive(p.ok ? (stale ? 'stale' : 'ok') : 'dead');
+
+    if (!p.ok) {
+      $('todayBig').textContent = '—';
+      $('todayMeta').textContent = esc(p.error || '数据异常');
+      $('foot').textContent = '更新时间 ' + new Date().toLocaleTimeString();
+      return;
+    }
+
+    const limits = p.limits || [];
+    const monthly = limits.find(l => l.id === 'monthly') || limits.find(l => l.used_pct != null) || null;
+    const t = p.meta && p.meta.today;
+    const pvKind = p.meta && p.meta.kind;
+    const pvBal = (pvKind === 'balance' || pvKind === 'relay');
+
+    // 中部大数字：余额型显示可用余额；否则今日 delta / monthly
+    if (pvBal && p.balance && p.balance.amount != null) {
+      $('todayBig').textContent = fmtMoney(p.balance.amount, p.balance.currency);
+      $('todayMeta').textContent = (p.balance.currency || '') + ' 可用余额'
+        + (isPeakNow() ? ' · 高峰贵一倍' : '');
+    } else if (t && t.delta_pct != null) {
+      $('todayBig').textContent = (t.delta_pct > 0 ? '+' : '') + Number(t.delta_pct).toFixed(1) + '%';
+      const since = t.since_midnight ? '00:00' : (t.base_label || '');
+      $('todayMeta').textContent = '今日 ' + fmtUsd(t.delta_usd) + (since ? ' · 自 ' + since : '') + ' 起算';
+    } else if (monthly && monthly.used_pct != null) {
+      $('todayBig').textContent = Math.round(monthly.used_pct) + '%';
+      $('todayMeta').textContent = '月度用量 · ' + esc(monthly.label || '每月');
+    } else {
+      $('todayBig').textContent = '—';
+      $('todayMeta').textContent = '暂无用量数据';
+    }
+
+    const meta = p.meta || {};
+    const balSpeed = meta.speed || {};
+    if (pvBal) {
+      // 余额型：卡片显示 还能撑 / 日均消耗
+      $('barLabel').textContent = 'BALANCE';
+      $('monthlyVal').textContent = balSpeed.data_ready ? balSpeed.days_left_text : '积累中';
+      const fill2 = $('monthlyFill');
+      fill2.style.width = '0%';
+      fill2.className = 'fill';
+      $('monthlyMoney').textContent = balSpeed.data_ready
+        ? '日均 ' + fmtMoney(balSpeed.daily_amount, p.balance && p.balance.currency) + ' · 近' + balSpeed.sample_days + '日'
+        : '消耗数据积累中';
+      $('resetText').textContent = '可用余额';
+    } else {
+      // 月度进度条
+      const mp = monthly && monthly.used_pct != null ? Math.min(100, monthly.used_pct) : 0;
+      const thr = (v.settings && v.settings.notify) ? v.settings.notify : {};
+      const warnAt = thr.threshold != null ? thr.threshold : 80;
+      const dangerAt = thr.urgent != null ? thr.urgent : 95;
+      $('monthlyVal').textContent = monthly && monthly.used_pct != null ? Math.round(monthly.used_pct) + '%' : '--%';
+      const fill = $('monthlyFill');
+      fill.style.width = mp + '%';
+      fill.className = 'fill' + (mp >= dangerAt ? ' danger' : mp >= warnAt ? ' warn' : '');
+      $('monthlyMoney').textContent =
+        fmtUsd(meta.used_usd != null ? meta.used_usd : 0) + ' / ' + fmtUsd(meta.monthly_limit_usd);
+      $('resetText').textContent = monthly ? fmtReset(monthly.reset_in_sec) : '--';
+    }
+
+    // 还能撑 / 滚动 / 每周
+    const speed = meta.speed || {};
+    if (pvBal) {
+      $('daysLeft').textContent = balSpeed.data_ready ? balSpeed.days_left_text : '积累中';
+      $('rollVal').textContent = balSpeed.data_ready
+        ? fmtMoney(balSpeed.daily_amount, p.balance && p.balance.currency) + '/天' : '--';
+      $('weekVal').textContent = balSpeed.data_ready
+        ? '近' + balSpeed.sample_days + '日' : '--';
+    } else {
+      // 优先科学日均（近 N 天），否则数据不足显示积累中，再否则当前烧速
+      if (speed.avg_days_left_text && speed.avg_days_left_text !== '—') {
+        $('daysLeft').textContent = speed.avg_days_left_text;
+      } else if (speed.data_ready === false) {
+        $('daysLeft').textContent = '积累中';
+      } else {
+        $('daysLeft').textContent = speed.days_left_text || '—';
+      }
+      const rolling = limits.find(l => l.id === 'rolling');
+      const weekly = limits.find(l => l.id === 'weekly');
+      $('rollVal').textContent = rolling && rolling.used_pct != null ? Math.round(rolling.used_pct) + '%' : '--%';
+      $('weekVal').textContent = weekly && weekly.used_pct != null ? Math.round(weekly.used_pct) + '%' : '--%';
+    }
+
+    renderDetail(limits);
+
+    // 详情四行统计
+    try {
+      // 今日用量
+      const t = meta.today || {};
+      if (t.delta_pct != null) {
+        const tv = (t.delta_pct > 0 ? '+' : '') + Number(t.delta_pct).toFixed(1) + '%';
+        const ts = (t.delta_usd != null) ? ' (' + fmtUsd(t.delta_usd) + ')' : '';
+        $('dToday').textContent = tv + ts;
+        $('dToday').className = t.delta_pct > 0 ? 'good' : '';
+      } else {
+        $('dToday').textContent = '—';
+      }
+      // 余额
+      const bal = meta.balance;
+      const used = meta.used_usd;
+      const lim = meta.monthly_limit_usd;
+      if (used != null && lim) {
+        $('dBal').textContent = fmtUsd(used) + ' / ' + fmtUsd(lim);
+      } else if (bal && bal.amount != null) {
+        $('dBal').textContent = fmtUsd(bal.amount);
+      } else {
+        $('dBal').textContent = '—';
+      }
+      // 当前速度
+      const curTxt = (speed.days_left_text && speed.days_left_text !== '—') ? '~' + speed.days_left_text : '—';
+      const curSrc = speed.source === 'today' ? '今日' : speed.source === 'short' ? '近1h' : speed.source === 'trend' ? '趋势' : (speed.source || '');
+      $('dCur').textContent = curTxt + (curSrc ? ' · ' + curSrc : '');
+      $('dCur').className = (speed.days_left_text && speed.days_left_text !== '—') ? 'good' : 'dim';
+      // 3日趋势
+      if (speed.avg_days_left_text && speed.avg_days_left_text !== '—') {
+        $('dAvg').textContent = '~' + speed.avg_days_left_text + ' · ' + (speed.avg_source || '');
+        $('dAvg').className = 'good';
+      } else {
+        $('dAvg').textContent = '积累中';
+        $('dAvg').className = 'dim';
+      }
+    } catch (e) { }
+
+    $('foot').textContent = '更新 ' + new Date(p.fetched_at * 1000).toLocaleTimeString() + (stale ? ' · 延迟' : '');
+  }
+
+  async function pull() {
+    try {
+      const v = await pywebview.api.get_view();
+      render(v);
+    } catch (e) {
+      setLive('dead');
+      $('foot').textContent = '连接中断';
+    }
+  }
+
+  // 立即刷新
+  $('refresh').addEventListener('click', async (ev) => {
+    ev.stopPropagation();
+    const btn = $('refresh');
+    btn.classList.add('spin');
+    try {
+      await pywebview.api.refresh_now();
+      await pull();
+    } catch (e) {
+      setLive('dead');
+    }
+    setTimeout(() => btn.classList.remove('spin'), 600);
+  });
+
+  // 点击切换详情浮层（拖动不触发，三重保险）
+  let downX = 0, downY = 0, tracking = false, dragged = false;
+  let startWinX = 0, startWinY = 0;
+  $('hud').addEventListener('mousedown', (e) => {
+    downX = e.clientX; downY = e.clientY;
+    startWinX = window.screenX; startWinY = window.screenY;
+    tracking = true; dragged = false;
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (tracking && !dragged &&
+        (Math.abs(e.clientX - downX) > 5 || Math.abs(e.clientY - downY) > 5)) {
+      dragged = true;
+    }
+  });
+  window.addEventListener('mouseup', () => { tracking = false; });
+  try {
+  $('hud').addEventListener('click', (e) => {
+    // 保险1：拖动中位移超阈值（mousemove 未被窗口移动打断时有效）
+    if (dragged) { dragged = false; return; }
+    // 保险2：窗口位置变化 = 窗口被拖动过（最可靠，不依赖鼠标事件流）
+    if (Math.abs(window.screenX - startWinX) > 3 ||
+        Math.abs(window.screenY - startWinY) > 3) {
+      return;
+    }
+    detailOn = !detailOn;
+    $('hud').classList.toggle('detail-on', detailOn);
+  });
+  } catch(e) { window.__initErr = window.__initErr || ('hud:' + e.message); }
+
+  // 数据刷新：立即尝试一次（api 可能已就绪），每 30 秒定时刷新，pywebviewready 兜底
+  pull();
+  setInterval(pull, 30000);
+  window.addEventListener('pywebviewready', () => { pull(); });
+
+  // 右侧竖条：左右拖动改宽度
+  try {
+  const rx = $('resizeX');
+  rx.addEventListener('mousedown', (e) => {
+    e.stopPropagation(); e.preventDefault();
+    if(window.pywebview && window.pywebview.api && window.pywebview.api.drag_start){
+      window.pywebview.api.drag_start('resizeX');
+    }
+  });
+  } catch(e) { window.__initErr = window.__initErr || ('rx:' + e.message); }
+
+  // 底部横条：上下拖动改高度
+  try {
+  const ry = $('resizeY');
+  ry.addEventListener('mousedown', (e) => {
+    e.stopPropagation(); e.preventDefault();
+    if(window.pywebview && window.pywebview.api && window.pywebview.api.drag_start){
+      window.pywebview.api.drag_start('resizeY');
+    }
+  });
+  } catch(e) { window.__initErr = window.__initErr || ('ry:' + e.message); }
+
+  // 主进程主动推送（多窗口下最可靠的数据通道，绕开 mini 侧 js_api）
+  window.__pushView = function(v){ render(v); };
+  window.__scriptEnd = true;
+  // mini 窗口隐藏后 evaluate_js 不可用，恢复显示时再拉一次兜底
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
+
+  // 顶部拖拽条：移动窗口（JS → js_api.move_mini → Win32，不依赖 pywebview drag region）
+  const dragTop = document.querySelector('.drag-top');
+  dragTop.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.drag_start) {
+      window.pywebview.api.drag_start('move');
+    }
+  });
+
+  // 右下角拖拽调整大小（通过主进程 resize_mini 实时改尺寸）
+  const handle = $('resizeHandle');
+  handle.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if(window.pywebview && window.pywebview.api && window.pywebview.api.drag_start){
+      window.pywebview.api.drag_start('resize');
+    }
+  });
+  }  /* initInteractions 结束 */
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ try { initInteractions(); } catch(e) { window.__initErr = window.__initErr || ('init:' + e.message); } });
+  } else {
+    try { initInteractions(); } catch(e) { window.__initErr = window.__initErr || ('init:' + e.message); }
+  }
+</script>
+</body>
+</html>

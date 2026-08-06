@@ -1,0 +1,45 @@
+{
+  "providers": {
+    "opencode-go": {
+      "enabled": true,
+      "name": "OpenCode Go",
+      "type": "",
+      "config": {
+        "workspace_id": "wrk_01KY0DNB1JS9JMPMSJAGTQAAKG",
+        "auth_cookie": ""
+      }
+    },
+    "deepseek": {
+      "enabled": true,
+      "name": "deepseek",
+      "type": "deepseek",
+      "config": {
+        "api_key": ""
+      }
+    }
+  },
+  "refresh_interval_sec": 1800,
+  "theme": {
+    "id": "paper",
+    "variant": null
+  },
+  "opacity": {
+    "main": 0.95,
+    "mini": 0.85
+  },
+  "mini_widget_enabled": true,
+  "density": "compact",
+  "currency": "pct",
+  "notify": {
+    "method": "tray",
+    "threshold": 80,
+    "urgent": 95,
+    "events": {
+      "threshold": true,
+      "urgent": true,
+      "cookie_fail": true,
+      "fetch_fail": true
+    }
+  },
+  "start_with_windows": false
+}
