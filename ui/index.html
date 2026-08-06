@@ -346,7 +346,12 @@ function render(){
 function doneGuide(){
   call('save_settings', { ui: { onboarded: true } })
     .catch(function(){})
-    .then(function(){ call('enter_dashboard').catch(function(){}); });
+    .then(function(){ return call('enter_dashboard'); })
+    .then(function(res){
+      if(res && res.url){ location.href = res.url; }
+      else { location.href = 'main_panel.html'; }  // 兜底：相对路径同目录跳转
+    })
+    .catch(function(){ location.href = 'main_panel.html'; });
 }
 
 function boot(){

@@ -2365,7 +2365,12 @@ async function init(){
   });
 
   /* 关于页：重看开屏引导 */
-  $('#btnReplayGuide').addEventListener('click', function(){ call('replay_guide').catch(function(){}); });
+  $('#btnReplayGuide').addEventListener('click', function(){
+    call('replay_guide').then(function(res){
+      if(res && res.url){ location.href = res.url; }
+      else { location.href = 'index.html?guide=1'; }
+    }).catch(function(){ location.href = 'index.html?guide=1'; });
+  });
 
   /* 添加供应商 */
   $('#btnAddProvider').addEventListener('click', function(){

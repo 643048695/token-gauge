@@ -226,21 +226,22 @@ class _Api:
         return {"ok": True}
 
     def enter_dashboard(self):
-        """引导/索引页 → 主面板（同一窗口加载主面板，js_api 保持不变）。"""
+        """引导/索引页 → 主面板。
+
+        返回主面板路径由前端 location 导航：js_api 线程里 load_url
+        跨线程操作窗口会挂掉主窗口（WinForms 限制，与 drag 同坑）。
+        """
         try:
-            self._app.main_window.load_url(
-                os.path.join(BASE_DIR, "ui", "main_panel.html"))
-            return {"ok": True}
+            # 相对路径：前端 location.href 在 file:// 下同目录导航
+            return {"ok": True, "url": "main_panel.html"}
         except Exception as e:
             log.warning(f"enter_dashboard 异常: {e}")
             return {"ok": False, "message": str(e)}
 
     def replay_guide(self):
-        """关于页「重看引导」：带 ?guide=1 强制引导页显示教学。"""
+        """关于页「重看引导」：带 ?guide=1 强制引导页显示教学（返回 URL 由前端导航）。"""
         try:
-            self._app.main_window.load_url(
-                os.path.join(BASE_DIR, "ui", "index.html") + "?guide=1")
-            return {"ok": True}
+            return {"ok": True, "url": "index.html?guide=1"}
         except Exception as e:
             log.warning(f"replay_guide 异常: {e}")
             return {"ok": False, "message": str(e)}
