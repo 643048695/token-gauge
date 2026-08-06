@@ -232,6 +232,16 @@ main{display:flex; height:calc(100% - 36px);}
 .bal-avail{font-size:10px; color:var(--muted); margin-bottom:6px;}
 .bal-avail.bad{color:var(--danger); font-weight:600;}
 .sparkline{display:flex; align-items:flex-end; gap:4px; height:36px; margin:8px 0 4px; padding:0 2px;}
+/* SVG 柱状图 */
+.spark-chart{width:100%; height:auto; display:block; margin:4px 0 2px;}
+.spark-bar{fill:var(--accent); opacity:.72; transition:opacity .15s;}
+.spark-bar:hover{opacity:1;}
+.spark-bar.today{fill:var(--accent); opacity:1; filter:drop-shadow(0 0 4px var(--glow));}
+.spark-bar.dim{fill:rgba(255,255,255,.12); opacity:1;}
+.spark-val{font-size:9px; fill:var(--text); font-family:Consolas,monospace;}
+.spark-day{font-size:8px; fill:var(--muted); font-family:Consolas,monospace;}
+.spark-day.today{fill:var(--accent); font-weight:600;}
+.spark-grid{stroke:rgba(255,255,255,.06); stroke-width:1;}
 .spark-title{font-size:10px; color:var(--muted); margin:6px 0 2px;}
 .btn-refresh-all{margin-left:auto;}
 .btn:disabled{opacity:.5; cursor:default;}
@@ -1312,18 +1322,13 @@ function dashCardHtml(pid, cfg, pv){
 
   var metaChips = '';
   if(!off && pvKind !== 'balance'){
-    // opencode 近5日消耗柱状图（按 token 显示）
+    // opencode 近5日消耗柱状图（SVG）
     var wp = pv && pv.meta && pv.meta.week_pct;
     var wt = pv && pv.meta && pv.meta.week_tokens;
     if(wp && wp.length){
       var series = (wt && wt.length) ? wt : wp;
-      var wm = Math.max.apply(null, series.concat([0.01]));
       limitsHtml += '<div class="spark-title">近5日每日消耗'+(wt?'（token）':'（%）')+'</div>'+
-        '<div class="sparkline">'+series.map(function(v, i){
-          var hh = Math.max(8, Math.round(v / wm * 100));
-          var tip = wt ? fmtTokens(v)+' token' : v+'%';
-          return '<div class="spark-col'+(v<=0?' dim':'')+'" style="height:'+hh+'%" title="'+tip+'"></div>';
-        }).join('')+'</div>';
+        sparkChartHtml(series, {fmt: wt ? fmtTokens : function(v){ return v+'%'; }});
     }
     var cells = [];
     // 订阅型/中转站 token 量
@@ -1401,6 +1406,37 @@ function fmtTokens(n){
   if(n >= 10000) return Math.round(n/10000)+' 万';
   return Math.round(n)+'';
 }
+/* SVG 柱状图：柱顶数值 + 日期标签 + 今天高亮 + 网格线 */
+function sparkChartHtml(series, opts){
+  opts = opts || {};
+  var fmt = opts.fmt || fmtTokens;
+  var todayIdx = series.length - 1;
+  var mx = Math.max.apply(null, series.concat([0.01]));
+  var slot = 36, w = series.length * slot + 6, h = 92, top = 18;
+  var barMax = h - 26 - 14;
+  var svg = '<svg class="spark-chart" viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg">';
+  for(var g = 0; g < 3; g++){
+    var gy = top + (barMax - 8) * g / 2;
+    svg += '<line x1="4" y1="'+gy+'" x2="'+(w-4)+'" y2="'+gy+'" class="spark-grid"/>';
+  }
+  series.forEach(function(v, i){
+    var x = 6 + i * slot;
+    var bh = Math.max(3, v / mx * (barMax - 8));
+    var y = top + (barMax - 8) - bh;
+    var isToday = i === todayIdx;
+    var cls = (v <= 0 ? 'spark-bar dim' : 'spark-bar') + (isToday && v > 0 ? ' today' : '');
+    if(v > 0){
+      svg += '<text x="'+(x+13)+'" y="'+(y-4)+'" class="spark-val" text-anchor="middle">'+fmt(v)+'</text>';
+    }
+    svg += '<rect x="'+x+'" y="'+y+'" width="26" height="'+bh+'" rx="3" class="'+cls+'">'+
+      '<title>'+fmt(v)+'</title></rect>';
+    var d = new Date(Date.now() - (todayIdx - i) * 86400000);
+    svg += '<text x="'+(x+13)+'" y="'+(h-4)+'" class="spark-day'+(isToday?' today':'')+'" text-anchor="middle">'+
+      (d.getMonth()+1)+'-'+d.getDate()+'</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
 function balanceCardHtml(pv){
   var b = pv.balance || {};
   var m = pv.meta || {};
@@ -1462,14 +1498,11 @@ function balanceCardHtml(pv){
       (sp.total_consumed != null ? '<div class="te-row"><span>接入以来已用</span><b>≈ '+fmtTokens(sp.total_consumed / (models[0].output * mul) * 1000000)+' tokens</b></div>' : '')+
     '</div>';
   }
-  // 近 7 日消耗柱状图
+  // 近 7 日消耗柱状图（SVG）
   var week = sp.week || [];
   if(week.length){
-    var mx = Math.max.apply(null, week.concat([0.01]));
-    h += '<div class="sparkline">'+week.map(function(v){
-      var hh = Math.max(8, Math.round(v / mx * 100));
-      return '<div class="spark-col'+(v<=0?' dim':'')+'" style="height:'+hh+'%" title="'+money(v,cur)+'"></div>';
-    }).join('')+'</div>';
+    h += '<div class="spark-title">近7日每日消耗（'+cur+'）</div>'+
+      sparkChartHtml(week, {fmt: function(v){ return money(v, cur); }});
   }
   if(pv.ok === false){
     h = '<div class="card-meta"><span class="chip danger">抓取失败'+(pv.error?': '+esc(pv.error):'')+'</span></div>';

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""诊断 mini __mini 未挂载"""
+"""查 opencode 卡柱状图"""
 import json
 import os
 import sys
@@ -21,7 +21,7 @@ def log(msg):
 
 
 with open(RESULT, "w", encoding="utf-8") as f:
-    f.write("=== mini __mini 诊断 %s ===\n" % time.strftime("%Y-%m-%d %H:%M:%S"))
+    f.write("=== opencode 卡图表诊断 %s ===\n" % time.strftime("%Y-%m-%d %H:%M:%S"))
 
 import webview  # noqa: E402
 from main import DashboardApp  # noqa: E402
@@ -36,16 +36,31 @@ def test_loop():
             break
         time.sleep(0.2)
     time.sleep(2)
-    js = """JSON.stringify({
-      mini: typeof window.__mini,
-      render: typeof render,
-      scriptEnd: !!window.__scriptEnd,
-      initErr: window.__initErr,
-      errLog: window.__errLog || null
-    })"""
     try:
-        r = app.mini_window.evaluate_js(js)
-        log("mini 状态: " + str(r))
+        app.kernel.refresh_now()
+    except Exception as e:
+        log("refresh_now 异常: %s" % e)
+    time.sleep(3)
+    try:
+        app.main_window.evaluate_js("window.location.reload()")
+    except Exception:
+        pass
+    time.sleep(6)
+    js = """JSON.stringify((function(){
+      var oc = Array.prototype.slice.call(document.querySelectorAll('.pcard')).find(function(c){
+        return (c.querySelector('.pcard-name')||{}).textContent === 'OpenCode Go';
+      });
+      if(!oc) return {noCard: true, cards: document.querySelectorAll('.pcard').length};
+      return {
+        sparkCharts: oc.querySelectorAll('.spark-chart').length,
+        sparkTitle: (oc.querySelector('.spark-title')||{}).textContent || null,
+        err: (oc.querySelector('.chip.danger')||{}).textContent || null,
+        metaCells: Array.prototype.slice.call(oc.querySelectorAll('.meta-cell .meta-k')).map(function(x){return x.textContent;})
+      };
+    })())"""
+    try:
+        r = app.main_window.evaluate_js(js)
+        log("opencode 卡: " + str(r))
     except Exception as e:
         log("evaluate 异常: %s" % e)
     log("诊断完成")
