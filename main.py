@@ -742,8 +742,19 @@ class DashboardApp:
         """轮询界面状态文件，响应 main_hidden / mini_hidden 变化。
         读取失败时保持现状，绝不回退默认导致窗口弹回。"""
         last = read_ui_state() or {}
+        cfg_marker = os.path.join(BASE_DIR, ".config_changed")
         while not self._stop_push.wait(3):
             try:
+                # CLI 配置变更标记：热重载供应商并刷新
+                if os.path.exists(cfg_marker):
+                    try:
+                        os.remove(cfg_marker)
+                        self.kernel._rebuild_providers()
+                        self.kernel.refresh_now()
+                        self.pusher.push_once()
+                        log.info("检测到 CLI 配置变更，已热重载供应商")
+                    except Exception as _e:
+                        log.warning(f"CLI 配置热重载失败: {_e}")
                 cur = read_ui_state()
                 if cur is None:
                     continue

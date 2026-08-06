@@ -71,11 +71,13 @@ def _deep_merge(base: dict, override: dict) -> dict:
 
 
 def _read_file() -> dict:
-    """读磁盘上的 config.json；文件不存在或损坏时返回 {}。"""
+    """读磁盘上的 config.json；文件不存在或损坏时返回 {}。敏感字段解密为明文。"""
     try:
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-            return data if isinstance(data, dict) else {}
+        if isinstance(data, dict):
+            _walk_secrets(data, _dpapi_decrypt)
+        return data if isinstance(data, dict) else {}
     except FileNotFoundError:
         return {}
     except (json.JSONDecodeError, OSError) as exc:
@@ -101,7 +103,9 @@ def _dblob(data: bytes):
 
 
 def _dpapi_encrypt(plain: str) -> str:
-    """CryptProtectData 加密；失败返回原明文（不阻塞功能）。"""
+    """CryptProtectData 加密；失败返回原明文（不阻塞功能）。已加密的值不再重复加密（幂等）。"""
+    if not isinstance(plain, str) or plain.startswith(_DPAPI_PREFIX):
+        return plain
     if os.name != "nt":
         return plain
     try:
