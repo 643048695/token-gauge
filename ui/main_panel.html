@@ -655,11 +655,20 @@ input[type=range]:disabled{opacity:.4;}
 .stats-head::before{content:'';width:4px;height:12px;background:var(--accent);border-radius:2px;box-shadow:0 0 8px var(--glow);}
 .stats-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;}
 @media(max-width:960px){.stats-grid{grid-template-columns:1fr;}}
-.stats-card{background:var(--bg-card);border:1px solid var(--li);border-radius:12px;padding:14px 16px;min-width:0;}
+.stats-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;min-width:0;}
 .stats-card h4{margin:0 0 10px;font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px;}
 .stats-card h4 .u{color:var(--accent);font-weight:400;}
 .stats-bar{width:100%;display:block;}
-.lg-row{display:flex;align-items:center;gap:8px;font-size:11px;padding:5px 0;border-bottom:1px dashed var(--li);}
+/* 任务B：统计区图表主题化 —— SVG 元素用 CSS 变量（--line/--muted/--text/--radius），随 themes.py 5 风格联动 */
+.sb-grid{stroke:var(--line);stroke-width:1;}
+.sb-day{fill:var(--muted);font-family:Consolas,monospace;}
+.sb-val{fill:var(--text);font-family:Consolas,monospace;font-size:9px;font-weight:600;}
+/* 任务B：柱形图附近单位快捷切换 */
+.stats-head .stats-unit{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
+.unit-btn{font-size:10px;padding:2px 9px;border-radius:var(--radius);border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font-ui,inherit);transition:all .15s;}
+.unit-btn:hover{color:var(--text);border-color:var(--muted);}
+.unit-btn.active{color:var(--accent);border-color:var(--accent);background:rgba(255,255,255,.05);box-shadow:0 0 6px var(--glow);}
+.lg-row{display:flex;align-items:center;gap:8px;font-size:11px;padding:5px 0;border-bottom:1px dashed var(--line);}
 .lg-row:last-child{border-bottom:none;}
 .lg-row i{width:10px;height:10px;border-radius:3px;flex:none;}
 .lg-row span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
@@ -1370,6 +1379,12 @@ function renderDashboard(){
   $$('#dashDots .pager-dot').forEach(function(dot){
     dot.addEventListener('click', function(){ pagerGo(Number(dot.dataset.page)); });
   });
+  /* 任务B：底部统计区单位快捷切换 */
+  $$('#dashGrid .stats-unit .unit-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      setDisplayUnit(btn.getAttribute('data-unit'));
+    });
+  });
 
   /* 卡片事件 */
   $$('#dashGrid .btn-test').forEach(function(btn){
@@ -1604,7 +1619,79 @@ function sparkChartHtml(series, opts){
   return svg;
 }
 /* ---- 底部统计区：数值版单位换算 + 柱形/扇形汇总 ---- */
-var STATS_COLORS = ['#22d3ee','#a78bfa','#34d399','#fbbf24','#f472b6','#60a5fa','#fb923c','#4ade80','#e879f9','#2dd4bf'];
+var STATS_COLORS = ['#22d3ee','#a78bfa','#34d399','#fbbf24','#f472b6','#60a5fa','#fb923c','#4ade80','#e879f9','#2dd4bf'];  /* 兜底色板（任务B：实际取用 themeChartColors 主题派生色） */
+/* 任务B：主题派生图表色板 —— 读当前主题 CSS 变量（--accent/--accent2），
+   色相环等距取色 + 明度/饱和度微差制造层次；黑白主题（如粗野）自动改用次色相点缀 */
+function parseCssColor(str){
+  str = String(str||'').trim();
+  var m;
+  if((m = str.match(/^#([0-9a-f]{6})$/i))){
+    var n = parseInt(m[1], 16);
+    return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+  }
+  if((m = str.match(/^#([0-9a-f]{3})$/i))){
+    var h = m[1];
+    return parseCssColor('#'+h[0]+h[0]+h[1]+h[1]+h[2]+h[2]);
+  }
+  if((m = str.match(/rgba?\(([^)]+)\)/i))){
+    var p = m[1].split(',').map(function(x){ return parseFloat(x); });
+    if(p.length >= 3) return { r:p[0]|0, g:p[1]|0, b:p[2]|0 };
+  }
+  return { r:0, g:255, b:156 };
+}
+function rgbToHsl(r, g, b){
+  r/=255; g/=255; b/=255;
+  var mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx-mn;
+  var h = 0, s = 0, l = (mx+mn)/2;
+  if(d){
+    s = l > 0.5 ? d/(2-mx-mn) : d/(mx+mn);
+    if(mx === r) h = ((g-b)/d)%6;
+    else if(mx === g) h = (b-r)/d+2;
+    else h = (r-g)/d+4;
+    h *= 60; if(h < 0) h += 360;
+  }
+  return { h:h, s:s, l:l };
+}
+function hslToHex(h, s, l){
+  h = ((h%360)+360)%360; s = Math.max(0, Math.min(1, s)); l = Math.max(0, Math.min(1, l));
+  var c = (1-Math.abs(2*l-1))*s, x = c*(1-Math.abs((h/60)%2-1)), m = l-c/2;
+  var r = 0, g = 0, b = 0;
+  if(h < 60){ r=c; g=x; } else if(h < 120){ r=x; g=c; } else if(h < 180){ g=c; b=x; }
+  else if(h < 240){ g=x; b=c; } else if(h < 300){ r=x; b=c; } else { r=c; b=x; }
+  var to = function(v){ return ('0'+Math.round((v+m)*255).toString(16)).slice(-2); };
+  return '#'+to(r)+to(g)+to(b);
+}
+function themeChartColors(n){
+  var cs = getComputedStyle(document.documentElement);
+  var acc = parseCssColor(cs.getPropertyValue('--accent'));
+  var acc2 = parseCssColor(cs.getPropertyValue('--accent2'));
+  var a = rgbToHsl(acc.r, acc.g, acc.b);
+  var b2 = rgbToHsl(acc2.r, acc2.g, acc2.b);
+  var h0 = a.h, s0 = a.s;
+  if(s0 < 0.12){ h0 = b2.h; s0 = Math.max(b2.s, 0.6); }  /* 黑白主题：次色相点缀 */
+  var out = [];
+  for(var i=0; i<n; i++){
+    var h = h0 + 360*i/n;
+    var l = 0.52 + (i%2 ? 0.13 : -0.10);
+    var s = Math.min(1, Math.max(0.32, s0 + (i%3===1 ? 0.12 : -0.06)));
+    out.push(hslToHex(h, s, l));
+  }
+  return out;
+}
+/* 任务B：柱体圆角随主题 --radius（8bit/粗野=0 直角，纸面=6 圆角） */
+function statsRadiusPx(){
+  var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--radius'));
+  if(isNaN(v)) v = 3;   /* 注意：8bit/粗野 --radius 为 0px，0 是合法值不能用 || 兜底 */
+  return Math.min(8, Math.max(0, v));
+}
+/* 任务B：统计区单位快捷切换 —— 改 display.unit 即时重渲染 + 静默持久化（外观页设置保留） */
+function setDisplayUnit(u){
+  var d = state.settings.display || {};
+  var next = { unit: u, fx_rate: Number(d.fx_rate) || 7.2 };
+  state.settings.display = next;
+  renderAll();
+  call('save_settings', patchTop('display', next)).catch(function(){});
+}
 function unitVal(amt, cur, meta){
   if(amt == null || isNaN(Number(amt))) return null;
   var d = state.settings.display || {};
@@ -1644,6 +1731,7 @@ function statsSectionHtml(v, s){
   var u = d.unit || 'auto';
   /* 收集有消耗数据的供应商 */
   var rows = [];
+  var chartColors = themeChartColors(12);
   Object.keys(s.providers || {}).forEach(function(pid, idx){
     var cfg = s.providers[pid];
     if(!cfg.enabled) return;
@@ -1658,7 +1746,7 @@ function statsSectionHtml(v, s){
     else if(kind === 'quota'){ today = m.today_tokens != null ? Number(m.today_tokens) : null; week = (m.week_tokens || []).map(Number); }
     else if(kind === 'relay'){ today = sp.today_amount != null ? Number(sp.today_amount) : null; week = (sp.week || []).map(Number); }
     if(today == null && (!week || !week.length)) return;
-    rows.push({ pid: pid, name: cfg.name || pid, color: STATS_COLORS[idx % STATS_COLORS.length],
+    rows.push({ pid: pid, name: cfg.name || pid, color: chartColors[idx % chartColors.length],
       today: today, week: week, cur: cur, meta: m });
   });
   if(!rows.length) return '<div class="stats-section"><div class="stats-empty">'+I18N.t('暂无消耗数据')+'</div></div>';
@@ -1685,12 +1773,12 @@ function statsSectionHtml(v, s){
   var bar = '<svg class="stats-bar" viewBox="0 0 '+wBar+' '+(bh+26)+'" xmlns="http://www.w3.org/2000/svg">';
   for(var g=0; g<4; g++){
     var gy = topBar + (bh - 10) * g / 3;
-    bar += '<line x1="30" y1="'+gy+'" x2="'+(wBar-10)+'" y2="'+gy+'" stroke="rgba(128,128,128,.14)"/>';
+    bar += '<line class="sb-grid" x1="30" y1="'+gy+'" x2="'+(wBar-10)+'" y2="'+gy+'"/>';
   }
   for(var d2=0; d2<DAYS; d2++){
     var dt = new Date(Date.now() - (DAYS-1-d2)*86400000);
     var lbl = (dt.getMonth()+1)+'-'+dt.getDate();
-    bar += '<text x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+18)+'" font-size="9" fill="rgba(128,128,128,.7)" text-anchor="middle">'+lbl+'</text>';
+    bar += '<text class="sb-day" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+18)+'" font-size="9" text-anchor="middle">'+lbl+'</text>';
     var cum = 0;
     var x = 32 + d2*bw;
     rows.forEach(function(r){
@@ -1699,11 +1787,15 @@ function statsSectionHtml(v, s){
       if(val <= 0) return;
       var hh = Math.max(2, val / mx * (bh - 10));
       var y = topBar + (bh - 10) - cum - hh;
-      bar += '<rect x="'+x+'" y="'+y+'" width="'+(bw-18)+'" height="'+hh+'" fill="'+r.color+'" rx="1.5" opacity="0.92"><title>'+esc(r.name)+': '+fmtStatNum(val)+'</title></rect>';
+      bar += '<rect x="'+x+'" y="'+y+'" width="'+(bw-18)+'" height="'+hh+'" fill="'+r.color+'" rx="'+statsRadiusPx()+'" opacity="0.92"><title>'+esc(r.name)+': '+fmtStatNum(val)+'</title></rect>';
       cum += hh;
     });
-    if(u !== 'auto' && total[d2] > 0){
-      bar += '<text x="'+(32 + d2*bw + bw/2)+'" y="'+(topBar + (bh-10) - total[d2]/mx*(bh-10) - 4)+'" font-size="9" fill="var(--text)" text-anchor="middle" opacity=".85">'+fmtStatNum(total[d2])+'</text>';
+    /* 任务B：柱顶标数字（所有单位模式；auto 为各供应商原币种之和） */
+    if(total[d2] > 0){
+      var ty = topBar + (bh-10) - total[d2]/mx*(bh-10) - 4;
+      bar += '<text class="sb-val" x="'+(32 + d2*bw + bw/2)+'" y="'+ty+'" text-anchor="middle" opacity=".9">'
+        + (u === 'auto' ? '<title>'+esc(I18N.t('自动模式：各供应商原币种之和'))+'</title>' : '')
+        + fmtStatNum(total[d2])+'</text>';
     }
   }
   bar += '</svg>';
@@ -1742,8 +1834,12 @@ function statsSectionHtml(v, s){
 
   /* ---- 汇总输出 ---- */
   var unitNote = (u === 'usd') ? I18N.t('（美元）') : (u === 'cny') ? I18N.t('（人民币）') : (u === 'tokens') ? I18N.t('（tokens）') : '';
+  var unitBtns = ['auto','usd','cny','tokens'].map(function(k){
+    var lbl = (k==='auto') ? I18N.t('自动') : (k==='usd') ? I18N.t('美元') : (k==='cny') ? I18N.t('人民币') : I18N.t('Tokens');
+    return '<button type="button" class="unit-btn'+(u===k?' active':'')+'" data-unit="'+k+'" title="'+esc(lbl)+'">'+lbl+'</button>';
+  }).join('');
   return '<div class="stats-section">'+
-    '<div class="stats-head">'+I18N.t('全部消耗 · 统计')+unitNote+'</div>'+
+    '<div class="stats-head">'+I18N.t('全部消耗 · 统计')+unitNote+'<span class="stats-unit">'+unitBtns+'</span></div>'+
     '<div class="stats-grid">'+
       '<div class="stats-card"><h4>'+I18N.t('近 7 日消耗')+'</h4>'+bar+'</div>'+
       pieHtml +
@@ -2733,6 +2829,23 @@ document.addEventListener('DOMContentLoaded', init);
     fetchView: fetchView,
     pagerGo: pagerGo,
     pagerInfo: function(){ return { page: _pagerPage, pages: _pagerPages }; },
+    /* 任务B：测试接口 */
+    setDisplayUnit: setDisplayUnit,
+    themeChartColors: themeChartColors,
+    applyTheme: applyTheme,
+    statsInfo: function(){
+      var svg = document.querySelector('.stats-bar');
+      if(!svg) return { exists:false };
+      var segs = svg.querySelectorAll('rect');
+      var fills = [];
+      segs.forEach(function(r){ fills.push(r.getAttribute('fill')); });
+      var vals = [];
+      svg.querySelectorAll('text.sb-val').forEach(function(t){ vals.push(t.textContent); });
+      var grid = svg.querySelector('line.sb-grid');
+      var gs = grid ? getComputedStyle(grid).stroke : null;
+      return { exists:true, segs:segs.length, fills:fills, segRx: segs.length ? segs[0].getAttribute('rx') : null,
+        vals:vals, gridStroke:gs, unit:(state.settings.display||{}).unit };
+    },
   };
 })();
 </script>

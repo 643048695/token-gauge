@@ -347,6 +347,8 @@ window.I18N = (function () {
     '（tokens）': ' (tokens)',
     '底部统计区（柱形/扇形）': 'Stats Section (bar/pie)',
       '自动（原币种）': 'Auto (native)',
+      '自动': 'Auto',
+      '自动模式：各供应商原币种之和': 'Auto: sum of native units',
     '人民币': 'CNY',
     '计量单位': 'Units',
     '金额与消耗显示口径（卡片 + 底部统计区）': 'Amount/usage display (cards + stats)',
