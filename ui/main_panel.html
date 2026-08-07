@@ -2419,7 +2419,7 @@ function renderAppearance(){
   var dUnit = (s.display || {}).unit || 'auto';
   var fxRate = (s.display || {}).fx_rate || 7.2;
   var diyMini = diy.mini_provider || '';
-  var miniStyle = s.mini_style || 'classic';
+
   var diyMods = diy.modules || { balance:{bal_main:true,meta_grid:true,token_est:true,chart:true}, quota:{progress:true,tokens:true,chart:true} };
   diyMods.balance = Object.assign({bal_main:true,meta_grid:true,token_est:true,chart:true}, diyMods.balance||{});
   diyMods.quota = Object.assign({progress:true,tokens:true,chart:true}, diyMods.quota||{});
@@ -2491,13 +2491,7 @@ function renderAppearance(){
             }).join('')+
           '</select>'+
         '</div>'+
-        '<div class="diy-row" style="margin-top:10px"><span class="diy-lbl">迷你窗形态</span>'+
-          '<div class="opt-group">'+
-            '<button class="opt-btn'+(miniStyle==='classic'?' active':'')+'" data-mstyle="classic" '+(disabled?'disabled':'')+I18N.t('>卡片</button>')+
-            '<button class="opt-btn'+(miniStyle==='ball'?' active':'')+'" data-mstyle="ball" '+(disabled?'disabled':'')+I18N.t('>悬浮球</button>')+
-            '<button class="opt-btn'+(miniStyle==='pet'?' active':'')+'" data-mstyle="pet" '+(disabled?'disabled':'')+I18N.t('>桌宠</button>')+
-          '</div>'+
-        '</div>'+
+
       '</div>'+
     '</div>'+
 
@@ -2632,14 +2626,7 @@ function renderAppearance(){
   if(miniProvider) miniProvider.addEventListener('change', function(){
     saveDiy({ mini_provider: miniProvider.value });
   });
-  /* 迷你窗形态（切换后立即推送迷你窗，不等 8 秒轮询） */
-  $$('#appearanceBody .opt-btn[data-mstyle]').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      save(patchTop('mini_style', btn.dataset.mstyle)).then(function(){
-        var api2 = window.pywebview && window.pywebview.api;
-        if(api2 && api2.push_mini) api2.push_mini();
-      }).catch(function(){});
-    });
+  
   });
   var DIY_MAP = [
     ['diyBalMain',   'balance', 'bal_main'],

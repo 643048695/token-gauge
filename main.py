@@ -120,10 +120,6 @@ class _Api:
             # 透明度只作用于迷你窗（主面板透明度已取消）
             self._app.apply_opacity(self._app.mini_window,
                                     settings.get("opacity", {}).get("mini", 0.92))
-        if "mini_style" in patch:
-            # 形态变化 → 调整迷你窗尺寸（ball/pet 小窗，classic 恢复）
-            self._app._apply_mini_style_size(patch.get("mini_style", "classic"))
-            self._app.pusher.push_once()
         # 主题/供应商变化后立即推送给迷你窗，让悬浮窗即时跟随
         if any(k in patch for k in ("theme", "providers")):
             self._app.pusher.push_once()
@@ -379,7 +375,6 @@ class DashboardApp:
             os.path.join(BASE_DIR, "ui", "mini_widget.html"),
             width=w, height=h,
             frameless=True,
-            transparent=True,
             # 不置顶：悬浮窗只待在桌面层，不盖在游戏/其他软件上层
             # 拖动走顶部 .pywebview-drag-region 拖拽区，避免整窗 easy_drag 拦截 resize 把手
             js_api=self.api,
@@ -397,15 +392,8 @@ class DashboardApp:
             # 迷你窗不出现在任务栏：加 WS_EX_TOOLWINDOW、去 WS_EX_APPWINDOW
             self.mini_window.events.loaded += self._mini_toolwindow
         except Exception as _e: log.debug(f"main.py 异常: {_e}")
-        try:
-            # 启动时按形态调整迷你窗尺寸（ball/pet 小窗，classic 配置尺寸）
-            style0 = (settings or self.cfg).get("mini_style", "classic")
-            self.mini_window.events.loaded += lambda: self._apply_mini_style_size(style0)
-        except Exception as _e: log.debug(f"main.py 异常: {_e}")
-        try:
-            # 透明窗口：LayeredWindow + color-key（品红 #FF00FF，球/宠物形态背景用键色）
-            self.mini_window.events.loaded += self._mini_color_key
-        except Exception as _e: log.debug(f"main.py 异常: {_e}")
+
+
 
     def _monitor_work(self, hwnd):
         """窗口所在显示器的工作区（绝对坐标 left/top/width/height）。"""

@@ -473,10 +473,6 @@ body.style-pet .pet-face{font-size:56px;}
     } catch (e) {
       // 主题注入失败不阻断数据渲染
     }
-    const _style = (v && v.settings && v.settings.mini_style) || 'classic';
-    document.body.classList.remove('style-ball', 'style-pet');
-    if (_style === 'ball') { document.body.classList.add('style-ball'); renderBall(v); return; }
-    if (_style === 'pet') { document.body.classList.add('style-pet'); renderPet(v); return; }
     setStyleHost(true);
     const p = firstProvider(v);
     if (!p) {
