@@ -688,16 +688,10 @@ input[type=range]:disabled{opacity:.4;}
 #dashGrid .pcard[draggable=true]:active{cursor:grabbing;}
 #dashGrid .pcard.drag-src{opacity:.35;outline:2px dashed var(--accent);outline-offset:2px;}
 #dashGrid .pcard.drag-over{outline:2px solid var(--accent);outline-offset:2px;box-shadow:0 0 14px var(--glow);}
-/* ---- 卡片分页（任务A：每页2张，translateX 滑动 + 指示点） ---- */
-.pager{overflow:hidden; border-radius:var(--radius); grid-column:1 / -1;}
-.pager-track{display:flex; transition:transform .42s cubic-bezier(.25,.75,.3,1); will-change:transform;}
-.pager-page{min-width:100%; flex:none; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:var(--gap); align-content:start; align-items:stretch;}
-.pager-page > .pcard{min-width:0;}
-@media (max-width:640px){.pager-page{grid-template-columns:1fr;}}
-.pager-dots{display:flex; justify-content:center; align-items:center; gap:8px; margin:12px 0 2px; min-height:12px;}
-.pager-dot{width:8px; height:8px; border-radius:4px; background:var(--line); border:none; cursor:pointer; padding:0; transition:all .28s ease;}
-.pager-dot:hover{background:var(--muted); transform:scale(1.25);}
-.pager-dot.active{width:22px; background:var(--accent); box-shadow:0 0 8px var(--glow);}
+/* 仪表盘卡片：一行两张，纵向滚动 */
+#dashGrid{grid-template-columns:repeat(2, minmax(0,1fr)); align-items:stretch;}
+#dashGrid > .pcard{min-width:0;}
+@media (max-width:640px){#dashGrid{grid-template-columns:1fr;}}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -1363,34 +1357,15 @@ function renderDashboard(){
     grid.innerHTML = I18N.t('<div class="empty-box"><b>暂无供应商</b><br>请在 config.json 中配置 providers，或在「供应商」页查看配置入口。</div>');
     return;
   }
-  var PER_PAGE = 2, pages = [];
-  for(var pi=0; pi<pidList.length; pi+=PER_PAGE) pages.push(pidList.slice(pi, pi+PER_PAGE));
-  _pagerPages = pages.length;
-  if(_pagerPage > _pagerPages - 1) _pagerPage = _pagerPages - 1;
-  if(_pagerPage < 0) _pagerPage = 0;
-  var pageHtml = pages.map(function(pids){
-    return '<div class="pager-page">'+pids.map(function(pid){
-      try {
-        return dashCardHtml(pid, s.providers[pid], v.providers ? v.providers[pid] : null);
-      } catch(e) {
-        return I18N.t('<div class="card pcard failed"><div class="card-meta"><span class="chip danger">渲染异常: ')+esc(e.message)+'</span></div></div>';
-      }
-    }).join('')+'</div>';
+  /* 流式布局：一行两张，内容往下滚动 */
+  var cardsHtml = pidList.map(function(pid){
+    try {
+      return dashCardHtml(pid, s.providers[pid], v.providers ? v.providers[pid] : null);
+    } catch(e) {
+      return I18N.t('<div class="card pcard failed"><div class="card-meta"><span class="chip danger">渲染异常: ')+esc(e.message)+'</span></div></div>';
+    }
   }).join('');
-  var dotsHtml = '';
-  if(_pagerPages > 1){
-    dotsHtml = '<div class="pager-dots" id="dashDots">'+pages.map(function(_, i){
-      return '<button type="button" class="pager-dot'+(i===_pagerPage?' active':'')+'" data-page="'+i+'" aria-label="'+(i+1)+'/'+_pagerPages+'"></button>';
-    }).join('')+'</div>';
-  }
-  grid.innerHTML =
-    '<div class="pager" id="dashPager"><div class="pager-track" id="dashTrack" style="transform:translateX(-'+(_pagerPage*100)+'%)">'+pageHtml+'</div></div>'+
-    dotsHtml +
-    statsSectionHtml(v, s);
-  /* 指示点点击跳页 */
-  $$('#dashDots .pager-dot').forEach(function(dot){
-    dot.addEventListener('click', function(){ pagerGo(Number(dot.dataset.page)); });
-  });
+  grid.innerHTML = cardsHtml + statsSectionHtml(v, s);
   /* 任务B：底部统计区单位快捷切换 */
   $$('#dashGrid .stats-unit .unit-btn').forEach(function(btn){
     btn.addEventListener('click', function(){
