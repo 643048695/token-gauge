@@ -702,27 +702,35 @@ class DashboardApp:
             log.warning(f"_mini_toolwindow 异常: {e}")
 
     def _apply_mini_style_size(self, style):
-        """按形态调整迷你窗尺寸：ball/pet 148x150 小窗（视觉接近球），classic 恢复配置。"""
+        """按形态调整迷你窗：ball/pet 小窗 + 圆形窗口区域（SetWindowRgn），classic 恢复方形。"""
         try:
             win = self.cfg.get("window", {}) or {}
-            if style in ("ball", "pet"):
+            round_ = style in ("ball", "pet")
+            if round_:
                 w, h = 148, 150
             else:
                 w = int(win.get("mini_width", 300))
                 h = int(win.get("mini_height", 170))
+            hwnd = self._window_hwnd(self.mini_window)
+            if not hwnd:
+                return
+            import ctypes
+            u32 = ctypes.windll.user32
+            # 只改尺寸、不动位置（SWP_NOMOVE | SWP_NOZORDER）——防漂移到左上角
+            u32.SetWindowPos(hwnd, 0, 0, 0, w, h, 0x0004 | 0x0010)
+            # 圆形窗口区域：球/宠物形态窗口外形为椭圆（点击/区域都在圆内）
+            if round_:
+                rgn = u32.CreateEllipticRgn(0, 0, w, h)
+            else:
+                rgn = u32.CreateRectRgn(0, 0, w, h)
+            if rgn:
+                u32.SetWindowRgn(hwnd, rgn, True)
+            # resize 后重新定位到角落（防位置漂移）
             try:
-                if self.mini_window and getattr(self.mini_window, "resize", None):
-                    self.mini_window.resize(w, h)
+                self._move_mini_to_corner(self.cfg)
             except Exception:
                 pass
-            try:
-                hwnd = self._window_hwnd(self.mini_window)
-                if hwnd:
-                    import ctypes
-                    ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, w, h, 0x0004 | 0x0010)
-            except Exception:
-                pass
-            log.debug(f"mini_style={style} 窗口 {w}x{h}")
+            log.debug(f"mini_style={style} 窗口 {w}x{h} 圆形={round_}")
         except Exception as e:
             log.warning(f"_apply_mini_style_size 异常: {e}")
 
@@ -755,15 +763,48 @@ class DashboardApp:
             log.info(f"迷你窗 loaded, hwnd={self._mini_hwnd}")
         except Exception as _e: log.debug(f"main.py 异常: {_e}")
         self._move_mini_to_corner(settings)
+        # 窗口显示后 pywebview 可能重设位置：延迟重试归位（1.5s/3s 双保险）
+        try:
+            import threading as _th
+            for _d in (1.5, 3.0):
+                _th.Timer(_d, lambda: self._move_mini_to_corner(settings)).start()
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     def _move_mini_to_corner(self, settings):
-        """把迷你窗移到角落（loaded 后窗口就绪时调用）。"""
-        if self.mini_window is None:
-            return
+        """把迷你窗移到角落（Win32 SetWindowPos 直设，物理坐标，不依赖 pywebview move）。"""
         try:
-            x, y = self._mini_position(settings)
-            self.mini_window.move(x, y)
-        except Exception as _e: log.debug(f"main.py 异常: {_e}")
+            hwnd = self._window_hwnd(self.mini_window)
+            if not hwnd:
+                return
+            import ctypes
+            u32 = ctypes.windll.user32
+            rect = ctypes.wintypes.RECT()
+            u32.GetWindowRect(hwnd, ctypes.byref(rect))
+            cw = rect.right - rect.left
+            ch = rect.bottom - rect.top
+            if cw <= 0:
+                cw, ch = 300, 170
+            mw = self._monitor_work(hwnd)
+            if mw:
+                left, top, ww, wh = mw
+            else:
+                left = top = 0
+                ww = u32.GetSystemMetrics(0)
+                wh = u32.GetSystemMetrics(1)
+            win = settings.get("window", {}) or {}
+            corner = win.get("mini_corner", "bottom-right")
+            margin = 12
+            if corner == "top":
+                px, py = left + (ww - cw) // 2, top + margin
+            else:
+                right = corner in ("top-right", "bottom-right")
+                bottom = corner in ("bottom-left", "bottom-right")
+                px = left + ww - cw - margin if right else left + margin
+                py = top + wh - ch - margin if bottom else top + margin
+            u32.SetWindowPos(hwnd, 0, px, py, 0, 0, 0x0001 | 0x0010)  # SWP_NOSIZE | SWP_NOZORDER
+            log.info(f"mini 定位到 ({px},{py}) {cw}x{ch}")
+        except Exception as e:
+            log.warning(f"_move_mini_to_corner 异常: {e}")
 
     def destroy_mini(self):
         if self.mini_window is not None:
