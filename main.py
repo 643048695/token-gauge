@@ -212,6 +212,18 @@ class _Api:
         """JS mousedown：启动 Win32 原生系统拖拽（hit: caption/right/bottom/bottomright; target: main/mini）。"""
         return self._app.drag.native_drag(hit, target)
 
+    def hide_mini(self):
+        """隐藏迷你悬浮窗（SW_HIDE；恢复走外观页迷你窗开关）。"""
+        try:
+            hwnd = self._app._window_hwnd(self._app.mini_window)
+            if hwnd:
+                import ctypes
+                ctypes.windll.user32.ShowWindow(hwnd, 0)  # SW_HIDE
+            return {"ok": True}
+        except Exception as e:
+            log.warning(f"hide_mini 异常: {e}")
+            return {"ok": False, "message": str(e)}
+
     def minimize_main(self):
         """主窗口最小化（Win32 ShowWindow SW_MINIMIZE）。"""
         try:
@@ -365,6 +377,10 @@ class DashboardApp:
         try:
             self.mini_window.events.loaded += lambda: self.apply_opacity(
                 self.mini_window, settings.get("opacity", {}).get("mini", 0.92))
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
+        try:
+            # 迷你窗不出现在任务栏：加 WS_EX_TOOLWINDOW、去 WS_EX_APPWINDOW
+            self.mini_window.events.loaded += self._mini_toolwindow
         except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     def _monitor_work(self, hwnd):
@@ -643,6 +659,23 @@ class DashboardApp:
 
     # ---------- Win32 原生系统拖拽（绕开 WebView2 事件流，系统级拖动/缩放） ----------
     HITS = {"caption": 2, "right": 11, "bottom": 15, "bottomright": 17}  # HTCAPTION/HTRIGHT/HTBOTTOM/HTBOTTOMRIGHT
+
+    def _mini_toolwindow(self, *_a, **_k):
+        """迷你窗不进任务栏：WS_EX_TOOLWINDOW。"""
+        try:
+            hwnd = self._window_hwnd(self.mini_window)
+            if not hwnd:
+                return
+            import ctypes
+            GWL_EXSTYLE = -20
+            WS_EX_TOOLWINDOW = 0x00000080
+            WS_EX_APPWINDOW = 0x00040000
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            style = (style | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW
+            ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+            log.debug("mini 已设为 toolwindow（不出现在任务栏）")
+        except Exception as e:
+            log.warning(f"_mini_toolwindow 异常: {e}")
 
     def _on_mini_loaded(self, settings):
         """迷你窗 loaded 时（窗口线程）记录 hwnd 并定位到角落。"""

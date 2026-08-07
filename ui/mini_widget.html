@@ -265,6 +265,7 @@
       <div class="topbtns">
         <span class="live" id="live"><span class="dot"></span>LIVE</span>
         <button class="refresh" id="refresh" data-i18n-title="立即刷新" title="立即刷新">↻</button>
+        <button class="minhide" id="minHide" data-i18n-title="隐藏悬浮窗" title="隐藏悬浮窗">×</button>
       </div>
     </div>
 
@@ -311,7 +312,8 @@
 
 <script>
   window.__initErr = null;
-  window.addEventListener('error', function(e){ if(!window.__initErr) window.__initErr = 'evt:' + e.message; });
+  window.addEventListener('error', function(e){ if(!window.__initErr) window.__initErr = 'evt:' + e.message;
+  $('#minHide').addEventListener('click', function(){ call('hide_mini').catch(function(){}); }); });
 
   /* DOM 交互绑定统一延迟到 DOM 就绪（WebView2 解析时序下立即执行可能取不到元素） */
   function initInteractions(){

@@ -689,9 +689,9 @@ input[type=range]:disabled{opacity:.4;}
 #dashGrid .pcard.drag-src{opacity:.35;outline:2px dashed var(--accent);outline-offset:2px;}
 #dashGrid .pcard.drag-over{outline:2px solid var(--accent);outline-offset:2px;box-shadow:0 0 14px var(--glow);}
 /* 仪表盘卡片：一行两张，纵向滚动 */
-#dashGrid{grid-template-columns:repeat(2, minmax(0,1fr)); align-items:stretch;}
-#dashGrid > .pcard{min-width:0;}
-@media (max-width:640px){#dashGrid{grid-template-columns:1fr;}}
+#dashGrid{display:block; columns:2; column-gap:var(--gap);}
+#dashGrid > .pcard{break-inside:avoid; margin-bottom:var(--gap); min-width:0;}
+@media (max-width:640px){#dashGrid{columns:1;}}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -1806,7 +1806,8 @@ function statsSectionHtml(v, s){
     /* 任务B：柱顶标数字（所有单位模式；auto 为各供应商原币种之和） */
     if(total[d2] > 0){
       var ty = topBar + (bh-10) - total[d2]/mx*(bh-10) - 4;
-      bar += '<text class="sb-val" x="'+(32 + d2*bw + bw/2)+'" y="'+ty+'" text-anchor="middle" opacity=".9">'
+      var _cx = x + _gx + _cw / 2;   // 柱中心（对齐柱体，非槽中心）
+      bar += '<text class="sb-val" x="'+_cx+'" y="'+ty+'" text-anchor="middle" opacity=".9">'
         + (u === 'auto' ? '<title>'+esc(I18N.t('自动模式：各供应商原币种之和'))+'</title>' : '')
         + fmtStatNum(total[d2])+'</text>';
     }
