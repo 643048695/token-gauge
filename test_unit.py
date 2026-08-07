@@ -210,6 +210,18 @@ class TestDiyDefaults(unittest.TestCase):
         self.assertEqual(settings.DEFAULTS["diy"]["mini_provider"], "")
 
 
+class TestDisplayOrderDefaults(unittest.TestCase):
+    """计量单位/汇率/拖拽顺序默认值回归（统计重构新增配置）。"""
+
+    def test_display_defaults(self):
+        d = settings.DEFAULTS["display"]
+        self.assertEqual(d["unit"], "auto")
+        self.assertEqual(d["fx_rate"], 7.2)
+
+    def test_order_defaults(self):
+        self.assertEqual(settings.DEFAULTS["order"]["providers"], [])
+
+
 class TestTemplates(unittest.TestCase):
     """供应商模板完整性：顺序/必填字段/形态契约。"""
 

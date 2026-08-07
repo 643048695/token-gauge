@@ -336,7 +336,21 @@ window.I18N = (function () {
     '<span class="status-item">数据时间 <span class="val">': '<span class="status-item">Data time <span class="val">',
     '<span style="font-size:10px;color:var(--muted);margin-left:10px">会立即触发一条通知验证链路</span>': '<span style="font-size:10px;color:var(--muted);margin-left:10px">triggers a test notification</span>',
     '<span style="font-size:12px">启用迷你悬浮窗</span>': '<span style="font-size:12px">Enable mini widget</span>',
-    '<span style="margin-left:auto;font-size:10px;color:var(--muted)">也可在迷你窗边缘拖动微调</span>': '<span style="margin-left:auto;font-size:10px;color:var(--muted)">or drag mini edges to fine-tune</span>'
+    '<span style="margin-left:auto;font-size:10px;color:var(--muted)">也可在迷你窗边缘拖动微调</span>': '<span style="margin-left:auto;font-size:10px;color:var(--muted)">or drag mini edges to fine-tune</span>',
+      '暂无消耗数据': 'No usage data yet',
+    '今日': 'Today',
+    '今日消耗占比': "Today's Share",
+    '近 7 日消耗': 'Last 7d Usage',
+    '全部消耗 · 统计': 'Usage · All Providers',
+    '（美元）': ' (USD)',
+    '（人民币）': ' (CNY)',
+    '（tokens）': ' (tokens)',
+    '底部统计区（柱形/扇形）': 'Stats Section (bar/pie)',
+      '自动（原币种）': 'Auto (native)',
+    '人民币': 'CNY',
+    '计量单位': 'Units',
+    '金额与消耗显示口径（卡片 + 底部统计区）': 'Amount/usage display (cards + stats)',
+    '汇率 1 USD = ? CNY': 'FX rate 1 USD = ? CNY',
   };
 
   var lang = 'zh';

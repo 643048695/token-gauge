@@ -45,6 +45,13 @@ DEFAULTS: dict = {
     },
     "density": "compact",
     "currency": "usd",
+    "display": {
+        "unit": "auto",
+        "fx_rate": 7.2,
+    },
+    "order": {
+        "providers": [],
+    },
     "notify": {
         "method": "tray",
         "threshold": 80,
