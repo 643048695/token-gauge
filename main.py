@@ -120,6 +120,10 @@ class _Api:
             # 透明度只作用于迷你窗（主面板透明度已取消）
             self._app.apply_opacity(self._app.mini_window,
                                     settings.get("opacity", {}).get("mini", 0.92))
+        if "mini_style" in patch:
+            # 形态变化 → 调整迷你窗尺寸（ball/pet 小窗，classic 恢复）
+            self._app._apply_mini_style_size(patch.get("mini_style", "classic"))
+            self._app.pusher.push_once()
         # 主题/供应商变化后立即推送给迷你窗，让悬浮窗即时跟随
         if any(k in patch for k in ("theme", "providers")):
             self._app.pusher.push_once()
@@ -392,6 +396,11 @@ class DashboardApp:
         try:
             # 迷你窗不出现在任务栏：加 WS_EX_TOOLWINDOW、去 WS_EX_APPWINDOW
             self.mini_window.events.loaded += self._mini_toolwindow
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
+        try:
+            # 启动时按形态调整迷你窗尺寸（ball/pet 小窗，classic 配置尺寸）
+            style0 = (settings or self.cfg).get("mini_style", "classic")
+            self.mini_window.events.loaded += lambda: self._apply_mini_style_size(style0)
         except Exception as _e: log.debug(f"main.py 异常: {_e}")
         try:
             # 透明窗口：LayeredWindow + color-key（品红 #FF00FF，球/宠物形态背景用键色）
@@ -691,6 +700,31 @@ class DashboardApp:
             log.debug("mini 已设为 toolwindow（不出现在任务栏）")
         except Exception as e:
             log.warning(f"_mini_toolwindow 异常: {e}")
+
+    def _apply_mini_style_size(self, style):
+        """按形态调整迷你窗尺寸：ball/pet 148x150 小窗（视觉接近球），classic 恢复配置。"""
+        try:
+            win = self.cfg.get("window", {}) or {}
+            if style in ("ball", "pet"):
+                w, h = 148, 150
+            else:
+                w = int(win.get("mini_width", 300))
+                h = int(win.get("mini_height", 170))
+            try:
+                if self.mini_window and getattr(self.mini_window, "resize", None):
+                    self.mini_window.resize(w, h)
+            except Exception:
+                pass
+            try:
+                hwnd = self._window_hwnd(self.mini_window)
+                if hwnd:
+                    import ctypes
+                    ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, w, h, 0x0004 | 0x0010)
+            except Exception:
+                pass
+            log.debug(f"mini_style={style} 窗口 {w}x{h}")
+        except Exception as e:
+            log.warning(f"_apply_mini_style_size 异常: {e}")
 
     def _mini_color_key(self, *_a, **_k):
         """迷你窗真透明：WS_EX_NOREDIRECTIONBITMAP（Win10 1809+）。
