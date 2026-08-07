@@ -271,6 +271,12 @@ main{display:flex; height:calc(100% - 36px);}
 }
 .brand-badge img{ width:100%; height:100%; object-fit:contain; display:block; }
 .pcard-name{font-size:13px; font-weight:700;}
+.pcard .lim-top{min-width:0; overflow:hidden;}
+.pcard .lim-top .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.pcard .lim-top .pct{flex:none; margin-left:auto;}
+.pcard .te-row{min-width:0;}
+.pcard .te-row span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.pcard .te-row b{flex:none;}
 .pcard-plan{
   font-size:10px; color:var(--accent2); border:1px solid rgba(0,201,255,0.3);
   padding:1px 7px; border-radius:20px; font-family:Consolas,monospace; letter-spacing:.5px;
@@ -296,7 +302,7 @@ main{display:flex; height:calc(100% - 36px);}
 }
 .cookie-bar svg{width:13px;height:13px;flex:none;}
 
-.lim{padding:8px 10px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; background:rgba(255,255,255,.02);}
+.lim{padding:6px 9px; border:1px solid var(--line); border-radius:8px; margin-bottom:6px; background:rgba(255,255,255,.02);}
 .lim:last-child{margin-bottom:0;}
 .lim-top{display:flex; justify-content:space-between; font-size:11px; margin-bottom:3px;}
 .lim-top .lbl{color:var(--text);}
@@ -311,9 +317,9 @@ main{display:flex; height:calc(100% - 36px);}
 .card-meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; padding-top:6px; border-top:1px dashed var(--border);}
 .meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; margin-top:2px;}
 .meta-grid.tri{grid-template-columns:repeat(3,1fr);}
-.meta-cell{min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03);}
+.meta-cell{min-width:0; padding:6px 9px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03);}
 .meta-k{font-size:9px; color:var(--muted); letter-spacing:.5px;}
-.meta-v{font-size:12px; font-weight:600; color:var(--text); font-family:Consolas,monospace; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.meta-v{display:block; max-width:100%; font-size:12px; font-weight:600; color:var(--text); font-family:Consolas,monospace; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .meta-s{font-size:9px; color:var(--muted); font-weight:400; margin-left:4px;}
 .chip{
   font-size:11px; padding:3px 9px; border-radius:6px;
@@ -685,7 +691,8 @@ input[type=range]:disabled{opacity:.4;}
 /* ---- 卡片分页（任务A：每页2张，translateX 滑动 + 指示点） ---- */
 .pager{overflow:hidden; border-radius:var(--radius); grid-column:1 / -1;}
 .pager-track{display:flex; transition:transform .42s cubic-bezier(.25,.75,.3,1); will-change:transform;}
-.pager-page{min-width:100%; flex:none; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:var(--gap); align-content:start;}
+.pager-page{min-width:100%; flex:none; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:var(--gap); align-content:start; align-items:stretch;}
+.pager-page > .pcard{min-width:0;}
 @media (max-width:640px){.pager-page{grid-template-columns:1fr;}}
 .pager-dots{display:flex; justify-content:center; align-items:center; gap:8px; margin:12px 0 2px; min-height:12px;}
 .pager-dot{width:8px; height:8px; border-radius:4px; background:var(--line); border:none; cursor:pointer; padding:0; transition:all .28s ease;}
