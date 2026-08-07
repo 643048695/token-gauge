@@ -1414,8 +1414,15 @@ function renderDashboard(){
       if(api && api.open_url) api.open_url(btn.dataset.site);
     });
   });
-  /* 模块⑤：供应商卡片拖拽排序 */
+  /* 模块⑤：供应商卡片拖拽排序 + 拖到边缘自动滚动 */
   var dragPid = null;
+  document.addEventListener('dragover', function(e){
+    if(!dragPid) return;
+    var vy = e.clientY, vh = window.innerHeight;
+    var step = 26;
+    if(vy < 90) window.scrollBy(0, -step);
+    else if(vy > vh - 90) window.scrollBy(0, step);
+  });
   $$('#dashGrid .pcard').forEach(function(card){
     card.draggable = true;
     card.addEventListener('dragstart', function(e){

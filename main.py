@@ -365,6 +365,7 @@ class DashboardApp:
             os.path.join(BASE_DIR, "ui", "mini_widget.html"),
             width=w, height=h,
             frameless=True,
+            transparent=True,
             # 不置顶：悬浮窗只待在桌面层，不盖在游戏/其他软件上层
             # 拖动走顶部 .pywebview-drag-region 拖拽区，避免整窗 easy_drag 拦截 resize 把手
             js_api=self.api,

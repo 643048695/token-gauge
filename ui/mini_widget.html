@@ -266,6 +266,14 @@
 .pet-face{font-size:44px; line-height:1; animation:pet-breathe 2.4s ease-in-out infinite; filter:drop-shadow(0 0 10px var(--glow));}
 @keyframes pet-breathe{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
 .pet-bubble{font-size:10px; color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:10px; padding:4px 10px; max-width:96%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+/* 形态：整窗透明（球/宠物外形即窗口） */
+body.style-ball, body.style-pet{background:transparent !important;}
+body.style-ball #hud, body.style-pet #hud{background:transparent; border:none; box-shadow:none; padding:0; overflow:visible;}
+body.style-ball .ball-wrap{height:100%; padding:4px;}
+body.style-ball .ball-svg{width:96%; max-width:132px; height:auto; flex:none; margin-top:10px;}
+body.style-pet .pet-wrap{height:100%;}
+body.style-pet .pet-face{font-size:52px;}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -453,8 +461,9 @@
       // 主题注入失败不阻断数据渲染
     }
     const _style = (v && v.settings && v.settings.mini_style) || 'classic';
-    if (_style === 'ball') { renderBall(v); return; }
-    if (_style === 'pet') { renderPet(v); return; }
+    document.body.classList.remove('style-ball', 'style-pet');
+    if (_style === 'ball') { document.body.classList.add('style-ball'); renderBall(v); return; }
+    if (_style === 'pet') { document.body.classList.add('style-pet'); renderPet(v); return; }
     setStyleHost(true);
     const p = firstProvider(v);
     if (!p) {
