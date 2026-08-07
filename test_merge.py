@@ -72,12 +72,13 @@ def test_loop():
         "text:document.body.innerText.slice(0,60)})", "2b)")
     log("2b) 引导页: " + str(r2b))
 
-    # 3) 完整引导流程：下一步 → 开始使用 → 主面板
+    # 3) 完整引导流程：下一步 ×4（五步引导）→ 开始使用 → 主面板
     r3 = ev(
         "JSON.stringify((function(){"
         "var next=document.getElementById('btnNext'); var start=document.getElementById('btnStart');"
         "if(!next||!start) return {noBtns:!!next+','+!!start};"
-        "next.click(); return {next:true};})())", "3)")
+        "for(var i=0;i<4;i++){next.click();}"
+        "return {next:true, clicks:4};})())", "3)")
     log("3) 下一步: " + str(r3))
     time.sleep(2)
     r3b = ev(
