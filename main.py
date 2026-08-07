@@ -212,6 +212,16 @@ class _Api:
         """JS mousedown：启动 Win32 原生系统拖拽（hit: caption/right/bottom/bottomright; target: main/mini）。"""
         return self._app.drag.native_drag(hit, target)
 
+    def push_mini(self):
+        """立即推送一次迷你窗数据（形态/设置切换后即时生效，不等 8 秒轮询）。"""
+        try:
+            if self._app.pusher:
+                self._app.pusher.push_once()
+            return {"ok": True}
+        except Exception as e:
+            log.warning(f"push_mini 异常: {e}")
+            return {"ok": False, "message": str(e)}
+
     def hide_mini(self):
         """隐藏迷你悬浮窗（SW_HIDE；恢复走外观页迷你窗开关）。"""
         try:

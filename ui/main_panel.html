@@ -684,6 +684,9 @@ input[type=range]:disabled{opacity:.4;}
 .lg-row em{font-style:normal;color:var(--muted);font-size:10px;width:38px;text-align:right;}
 .stats-empty{font-size:11px;color:var(--muted);padding:8px 0;}
 /* ---- 拖拽排序 ---- */
+.pcard, .prow-card{position:relative;}
+.drag-grip{position:absolute; top:7px; right:9px; font-size:13px; color:var(--muted); opacity:.45; cursor:grab; user-select:none; line-height:1; z-index:5; transition:all .15s;}
+.drag-grip:hover{opacity:1; color:var(--accent); transform:scale(1.15);}
 #dashGrid .pcard[draggable=true]{cursor:grab;}
 #dashGrid .pcard[draggable=true]:active{cursor:grabbing;}
 #dashGrid .pcard.drag-src{opacity:.35;outline:2px dashed var(--accent);outline-offset:2px;}
@@ -1575,6 +1578,7 @@ function dashCardHtml(pid, cfg, pv){
   var trHtml = tr ? '<div class="test-result '+(tr.ok===null?'running':(tr.ok?'ok':'fail'))+'">'+(tr.ok===null?I18N.t('测试中'):(tr.ok?I18N.t('连接成功'):I18N.t('失败')))+' · '+esc(tr.message)+'</div>' : '';
 
   return '<div class="card pcard '+st.key+'" data-pid="'+esc(pid)+'">'+
+    '<span class="drag-grip no-drag" title="'+I18N.t('拖动排序')+'">⠿</span>'+
     '<div class="pcard-head">'+
       '<span class="health-dot '+st.key+'"></span>'+
       brandBadgeHtml(pid)+
@@ -2308,6 +2312,7 @@ function providerRowHtml(pid, cfg){
   var trHtml = tr ? '<div class="test-result '+(tr.ok?'ok':'fail')+'">'+(tr.ok?I18N.t('连接成功'):I18N.t('连接失败'))+' · '+esc(tr.message)+'</div>' : '';
 
   return '<div class="card prow-card '+(cfg.enabled===false?'off':'')+'" data-pid="'+esc(pid)+'">'+
+    '<span class="drag-grip no-drag" title="'+I18N.t('拖动排序')+'">⠿</span>'+
     '<div class="prow-head">'+
       '<label class="switch"><input type="checkbox" class="sw-enabled" data-pid="'+esc(pid)+'" '+(cfg.enabled?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label>'+
       brandBadgeHtml(pid)+
@@ -2627,10 +2632,13 @@ function renderAppearance(){
   if(miniProvider) miniProvider.addEventListener('change', function(){
     saveDiy({ mini_provider: miniProvider.value });
   });
-  /* 迷你窗形态 */
+  /* 迷你窗形态（切换后立即推送迷你窗，不等 8 秒轮询） */
   $$('#appearanceBody .opt-btn[data-mstyle]').forEach(function(btn){
     btn.addEventListener('click', function(){
-      save(patchTop('mini_style', btn.dataset.mstyle));
+      save(patchTop('mini_style', btn.dataset.mstyle)).then(function(){
+        var api2 = window.pywebview && window.pywebview.api;
+        if(api2 && api2.push_mini) api2.push_mini();
+      }).catch(function(){});
     });
   });
   var DIY_MAP = [
