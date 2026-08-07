@@ -1120,7 +1120,7 @@ function money(v, cur){
   if(cur === 'CNY') return '¥'+n.toFixed(2);
   if(cur === 'USD') return '$'+n.toFixed(2);
   return (cur?cur+' ':'')+n.toFixed(2);
-
+}
 
 /* 计量单位换算：auto（原币种）/ usd / cny / tokens
    meta 可带 models（输出单价，元/百万 token 口径）供 token 换算 */
@@ -1149,7 +1149,7 @@ function moneyUnit(amt, cur, meta){
     return '≈¥' + v2.toFixed(2);
   }
   return money(amt, cur);
-}}
+}
 function maxLimit(limits){
   if(!limits || !limits.length) return null;
   var mx = null;
