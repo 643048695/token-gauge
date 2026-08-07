@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OC-GO Dashboard · 开屏引导</title>
 <style>
-/* ============ 兜底变量（与 main_panel 一致，主题 CSS 注入后覆盖） ============ */
+/* ============ 兜底变量（paper 纸面极简系；主题 CSS 注入后覆盖） ============ */
 :root{
-  --accent:#00ff9c; --accent2:#00c9ff;
-  --bg:rgba(8,14,12,0.94);
-  --text:#d8ffef; --muted:#7fa896;
-  --glow:rgba(0,255,156,0.55);
-  --danger:#ff4d6d; --danger-glow:rgba(255,77,109,0.5);
-  --warn:#ffc400;  --warn-glow:rgba(255,196,0,0.45);
-  --card:rgba(255,255,255,0.035);
-  --card-hi:rgba(255,255,255,0.06);
-  --border:rgba(255,255,255,0.09);
-  --line:rgba(255,255,255,0.14);
-  --panel:rgba(255,255,255,0.05);
-  --radius:10px;
+  --accent:#537d96; --accent2:#6f9cb5;
+  --bg:#f5efe4;
+  --text:#2a2622; --muted:#7a7266;
+  --glow:transparent;
+  --danger:#b91c1c; --danger-glow:transparent;
+  --warn:#b07a1e;  --warn-glow:transparent;
+  --card:#fbf7ee;
+  --card-hi:#fffdf6;
+  --border:#d8cfbe;
+  --line:#e4dccb;
+  --panel:#fbf7ee;
+  --radius:6px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow:hidden;}
@@ -38,14 +38,13 @@ body{
   display:flex; align-items:center; gap:10px;
   padding:0 12px 0 16px;
   border-bottom:1px solid var(--border);
-  background:rgba(0,0,0,0.22);
+  background:var(--card-hi);
   -webkit-app-region:drag;
 }
 #topbar .no-drag{-webkit-app-region:no-drag;}
 .logo-dot{
   width:9px;height:9px;border-radius:50%;
   background:var(--accent);
-  box-shadow:0 0 8px var(--glow),0 0 2px var(--accent);
   flex:none;
 }
 .brand{
@@ -55,18 +54,18 @@ body{
 .brand b{color:var(--accent);font-weight:700;}
 #btnSkip{
   margin-left:auto;
-  background:none;border:none;color:var(--muted);
+  background:none;border:1px solid transparent;color:var(--muted);
   font-size:11px;cursor:pointer;padding:6px 10px;border-radius:6px;
   transition:color .15s ease;
 }
-#btnSkip:hover{color:var(--text);background:var(--card-hi);}
+#btnSkip:hover{color:var(--text);background:var(--card-hi);border-color:var(--border);}
 
 /* ============ 主舞台 ============ */
 #stage{
   flex:1; display:flex; align-items:center; justify-content:center;
-  padding:18px 44px 8px;
+  padding:16px 44px 8px;
 }
-.step{width:100%; max-width:820px;}
+.step{width:100%; max-width:860px;}
 .step.hidden{display:none;}
 .fade-in{animation:fi .28s ease;}
 @keyframes fi{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
@@ -75,20 +74,45 @@ body{
   display:inline-flex; align-items:center; gap:6px;
   font-family:Consolas,monospace; font-size:10px; letter-spacing:2px;
   color:var(--accent); border:1px solid var(--accent);
-  padding:3px 10px; border-radius:20px; margin-bottom:12px;
+  padding:3px 10px; border-radius:20px; margin-bottom:10px;
   opacity:0.9;
 }
-h1.title{font-size:25px; letter-spacing:1px; font-weight:700;}
-.sub{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.7;}
+h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
+.sub{font-size:12px; color:var(--muted); margin-top:5px; line-height:1.7;}
 
-/* ---- Step1 左右分栏 ---- */
-.step1{display:flex; gap:34px; align-items:stretch;}
-.s1-left{flex:1.15; min-width:0;}
-.s1-right{flex:1; display:flex; align-items:center; justify-content:center; min-width:0;}
-.steps-list{list-style:none; margin-top:16px;}
+/* ---------- P1 数据流 ---------- */
+.flow{display:flex; align-items:stretch; gap:0; margin-top:26px;}
+.flow-node{
+  flex:1; min-width:0;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 12px 12px;
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px;
+}
+.flow-node .ic{width:34px;height:34px;margin-bottom:2px;}
+.flow-node .ic svg{width:34px;height:34px;stroke:var(--accent);}
+.flow-node .n{font-size:12.5px;font-weight:700;color:var(--text);}
+.flow-node .d{font-size:10.5px;color:var(--muted);line-height:1.5;}
+.flow-node .e{
+  margin-top:6px; font-size:10px; color:var(--accent);
+  border:1px dashed var(--line); border-radius:4px;
+  padding:3px 8px; max-width:100%; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap;
+  font-family:Consolas,monospace;
+}
+.flow-arrow{
+  flex:none; width:44px; display:flex; align-items:center; justify-content:center;
+  color:var(--muted);
+}
+.flow-arrow svg{width:26px;height:16px;}
+
+/* ---------- P2 配置三步 ---------- */
+.p2-wrap{display:flex; gap:30px; align-items:stretch; margin-top:16px;}
+.p2-left{flex:1.1; min-width:0;}
+.p2-right{flex:1; display:flex; align-items:center; justify-content:center; min-width:0;}
+.steps-list{list-style:none; margin-top:10px;}
 .steps-list li{
   display:flex; gap:12px; padding:9px 0;
-  border-bottom:1px dashed var(--border);
+  border-bottom:1px dashed var(--line);
   line-height:1.55;
 }
 .steps-list li:last-child{border-bottom:none;}
@@ -102,18 +126,17 @@ h1.title{font-size:25px; letter-spacing:1px; font-weight:700;}
 .steps-list .t{font-weight:600;}
 .steps-list .d{color:var(--muted); font-size:11.5px;}
 .hint{
-  margin-top:12px; padding:9px 12px; border-radius:8px;
-  background:rgba(255,196,0,0.07); border:1px solid rgba(255,196,0,0.35);
+  margin-top:12px; padding:8px 12px; border-radius:6px;
+  background:rgba(176,122,30,0.07); border:1px solid rgba(176,122,30,0.35);
   color:var(--warn); font-size:11.5px; line-height:1.6;
 }
 .hint svg{width:13px;height:13px;vertical-align:-2px;margin-right:6px;}
 
-/* ---- 仿界面示意图（迷你添加供应商面板） ---- */
+/* ---- 仿界面示意图（添加供应商面板） ---- */
 .mock-panel{
-  width:100%; max-width:300px;
+  width:100%; max-width:290px;
   background:var(--card); border:1px solid var(--border);
-  border-radius:10px; overflow:hidden;
-  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  border-radius:var(--radius); overflow:hidden;
 }
 .mock-head{
   padding:9px 14px; font-size:12px; font-weight:700;
@@ -130,7 +153,7 @@ h1.title{font-size:25px; letter-spacing:1px; font-weight:700;}
 .mock-select{
   flex:1; font-size:11.5px; color:var(--text);
   border:1px solid var(--line); border-radius:6px;
-  padding:5px 10px; background:var(--panel);
+  padding:5px 10px; background:#fff;
   display:flex; align-items:center; justify-content:space-between;
 }
 .mock-select .arr{color:var(--muted); font-size:10px;}
@@ -150,154 +173,350 @@ h1.title{font-size:25px; letter-spacing:1px; font-weight:700;}
 .mock-btn{
   margin-top:10px; text-align:center;
   border:1px solid var(--accent); color:var(--accent);
-  padding:7px 0; border-radius:7px; font-size:12px; font-weight:700;
+  padding:7px 0; border-radius:6px; font-size:12px; font-weight:700;
   letter-spacing:2px; cursor:default;
-  background:rgba(0,255,156,0.06);
+  background:transparent;
 }
-.mock-arrow{
-  position:absolute; font-size:20px; color:var(--accent);
-}
-.s1-right{position:relative;}
 
-/* ---- Step2 垂直清单 ---- */
-.step2{max-width:640px; margin:0 auto; text-align:center;}
-.checks{list-style:none; margin-top:20px; text-align:left;}
-.checks li{
-  display:flex; align-items:flex-start; gap:12px;
-  padding:11px 14px; margin-bottom:9px;
+/* ---------- P3 测试连接 ---------- */
+.p3-wrap{display:flex; flex-direction:column; align-items:center; margin-top:14px;}
+.testmock{
+  width:100%; max-width:430px;
   background:var(--card); border:1px solid var(--border);
-  border-radius:10px; line-height:1.55; font-size:12.5px;
+  border-radius:var(--radius); overflow:hidden;
 }
-.checks .ic{
-  flex:none; width:20px; height:20px; border-radius:50%;
+.testmock .tm-title{
+  padding:9px 14px; font-size:12px; font-weight:700;
+  border-bottom:1px solid var(--border);
+  background:var(--card-hi); color:var(--accent);
+  font-family:Consolas,monospace; letter-spacing:1px;
+}
+.trow{
+  display:flex; align-items:center; gap:12px;
+  padding:13px 14px;
+}
+.trow .tname{
+  font-size:12.5px; font-weight:700; flex:none;
+}
+.trow .ttag{
+  font-size:10px; color:var(--muted); font-family:Consolas,monospace;
+}
+.tdot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--line); flex:none; margin-left:auto;
+  transition:background .25s ease;
+}
+.tdot.ok{background:var(--accent);}
+.tdot.bad{background:var(--danger);}
+.btnTest{
+  flex:none;
   border:1px solid var(--accent); color:var(--accent);
-  display:flex; align-items:center; justify-content:center;
-  font-size:11px; margin-top:1px;
+  background:transparent; border-radius:6px;
+  font-size:11.5px; padding:6px 14px; cursor:pointer; font-weight:700;
+  letter-spacing:1px; transition:background .15s ease;
 }
-.checks b{color:var(--accent); font-weight:600;}
-.finish{
-  margin-top:18px; font-size:13px; color:var(--text);
-  border-left:3px solid var(--accent);
-  padding:8px 0 8px 14px; text-align:left;
-  font-family:Consolas,monospace; letter-spacing:0.5px;
-  color:var(--muted);
+.btnTest:hover{background:rgba(83,125,150,0.1);}
+.btnTest.loading{color:var(--muted); border-color:var(--line); cursor:default;}
+.tres{
+  font-family:Consolas,monospace; font-size:12px;
+  color:var(--muted); min-height:20px; padding:0 14px 13px; text-align:center;
+}
+.tres.ok{color:var(--accent);}
+.tres.bad{color:var(--danger);}
+.p3-note{margin-top:12px; font-size:11.5px; color:var(--muted);}
+
+/* ---------- P4 仪表盘四件套 ---------- */
+.grid4{
+  display:grid; grid-template-columns:1fr 1fr; gap:14px;
+  margin-top:20px;
+}
+.g4card{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 16px 12px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.g4card .g4-name{font-size:12px;font-weight:700;}
+.g4card .g4-desc{font-size:10.5px;color:var(--muted);}
+.g4-bal{font-family:Consolas,monospace;font-size:20px;font-weight:700;color:var(--accent);}
+.g4-bal small{font-size:11px;color:var(--muted);font-weight:400;}
+.g4-track{height:7px;border-radius:4px;background:var(--line);overflow:hidden;}
+.g4-track i{
+  display:block;height:100%;border-radius:4px;
+  background:var(--accent);width:62%;
+}
+.g4-track i.warn{background:var(--warn);width:82%;}
+.g4-bars{display:flex;align-items:flex-end;gap:4px;height:34px;}
+.g4-bars i{flex:1;background:var(--accent);border-radius:2px;}
+.g4-bars i:nth-child(2){height:55%;opacity:.85;}
+.g4-bars i:nth-child(3){height:80%;opacity:.7;}
+.g4-bars i:nth-child(4){height:40%;opacity:.55;}
+.g4-bars i:nth-child(5){height:65%;opacity:.45;}
+.g4-bars i:nth-child(6){height:90%;opacity:.35;}
+.g4-bars i:nth-child(7){height:58%;opacity:.28;}
+.g4-mini{
+  position:relative; height:40px;
+  background:var(--card-hi); border:1px solid var(--line); border-radius:6px;
+  display:flex; align-items:center; gap:8px; padding:0 10px;
+}
+.g4-mini .mdot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;}
+.g4-mini .mline{height:4px;border-radius:2px;background:var(--line);flex:1;}
+.g4-mini .mline.w{width:60%;flex:none;}
+.g4-mini .mval{font-family:Consolas,monospace;font-size:11px;color:var(--accent);}
+
+/* ---------- P5 对话助手 + CLI ---------- */
+.p5-wrap{display:flex; gap:26px; align-items:stretch; margin-top:18px;}
+.p5-left{flex:1; min-width:0; display:flex; flex-direction:column;}
+.p5-right{flex:1.15; min-width:0;}
+.chat{
+  flex:1; display:flex; align-items:center; justify-content:center;
+}
+.chat-bubble{
+  position:relative; max-width:100%;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:12px 14px;
+  font-size:12px; line-height:1.7;
+}
+.chat-bubble:before{
+  content:""; position:absolute; left:18px; top:-6px;
+  width:10px;height:10px; transform:rotate(45deg);
+  background:var(--card); border-left:1px solid var(--border); border-top:1px solid var(--border);
+}
+.chat-bubble b{color:var(--accent);}
+.chat-bubble .who{
+  display:block; font-size:10px; color:var(--muted);
+  font-family:Consolas,monospace; letter-spacing:1px; margin-bottom:4px;
+}
+.term{
+  background:#2a2622; color:#e8e2d5; border-radius:6px;
+  font-family:Consolas,"Courier New",monospace; font-size:11.5px;
+  line-height:1.7; padding:12px 14px; overflow:hidden;
+}
+.term .line{white-space:pre-wrap;word-break:break-all;}
+.term .p{color:#9aa7b3;}
+.term .ok{color:#7d9c5a;}
+.term .path{color:#c9a26b;}
+.p5-hint{
+  margin-top:14px; font-size:11.5px; color:var(--muted); line-height:1.6;
 }
 
-/* ============ 底部：步骤条 + 导航 ============ */
+/* ============ 底部：不再显示 + 步骤条 + 导航 ============ */
 #foot{
-  flex:none; height:62px;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 44px 12px;
+  flex:none; height:64px;
+  display:flex; align-items:center; gap:16px;
+  padding:0 44px 14px;
 }
-.dots{display:flex; gap:8px;}
+#btnNever{
+  flex:none;
+  background:none; border:1px solid transparent; color:var(--muted);
+  font-size:11.5px; cursor:pointer; padding:7px 10px; border-radius:6px;
+  transition:all .15s ease;
+}
+#btnNever:hover{color:var(--danger); border-color:var(--danger);}
+.dots{flex:1; display:flex; justify-content:center; gap:8px;}
 .dots i{
   width:8px; height:8px; border-radius:50%;
-  background:var(--border); transition:all .2s ease;
+  background:var(--line); transition:all .2s ease;
 }
-.dots i.on{background:var(--accent); box-shadow:0 0 8px var(--glow);}
-.nav-btns{display:flex; gap:10px;}
+.dots i.on{background:var(--accent);}
+.nav-btns{flex:none; display:flex; gap:10px;}
 .nav-btns button{
   background:none; border:1px solid var(--line); color:var(--text);
-  font-size:12px; padding:8px 22px; border-radius:8px; cursor:pointer;
+  font-size:12px; padding:8px 20px; border-radius:6px; cursor:pointer;
   transition:all .15s ease;
 }
 .nav-btns button:hover{background:var(--card-hi);}
+.nav-btns .ghost{color:var(--muted); border-color:transparent;}
+.nav-btns .ghost:hover{color:var(--text); border-color:var(--line); background:var(--card-hi);}
 .nav-btns .primary{
   border-color:var(--accent); color:var(--accent);
-  font-weight:700; letter-spacing:1px;
-  background:rgba(0,255,156,0.06);
+  font-weight:700; letter-spacing:1px; background:transparent;
 }
-.nav-btns .primary:hover{box-shadow:0 0 14px rgba(0,255,156,0.25);}
-.nav-btns .ghost{visibility:hidden;}
+.nav-btns .primary:hover{background:rgba(83,125,150,0.1);}
+.nav-btns .ghost-invisible{visibility:hidden;}
 </style>
 </head>
 <body>
 <div id="topbar">
   <span class="logo-dot"></span>
   <span class="brand">OC-GO <b>DASHBOARD</b></span>
-  <button id="btnSkip" class="no-drag" title="跳过引导，直接进入">跳过引导</button>
+  <button id="btnSkip" class="no-drag" title="本次跳过，下次启动还会显示">跳过引导</button>
 </div>
 
 <main id="stage">
 
-  <!-- Step 1：先喂饱数据源 -->
-  <section class="step step1 fade-in" id="step1">
-    <div class="s1-left">
-      <span class="step-tag">STEP 1 · 配置供应商</span>
-      <h1 class="title">先喂饱数据源</h1>
-      <p class="sub">没有供应商，仪表盘就是一块空屏。三步接通第一个额度源：</p>
-      <ol class="steps-list">
-        <li>
-          <span class="step-no">01</span>
-          <div><div class="t">左侧导航切到「供应商」页</div>
-          <div class="d">所有额度源都在这里统一管理。</div></div>
-        </li>
-        <li>
-          <span class="step-no">02</span>
-          <div><div class="t">点「＋ 添加供应商」，选类型</div>
-          <div class="d">DeepSeek / Kimi / OpenRouter / opencode-go…… 13 种预设，余额型 / 中转站 / 订阅配额自动适配显示形态。</div></div>
-        </li>
-        <li>
-          <span class="step-no">03</span>
-          <div><div class="t">填凭据（API Key / Cookie），保存即启用</div>
-          <div class="d">凭据存在本机，加密保管，只有你能看到。</div></div>
-        </li>
-      </ol>
-      <div class="hint">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.5"/><path d="M12 11v5"/></svg>
-        没有 Key？把「演示模式」开关打开，不用 Key 也有模拟数据，先看界面再补凭据。
+  <!-- Step 1：数据源从哪来 -->
+  <section class="step fade-in" id="step1">
+    <span class="step-tag">STEP 1 · 数据源</span>
+    <h1 class="title">数据从哪来</h1>
+    <p class="sub">每个供应商的余额都存在它的 API 里，OC-GO 负责抓回来、画成屏。</p>
+    <div class="flow">
+      <div class="flow-node">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M3 20h18"/><path d="M8 8h8" stroke-dasharray="2 2"/></svg></div>
+        <div class="n">供应商 API</div>
+        <div class="d">余额 · 用量<br>都在云端账户里</div>
+        <div class="e">DeepSeek · Kimi · OpenRouter…</div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 26 16" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M1 8h22M17 2l6 6-6 6"/></svg></div>
+      <div class="flow-node">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="n">OC-GO 本地抓取</div>
+        <div class="d">定时同步<br>凭据加密 · 只在本机</div>
+        <div class="e">1 / 2 / 5 / 10 分钟可调</div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 26 16" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M1 8h22M17 2l6 6-6 6"/></svg></div>
+      <div class="flow-node">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg></div>
+        <div class="n">仪表盘 · 迷你窗</div>
+        <div class="d">余额卡 · 进度条 · 统计区<br>超额前先提醒你</div>
+        <div class="e">80% / 95% 两级阈值</div>
       </div>
     </div>
-    <div class="s1-right">
-      <div class="mock-panel">
-        <div class="mock-head">＋ 添加供应商</div>
-        <div class="mock-body">
-          <div class="mock-row">
-            <label>类型</label>
-            <div class="mock-select">DeepSeek<span class="arr">▾</span></div>
+  </section>
+
+  <!-- Step 2：供应商配置教学 -->
+  <section class="step fade-in hidden" id="step2">
+    <div class="p2-wrap">
+      <div class="p2-left">
+        <span class="step-tag">STEP 2 · 配置</span>
+        <h1 class="title">三步接好供应商</h1>
+        <p class="sub">在「供应商」页，从 13 种预设里挑一个。</p>
+        <ol class="steps-list">
+          <li>
+            <span class="step-no">01</span>
+            <div><div class="t">添加供应商</div>
+            <div class="d">选类型，余额型 / 中转站 / 订阅自动适配显示。</div></div>
+          </li>
+          <li>
+            <span class="step-no">02</span>
+            <div><div class="t">填 API Key</div>
+            <div class="d">凭据加密存本机，只有你能看到。</div></div>
+          </li>
+          <li>
+            <span class="step-no">03</span>
+            <div><div class="t">保存即启用</div>
+            <div class="d">供应商卡片亮起，开始抓数据。</div></div>
+          </li>
+        </ol>
+        <div class="hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.5"/><path d="M12 11v5"/></svg>
+          没有 Key？打开「演示模式」也能先看界面，再补凭据。
+        </div>
+      </div>
+      <div class="p2-right">
+        <div class="mock-panel">
+          <div class="mock-head">＋ 添加供应商</div>
+          <div class="mock-body">
+            <div class="mock-row">
+              <label>类型</label>
+              <div class="mock-select">DeepSeek<span class="arr">▾</span></div>
+            </div>
+            <div class="mock-row">
+              <label>API Key</label>
+              <div class="mock-input">sk-••••••••••</div>
+            </div>
+            <div class="mock-row">
+              <label>演示模式</label>
+              <div class="sw"></div>
+            </div>
+            <div class="mock-btn">保存并启用</div>
           </div>
-          <div class="mock-row">
-            <label>API Key</label>
-            <div class="mock-input">sk-••••••••••</div>
-          </div>
-          <div class="mock-row">
-            <label>演示模式</label>
-            <div class="sw"></div>
-          </div>
-          <div class="mock-btn">保存并启用</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Step 2：看它活过来 -->
-  <section class="step step2 fade-in hidden" id="step2">
-    <span class="step-tag">STEP 2 · 验证与接管</span>
-    <h1 class="title">看它活过来</h1>
-    <p class="sub">配置完成后，三件事依次发生：</p>
-    <ol class="checks">
-      <li>
-        <span class="ic">✓</span>
-        <div><b>测试连接</b> —— 供应商页点「测试连接」，延迟数字蹦出来就是通了。</div>
-      </li>
-      <li>
-        <span class="ic">✓</span>
-        <div><b>数据上屏</b> —— 仪表盘出现余额卡 / 进度条，7 日趋势开始爬坡。</div>
-      </li>
-      <li>
-        <span class="ic">✓</span>
-        <div><b>自动接管</b> —— 迷你窗实时悬浮，80% / 95% 两级阈值，超额之前先提醒你。</div>
-      </li>
-    </ol>
-    <div class="finish">数据会说话。别让额度静悄悄烧光。</div>
+  <!-- Step 3：测试连接 -->
+  <section class="step fade-in hidden" id="step3">
+    <span class="step-tag">STEP 3 · 测试连接</span>
+    <h1 class="title">验证 Key 有效</h1>
+    <p class="sub">保存后点「测试连接」，延迟数字蹦出来就是通了。</p>
+    <div class="p3-wrap">
+      <div class="testmock">
+        <div class="tm-title">供应商 · DeepSeek</div>
+        <div class="trow">
+          <span class="tname">DeepSeek</span>
+          <span class="ttag">deepseek · balance</span>
+          <span class="tdot" id="testDot"></span>
+          <button class="btnTest" id="btnTestMock">测试连接</button>
+        </div>
+        <div class="tres" id="testRes">点击上方按钮，模拟一次真实测试</div>
+      </div>
+      <div class="p3-note">失败会提示具体原因：Key 无效 / 网络不通 / 额度接口异常。</div>
+    </div>
+  </section>
+
+  <!-- Step 4：仪表盘看什么 -->
+  <section class="step fade-in hidden" id="step4">
+    <span class="step-tag">STEP 4 · 仪表盘</span>
+    <h1 class="title">一眼看懂全貌</h1>
+    <p class="sub">仪表盘四件套，从上到下各司其职。</p>
+    <div class="grid4">
+      <div class="g4card">
+        <div class="g4-name">余额卡</div>
+        <div class="g4-bal">¥ 128.40 <small>/ 还剩 · 还能撑 12 天</small></div>
+        <div class="g4-desc">余额型供应商的主数字，充值 / 赠金拆开看。</div>
+      </div>
+      <div class="g4card">
+        <div class="g4-name">进度条</div>
+        <div class="g4-track"><i></i></div>
+        <div class="g4-desc">订阅配额走到哪了，重置倒计时一起算好。</div>
+      </div>
+      <div class="g4card">
+        <div class="g4-name">统计区</div>
+        <div class="g4-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="g4-desc">近 7 日消耗柱形 + 今日占比环形。</div>
+      </div>
+      <div class="g4card">
+        <div class="g4-name">迷你窗</div>
+        <div class="g4-mini">
+          <span class="mdot"></span>
+          <span class="mline"></span>
+          <span class="mline w"></span>
+          <span class="mval">¥ 12.4</span>
+        </div>
+        <div class="g4-desc">桌面常驻小窗，不看仪表盘也知道用了多少。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 5：可用 agent 配置 -->
+  <section class="step fade-in hidden" id="step5">
+    <div class="p5-wrap">
+      <div class="p5-left">
+        <span class="step-tag">STEP 5 · 进阶</span>
+        <h1 class="title">对话助手也能配</h1>
+        <p class="sub">不想手动填？让对话助手（agent）代劳。</p>
+        <div class="chat">
+          <div class="chat-bubble">
+            <span class="who">对话助手</span>
+            在 Hana 里直接说：<br>
+            「<b>给 OC-GO 添加一个 DeepSeek 供应商</b>」<br>
+            它会调 <b>cli.py</b> 帮你配好，软件自动重载。
+          </div>
+        </div>
+        <div class="p5-hint">也可以在项目目录手动跑命令，<span class="mono">--api-key -</span> 表示从 stdin 读，不留在命令行里。</div>
+      </div>
+      <div class="p5-right">
+        <div class="term">
+          <div class="line"><span class="p">$</span> python cli.py add deepseek-main --type deepseek <span class="path">\</span></div>
+          <div class="line">&nbsp;&nbsp;&nbsp;&nbsp;--name "DeepSeek" --api-key sk-****</div>
+          <div class="line ok">✓ 已添加供应商 'deepseek-main'</div>
+          <div class="line ok">&nbsp;&nbsp;运行中的软件将自动重载</div>
+          <div class="line"><span class="p">$</span> python cli.py list</div>
+          <div class="line">deepseek-main&nbsp;&nbsp;DeepSeek&nbsp;&nbsp;type=deepseek&nbsp;&nbsp;enabled ✓</div>
+        </div>
+      </div>
+    </div>
   </section>
 
 </main>
 
 <footer id="foot">
-  <div class="dots" id="dots"><i class="on"></i><i></i></div>
+  <button id="btnNever" title="永久跳过引导，下次启动不再显示">不再显示</button>
+  <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
   <div class="nav-btns">
-    <button id="btnPrev" class="ghost">上一步</button>
+    <button id="btnSkipOnce" title="本次跳过，下次启动还会显示">跳过指引</button>
+    <button id="btnPrev" class="ghost-invisible">上一步</button>
     <button id="btnNext" class="primary">下一步 →</button>
     <button id="btnStart" class="primary" style="display:none">开始使用 →</button>
   </div>
@@ -307,6 +526,7 @@ h1.title{font-size:25px; letter-spacing:1px; font-weight:700;}
 (function(){
 'use strict';
 var $ = function(s){ return document.querySelector(s); };
+var TOTAL = 5;
 var state = { step: 1, booted: false };
 
 function currentApi(){ return (window.pywebview && window.pywebview.api) || null; }
@@ -331,18 +551,22 @@ function injectTheme(css){
 }
 
 function render(){
-  $('#step1').classList.toggle('hidden', state.step !== 1);
-  $('#step2').classList.toggle('hidden', state.step !== 2);
+  for(var i = 1; i <= TOTAL; i++){
+    var sec = $('#step' + i);
+    if(sec) sec.classList.toggle('hidden', state.step !== i);
+  }
   var dots = $('#dots').children;
-  for(var i = 0; i < dots.length; i++) dots[i].classList.toggle('on', i === state.step - 1);
-  $('#btnPrev').style.visibility = (state.step === 1) ? 'hidden' : 'visible';
-  $('#btnNext').style.display = (state.step === 1) ? '' : 'none';
-  $('#btnStart').style.display = (state.step === 2) ? '' : 'none';
-  var sec = state.step === 1 ? $('#step1') : $('#step2');
-  sec.classList.remove('fade-in'); void sec.offsetWidth; sec.classList.add('fade-in');
+  for(var j = 0; j < dots.length; j++) dots[j].classList.toggle('on', j === state.step - 1);
+  $('#btnPrev').className = (state.step === 1) ? 'ghost-invisible' : 'ghost';
+  $('#btnNext').style.display = (state.step < TOTAL) ? '' : 'none';
+  $('#btnStart').style.display = (state.step === TOTAL) ? '' : 'none';
+  var sec2 = $('#step' + state.step);
+  if(sec2){
+    sec2.classList.remove('fade-in'); void sec2.offsetWidth; sec2.classList.add('fade-in');
+  }
 }
 
-/* 引导完成/跳过：写 onboarded 标记后进主面板 */
+/* 永久完成/跳过：写 onboarded 标记后进主面板 */
 function doneGuide(){
   call('save_settings', { ui: { onboarded: true } })
     .catch(function(){})
@@ -354,14 +578,44 @@ function doneGuide(){
     .catch(function(){ location.href = 'main_panel.html'; });
 }
 
+/* 本次跳过：不写 onboarded，下次启动引导仍会显示 */
+function skipOnce(){
+  call('enter_dashboard')
+    .then(function(res){
+      if(res && res.url){ location.href = res.url; }
+      else { location.href = 'main_panel.html'; }
+    })
+    .catch(function(){ location.href = 'main_panel.html'; });
+}
+
+/* P3 测试连接模拟（纯前端演示） */
+function mockTest(){
+  var btn = $('#btnTestMock');
+  if(btn.classList.contains('loading')) return;
+  btn.classList.add('loading');
+  btn.textContent = '测试中…';
+  var res = $('#testRes'), dot = $('#testDot');
+  res.className = 'tres';
+  res.textContent = '';
+  dot.className = 'tdot';
+  setTimeout(function(){
+    btn.classList.remove('loading');
+    btn.textContent = '测试连接';
+    res.className = 'tres ok';
+    res.textContent = '✓ 128 ms · 连接成功，Key 有效';
+    dot.className = 'tdot ok';
+  }, 800);
+}
+
 function boot(){
   if(state.booted) return;
   state.booted = true;
   Promise.all([call('get_settings'), call('get_theme_css')])
     .then(function(res){
       var settings = res[0] || {};
-      injectTheme(res[1]);
-      var tid = (settings.theme && settings.theme.id) || 'paper';
+      var tc = res[1] || {};
+      injectTheme(tc.css);
+      var tid = tc.theme_id || (settings.theme && settings.theme.id) || 'paper';
       document.body.setAttribute('data-style', tid);
       /* ?guide=1 = 关于页重看引导，强制显示；onboarded 已真 → 直接进主面板（异常兜底） */
       var replay = /[?&]guide=1/.test(location.search);
@@ -372,10 +626,13 @@ function boot(){
     .catch(function(){ render(); });
 }
 
-$('#btnSkip').addEventListener('click', doneGuide);
-$('#btnNext').addEventListener('click', function(){ state.step = 2; render(); });
-$('#btnPrev').addEventListener('click', function(){ state.step = 1; render(); });
+$('#btnSkip').addEventListener('click', skipOnce);
+$('#btnNever').addEventListener('click', doneGuide);
+$('#btnSkipOnce').addEventListener('click', skipOnce);
+$('#btnNext').addEventListener('click', function(){ if(state.step < TOTAL){ state.step++; render(); } });
+$('#btnPrev').addEventListener('click', function(){ if(state.step > 1){ state.step--; render(); } });
 $('#btnStart').addEventListener('click', doneGuide);
+$('#btnTestMock').addEventListener('click', mockTest);
 
 window.addEventListener('pywebviewready', boot);
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 600); });
