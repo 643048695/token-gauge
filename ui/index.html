@@ -333,6 +333,15 @@ h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
 }
 .nav-btns .primary:hover{background:rgba(83,125,150,0.1);}
 .nav-btns .ghost-invisible{visibility:hidden;}
+.lang-picker{position:relative; flex:none; margin-left:8px;}
+.lang-current{display:flex; align-items:center; gap:5px; background:none; border:1px solid var(--line); border-radius:6px; color:var(--text); font-size:12px; padding:3px 9px; cursor:pointer; opacity:.85;}
+.lang-current:hover{opacity:1; border-color:var(--accent);}
+.lang-arrow{font-size:9px; opacity:.6;}
+.lang-menu{position:absolute; right:0; top:calc(100% + 5px); background:var(--panel); border:1px solid var(--border); border-radius:8px; min-width:120px; padding:4px; box-shadow:0 8px 22px rgba(0,0,0,.28); z-index:80; display:none;}
+.lang-menu.open{display:block;}
+.lang-item{display:block; width:100%; text-align:left; background:none; border:none; color:var(--text); font-size:12px; padding:7px 11px; border-radius:5px; cursor:pointer;}
+.lang-item:hover{background:var(--line);}
+.lang-item.active{color:var(--accent); font-weight:600;}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -340,9 +349,12 @@ h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
 <div id="topbar">
   <span class="logo-dot"></span>
   <span class="brand">OC-GO <b>DASHBOARD</b></span>
-     <div class="lang-switch no-drag" id="langSwitch">
-     <button type="button" class="lang-btn" data-lang="zh" title="中文">🇨🇳</button>
-     <button type="button" class="lang-btn" data-lang="en" title="English">🇬🇧</button>
+     <div class="lang-picker no-drag" id="langPicker">
+     <button type="button" class="lang-current" id="langCurrent"><span class="lc-text">🌐 中文</span><span class="lc-arrow">▾</span></button>
+     <div class="lang-menu" id="langMenu">
+       <button type="button" class="lang-item" data-lang="zh">中文</button>
+       <button type="button" class="lang-item" data-lang="en">English</button>
+     </div>
    </div>
    <button id="btnSkip" class="no-drag" title="本次跳过，下次启动还会显示" data-i18n="跳过引导">跳过引导</button>
 </div>
@@ -573,22 +585,30 @@ function render(){
 
 /* 永久完成/跳过：写 onboarded 标记后进主面板 */
 
-/* 引导页语言切换 */
-var langBtns = document.querySelectorAll('#langSwitch .lang-btn');
-function syncLangBtns(){ langBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lang') === I18N.getLang()); }); }
-syncLangBtns();
-langBtns.forEach(function(b){
+/* 引导页语言切换（CN 按钮 + 列表） */
+var langCur = document.querySelector('#langCurrent'), langMenu = document.querySelector('#langMenu');
+function syncLangMenu(){
+  var l = I18N.getLang();
+  langCur.querySelector('.lc-text').textContent = (l === 'en' ? '🌐 English' : '🌐 中文');
+  langMenu.querySelectorAll('.lang-item').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lang') === l); });
+  langMenu.classList.remove('open');
+}
+langCur.addEventListener('click', function(e){ e.stopPropagation(); langMenu.classList.toggle('open'); });
+document.addEventListener('click', function(e){ if(!e.target.closest || !e.target.closest('#langPicker')) langMenu.classList.remove('open'); });
+langMenu.querySelectorAll('.lang-item').forEach(function(b){
   b.addEventListener('click', function(){
     var l = b.getAttribute('data-lang');
-    if(l === I18N.getLang()) return;
-    I18N.setLang(l);
-    syncLangBtns();
-    I18N.apply();
-    var st = state.settings || {};
-    var ui2 = Object.assign({}, st.ui || {}, { lang: l });
-    call('save_settings', { ui: ui2 }).catch(function(){});
+    if(l !== I18N.getLang()){
+      I18N.setLang(l);
+      I18N.apply();
+      var st = state.settings || {};
+      var ui2 = Object.assign({}, st.ui || {}, { lang: l });
+      call('save_settings', { ui: ui2 }).catch(function(){});
+    }
+    syncLangMenu();
   });
 });
+syncLangMenu();
 
 function doneGuide(){
   call('save_settings', { ui: { onboarded: true } })
