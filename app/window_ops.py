@@ -122,12 +122,15 @@ class DragController:
 
     # ------------------------------------------------------------ 系统级拖拽
 
-    def native_drag(self, hit):
-        """Win32 原生系统拖拽（WM_NCLBUTTONDOWN + 命中区域）。"""
-        if self._app.mini_window is None or hit not in self.HITS:
+    def native_drag(self, hit, target="mini"):
+        """Win32 原生系统拖拽（WM_NCLBUTTONDOWN + 命中区域）。target: main/mini。"""
+        if hit not in self.HITS:
             return {"ok": False, "message": "参数错误"}
+        win = self._app.main_window if target == "main" else self._app.mini_window
+        if win is None:
+            return {"ok": False, "message": "窗口不存在"}
         try:
-            hwnd = self._app._window_hwnd(self._app.mini_window)
+            hwnd = self._app._window_hwnd(win)
             if not hwnd:
                 return {"ok": False, "message": "无句柄"}
             WM_NCLBUTTONDOWN = 0x00A1

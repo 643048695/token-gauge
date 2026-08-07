@@ -720,6 +720,12 @@ input[type=range]:disabled{opacity:.4;}
       <button type="button" class="lang-item" data-lang="en">English</button>
     </div>
   </div>
+  <button id="btnMin" class="icon-btn no-drag" data-i18n-title="最小化" title="最小化">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button id="btnMax" class="icon-btn no-drag" data-i18n-title="最大化" title="最大化">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+  </button>
   <button id="btnClose" class="icon-btn close no-drag" data-i18n-title="隐藏到托盘" title="隐藏到托盘">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
   </button>
@@ -2784,6 +2790,25 @@ async function init(){
     } catch(e){
       toast(I18N.t('隐藏失败: ')+e.message, 'err');
     }
+  });
+
+  /* 最小化/最大化（主窗口） */
+  $('#btnMin').addEventListener('click', function(){ call('minimize_main').catch(function(){}); });
+  var maxSvgMax = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
+  var maxSvgRes = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="8" width="11" height="11" rx="2"/><path d="M8 5v3M8 8h11"/></svg>';
+  $('#btnMax').addEventListener('click', function(){
+    call('maximize_main').then(function(r){
+      if(r && r.maxed){ $('#btnMax').innerHTML = maxSvgRes; }
+      else { $('#btnMax').innerHTML = maxSvgMax; }
+    }).catch(function(){});
+  });
+  /* 标题栏拖动（主窗口）：CSS app-region 失效时的 Win32 兜底 */
+  $('#titlebar').addEventListener('mousedown', function(e){
+    if(e.button !== 0) return;
+    var t = e.target;
+    if(t.closest && t.closest('.no-drag')) return;
+    if(t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'BUTTON') return;
+    call('native_drag', 'caption', 'main').catch(function(){});
   });
 
   /* 关于页：重看开屏引导 */

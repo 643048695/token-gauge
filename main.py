@@ -208,9 +208,37 @@ class _Api:
         """JS mouseup：停止轮询拖拽并写回配置。"""
         return self._app.drag.drag_stop()
 
-    def native_drag(self, hit):
-        """JS mousedown：启动 Win32 原生系统拖拽（hit: caption/right/bottom/bottomright）。"""
-        return self._app.drag.native_drag(hit)
+    def native_drag(self, hit, target="mini"):
+        """JS mousedown：启动 Win32 原生系统拖拽（hit: caption/right/bottom/bottomright; target: main/mini）。"""
+        return self._app.drag.native_drag(hit, target)
+
+    def minimize_main(self):
+        """主窗口最小化（Win32 ShowWindow SW_MINIMIZE）。"""
+        try:
+            hwnd = self._app._window_hwnd(self._app.main_window)
+            if not hwnd:
+                return {"ok": False, "message": "无句柄"}
+            import ctypes
+            ctypes.windll.user32.ShowWindow(hwnd, 6)  # SW_MINIMIZE
+            return {"ok": True}
+        except Exception as e:
+            log.warning(f"minimize_main 异常: {e}")
+            return {"ok": False, "message": str(e)}
+
+    def maximize_main(self):
+        """主窗口最大化/还原切换（Win32 IsZoomed + ShowWindow）。"""
+        try:
+            hwnd = self._app._window_hwnd(self._app.main_window)
+            if not hwnd:
+                return {"ok": False, "message": "无句柄"}
+            import ctypes
+            u32 = ctypes.windll.user32
+            maxed = bool(u32.IsZoomed(hwnd))
+            u32.ShowWindow(hwnd, 9 if maxed else 3)  # SW_RESTORE / SW_MAXIMIZE
+            return {"ok": True, "maxed": not maxed}
+        except Exception as e:
+            log.warning(f"maximize_main 异常: {e}")
+            return {"ok": False, "message": str(e)}
 
     def open_url(self, url):
         """用系统默认浏览器打开官网链接。"""
