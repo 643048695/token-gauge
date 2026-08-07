@@ -393,6 +393,10 @@ class DashboardApp:
             # 迷你窗不出现在任务栏：加 WS_EX_TOOLWINDOW、去 WS_EX_APPWINDOW
             self.mini_window.events.loaded += self._mini_toolwindow
         except Exception as _e: log.debug(f"main.py 异常: {_e}")
+        try:
+            # 透明窗口：LayeredWindow + color-key（品红 #FF00FF，球/宠物形态背景用键色）
+            self.mini_window.events.loaded += self._mini_color_key
+        except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     def _monitor_work(self, hwnd):
         """窗口所在显示器的工作区（绝对坐标 left/top/width/height）。"""
@@ -687,6 +691,25 @@ class DashboardApp:
             log.debug("mini 已设为 toolwindow（不出现在任务栏）")
         except Exception as e:
             log.warning(f"_mini_toolwindow 异常: {e}")
+
+    def _mini_color_key(self, *_a, **_k):
+        """迷你窗 LayeredWindow + 品红 color-key（球/宠物形态透明背景；classic 无品红像素无影响）。"""
+        try:
+            hwnd = self._window_hwnd(self.mini_window)
+            if not hwnd:
+                return
+            import ctypes
+            u32 = ctypes.windll.user32
+            GWL_EXSTYLE = -20
+            WS_EX_LAYERED = 0x00080000
+            LWA_COLORKEY = 0x00000001
+            style = u32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            u32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_LAYERED)
+            # COLORREF 品红：R=FF G=00 B=FF → 0x00FF00FF
+            u32.SetLayeredWindowAttributes(hwnd, 0x00FF00FF, 0, LWA_COLORKEY)
+            log.debug("mini color-key 透明已启用")
+        except Exception as e:
+            log.warning(f"_mini_color_key 异常: {e}")
 
     def _on_mini_loaded(self, settings):
         """迷你窗 loaded 时（窗口线程）记录 hwnd 并定位到角落。"""
