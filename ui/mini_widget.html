@@ -36,7 +36,11 @@
     position: relative;
     box-shadow: 0 0 18px var(--glow), inset 0 0 24px var(--panel);
     cursor: pointer;
+    /* 内容自适应窗口高度：窗口过矮时优先内部滚动，内容不丢 */
+    overflow-y: auto;
+    scrollbar-width: none;
   }
+  .hud::-webkit-scrollbar, .detail-overlay::-webkit-scrollbar { display: none; }
   /* 顶部拖拽区：覆盖整条顶部（topbar 之上一层），右侧按钮组再上一层保证可点 */
   .drag-top {
     position: absolute; top: 0; left: 0; right: 0; height: 30px;
@@ -122,10 +126,16 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* 中部大数字 */
-  .today { display: flex; align-items: baseline; gap: 7px; }
+  .today {
+    display: flex; align-items: baseline; gap: 7px;
+    /* 窗口过矮时允许压缩大数字区（其余区块保底不压） */
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
   .today .big {
     font-family: Consolas, "JetBrains Mono", monospace;
-    font-size: 27px; font-weight: 700;
+    font-size: clamp(20px, 12.8vh, 27px); font-weight: 700;
     color: var(--accent);
     text-shadow: 0 0 10px var(--glow);
     font-variant-numeric: tabular-nums;
@@ -139,7 +149,7 @@
   .today .meta b { color: var(--text); font-weight: 400; }
 
   /* 月度进度条 */
-  .barwrap { display: flex; flex-direction: column; gap: 2px; }
+  .barwrap { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
   .barhead {
     display: flex; justify-content: space-between; align-items: baseline;
     font-size: 8.5px; letter-spacing: 1.5px; color: var(--muted);
@@ -170,6 +180,7 @@
     font-size: 8.5px; color: var(--muted);
     border-top: 1px solid var(--line);
     padding-top: 4px;
+    flex: 0 0 auto;
   }
   .subrow .item { display: flex; gap: 4px; align-items: baseline; white-space: nowrap; }
   .subrow b {
@@ -182,6 +193,7 @@
     text-align: right; letter-spacing: 0.5px;
     opacity: 0.6;
     margin-top: auto;
+    flex: 0 0 auto;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   }
 
@@ -195,6 +207,9 @@
     gap: 5px;
     padding: 9px 12px 7px;
     z-index: 5;
+    /* 窗口过矮时详情列表可滚动查看 */
+    overflow-y: auto;
+    scrollbar-width: none;
   }
   .hud.detail-on .detail-overlay { display: flex; }
   .detail-head {
