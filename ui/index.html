@@ -334,41 +334,46 @@ h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
 .nav-btns .primary:hover{background:rgba(83,125,150,0.1);}
 .nav-btns .ghost-invisible{visibility:hidden;}
 </style>
+<script src="i18n.js"></script>
 </head>
 <body>
 <div id="topbar">
   <span class="logo-dot"></span>
   <span class="brand">OC-GO <b>DASHBOARD</b></span>
-  <button id="btnSkip" class="no-drag" title="本次跳过，下次启动还会显示">跳过引导</button>
+     <div class="lang-switch no-drag" id="langSwitch">
+     <button type="button" class="lang-btn" data-lang="zh" title="中文">🇨🇳</button>
+     <button type="button" class="lang-btn" data-lang="en" title="English">🇬🇧</button>
+   </div>
+   <button id="btnSkip" class="no-drag" title="本次跳过，下次启动还会显示" data-i18n="跳过引导">跳过引导</button>
 </div>
 
 <main id="stage">
 
   <!-- Step 1：数据源从哪来 -->
   <section class="step fade-in" id="step1">
-    <span class="step-tag">STEP 1 · 数据源</span>
-    <h1 class="title">数据从哪来</h1>
-    <p class="sub">每个供应商的余额都存在它的 API 里，OC-GO 负责抓回来、画成屏。</p>
+    <span class="step-tag" data-i18n="STEP 1 · 数据源">STEP 1 · 数据源</span>
+    <h1 class="title" data-i18n="数据从哪来">数据从哪来</h1>
+    <p class="sub" data-i18n="每个供应商的余额都存在它的 API 里，OC-GO 负责抓回来、画成屏。">每个供应商的余额都存在它的 API 里，OC-GO 负责抓回来、画成屏。</p>
     <div class="flow">
       <div class="flow-node">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M3 20h18"/><path d="M8 8h8" stroke-dasharray="2 2"/></svg></div>
-        <div class="n">供应商 API</div>
-        <div class="d">余额 · 用量<br>都在云端账户里</div>
+        <div class="n" data-i18n="供应商 API">供应商 API</div>
+        <div class="d" data-i18n="余额 · 用量">余额 · 用量<br data-i18n="都在云端账户里">都在云端账户里</div>
         <div class="e">DeepSeek · Kimi · OpenRouter…</div>
       </div>
       <div class="flow-arrow"><svg viewBox="0 0 26 16" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M1 8h22M17 2l6 6-6 6"/></svg></div>
       <div class="flow-node">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
-        <div class="n">OC-GO 本地抓取</div>
-        <div class="d">定时同步<br>凭据加密 · 只在本机</div>
-        <div class="e">1 / 2 / 5 / 10 分钟可调</div>
+        <div class="n" data-i18n="OC-GO 本地抓取">OC-GO 本地抓取</div>
+        <div class="d" data-i18n="定时同步">定时同步<br data-i18n="凭据加密 · 只在本机">凭据加密 · 只在本机</div>
+        <div class="e" data-i18n="1 / 2 / 5 / 10 分钟可调">1 / 2 / 5 / 10 分钟可调</div>
       </div>
       <div class="flow-arrow"><svg viewBox="0 0 26 16" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M1 8h22M17 2l6 6-6 6"/></svg></div>
       <div class="flow-node">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg></div>
-        <div class="n">仪表盘 · 迷你窗</div>
-        <div class="d">余额卡 · 进度条 · 统计区<br>超额前先提醒你</div>
-        <div class="e">80% / 95% 两级阈值</div>
+        <div class="n" data-i18n="仪表盘 · 迷你窗">仪表盘 · 迷你窗</div>
+        <div class="d" data-i18n="余额卡 · 进度条 · 统计区">余额卡 · 进度条 · 统计区<br data-i18n="超额前先提醒你">超额前先提醒你</div>
+        <div class="e" data-i18n="80% / 95% 两级阈值">80% / 95% 两级阈值</div>
       </div>
     </div>
   </section>
@@ -377,37 +382,37 @@ h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
   <section class="step fade-in hidden" id="step2">
     <div class="p2-wrap">
       <div class="p2-left">
-        <span class="step-tag">STEP 2 · 配置</span>
-        <h1 class="title">三步接好供应商</h1>
-        <p class="sub">在「供应商」页，从 13 种预设里挑一个。</p>
+        <span class="step-tag" data-i18n="STEP 2 · 配置">STEP 2 · 配置</span>
+        <h1 class="title" data-i18n="三步接好供应商">三步接好供应商</h1>
+        <p class="sub" data-i18n="在「供应商」页，从 13 种预设里挑一个。">在「供应商」页，从 13 种预设里挑一个。</p>
         <ol class="steps-list">
           <li>
             <span class="step-no">01</span>
-            <div><div class="t">添加供应商</div>
-            <div class="d">选类型，余额型 / 中转站 / 订阅自动适配显示。</div></div>
+            <div><div class="t" data-i18n="添加供应商">添加供应商</div>
+            <div class="d" data-i18n="选类型，余额型 / 中转站 / 订阅自动适配显示。">选类型，余额型 / 中转站 / 订阅自动适配显示。</div></div>
           </li>
           <li>
             <span class="step-no">02</span>
-            <div><div class="t">填 API Key</div>
-            <div class="d">凭据加密存本机，只有你能看到。</div></div>
+            <div><div class="t" data-i18n="填 API Key">填 API Key</div>
+            <div class="d" data-i18n="凭据加密存本机，只有你能看到。">凭据加密存本机，只有你能看到。</div></div>
           </li>
           <li>
             <span class="step-no">03</span>
-            <div><div class="t">保存即启用</div>
-            <div class="d">供应商卡片亮起，开始抓数据。</div></div>
+            <div><div class="t" data-i18n="保存即启用">保存即启用</div>
+            <div class="d" data-i18n="供应商卡片亮起，开始抓数据。">供应商卡片亮起，开始抓数据。</div></div>
           </li>
         </ol>
         <div class="hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.5"/><path d="M12 11v5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v.5"/><path d="M12 11v5"/></svg data-i18n="没有 Key？打开「演示模式」也能先看界面，再补凭据。">
           没有 Key？打开「演示模式」也能先看界面，再补凭据。
         </div>
       </div>
       <div class="p2-right">
         <div class="mock-panel">
-          <div class="mock-head">＋ 添加供应商</div>
+          <div class="mock-head" data-i18n="＋ 添加供应商">＋ 添加供应商</div>
           <div class="mock-body">
             <div class="mock-row">
-              <label>类型</label>
+              <label data-i18n="类型">类型</label>
               <div class="mock-select">DeepSeek<span class="arr">▾</span></div>
             </div>
             <div class="mock-row">
@@ -415,10 +420,10 @@ h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
               <div class="mock-input">sk-••••••••••</div>
             </div>
             <div class="mock-row">
-              <label>演示模式</label>
+              <label data-i18n="演示模式">演示模式</label>
               <div class="sw"></div>
             </div>
-            <div class="mock-btn">保存并启用</div>
+            <div class="mock-btn" data-i18n="保存并启用">保存并启用</div>
           </div>
         </div>
       </div>
@@ -427,54 +432,54 @@ h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
 
   <!-- Step 3：测试连接 -->
   <section class="step fade-in hidden" id="step3">
-    <span class="step-tag">STEP 3 · 测试连接</span>
-    <h1 class="title">验证 Key 有效</h1>
-    <p class="sub">保存后点「测试连接」，延迟数字蹦出来就是通了。</p>
+    <span class="step-tag" data-i18n="STEP 3 · 测试连接">STEP 3 · 测试连接</span>
+    <h1 class="title" data-i18n="验证 Key 有效">验证 Key 有效</h1>
+    <p class="sub" data-i18n="保存后点「测试连接」，延迟数字蹦出来就是通了。">保存后点「测试连接」，延迟数字蹦出来就是通了。</p>
     <div class="p3-wrap">
       <div class="testmock">
-        <div class="tm-title">供应商 · DeepSeek</div>
+        <div class="tm-title" data-i18n="供应商 · DeepSeek">供应商 · DeepSeek</div>
         <div class="trow">
           <span class="tname">DeepSeek</span>
           <span class="ttag">deepseek · balance</span>
           <span class="tdot" id="testDot"></span>
-          <button class="btnTest" id="btnTestMock">测试连接</button>
+          <button class="btnTest" id="btnTestMock" data-i18n="测试连接">测试连接</button>
         </div>
-        <div class="tres" id="testRes">点击上方按钮，模拟一次真实测试</div>
+        <div class="tres" id="testRes" data-i18n="点击上方按钮，模拟一次真实测试">点击上方按钮，模拟一次真实测试</div>
       </div>
-      <div class="p3-note">失败会提示具体原因：Key 无效 / 网络不通 / 额度接口异常。</div>
+      <div class="p3-note" data-i18n="失败会提示具体原因：Key 无效 / 网络不通 / 额度接口异常。">失败会提示具体原因：Key 无效 / 网络不通 / 额度接口异常。</div>
     </div>
   </section>
 
   <!-- Step 4：仪表盘看什么 -->
   <section class="step fade-in hidden" id="step4">
-    <span class="step-tag">STEP 4 · 仪表盘</span>
-    <h1 class="title">一眼看懂全貌</h1>
-    <p class="sub">仪表盘四件套，从上到下各司其职。</p>
+    <span class="step-tag" data-i18n="STEP 4 · 仪表盘">STEP 4 · 仪表盘</span>
+    <h1 class="title" data-i18n="一眼看懂全貌">一眼看懂全貌</h1>
+    <p class="sub" data-i18n="仪表盘四件套，从上到下各司其职。">仪表盘四件套，从上到下各司其职。</p>
     <div class="grid4">
       <div class="g4card">
-        <div class="g4-name">余额卡</div>
-        <div class="g4-bal">¥ 128.40 <small>/ 还剩 · 还能撑 12 天</small></div>
-        <div class="g4-desc">余额型供应商的主数字，充值 / 赠金拆开看。</div>
+        <div class="g4-name" data-i18n="余额卡">余额卡</div>
+        <div class="g4-bal">¥ 128.40 <small data-i18n="/ 还剩 · 还能撑 12 天">/ 还剩 · 还能撑 12 天</small></div>
+        <div class="g4-desc" data-i18n="余额型供应商的主数字，充值 / 赠金拆开看。">余额型供应商的主数字，充值 / 赠金拆开看。</div>
       </div>
       <div class="g4card">
-        <div class="g4-name">进度条</div>
+        <div class="g4-name" data-i18n="进度条">进度条</div>
         <div class="g4-track"><i></i></div>
-        <div class="g4-desc">订阅配额走到哪了，重置倒计时一起算好。</div>
+        <div class="g4-desc" data-i18n="订阅配额走到哪了，重置倒计时一起算好。">订阅配额走到哪了，重置倒计时一起算好。</div>
       </div>
       <div class="g4card">
-        <div class="g4-name">统计区</div>
+        <div class="g4-name" data-i18n="统计区">统计区</div>
         <div class="g4-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="g4-desc">近 7 日消耗柱形 + 今日占比环形。</div>
+        <div class="g4-desc" data-i18n="近 7 日消耗柱形 + 今日占比环形。">近 7 日消耗柱形 + 今日占比环形。</div>
       </div>
       <div class="g4card">
-        <div class="g4-name">迷你窗</div>
+        <div class="g4-name" data-i18n="迷你窗">迷你窗</div>
         <div class="g4-mini">
           <span class="mdot"></span>
           <span class="mline"></span>
           <span class="mline w"></span>
           <span class="mval">¥ 12.4</span>
         </div>
-        <div class="g4-desc">桌面常驻小窗，不看仪表盘也知道用了多少。</div>
+        <div class="g4-desc" data-i18n="桌面常驻小窗，不看仪表盘也知道用了多少。">桌面常驻小窗，不看仪表盘也知道用了多少。</div>
       </div>
     </div>
   </section>
@@ -483,25 +488,25 @@ h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
   <section class="step fade-in hidden" id="step5">
     <div class="p5-wrap">
       <div class="p5-left">
-        <span class="step-tag">STEP 5 · 进阶</span>
-        <h1 class="title">对话助手也能配</h1>
-        <p class="sub">不想手动填？让对话助手（agent）代劳。</p>
+        <span class="step-tag" data-i18n="STEP 5 · 进阶">STEP 5 · 进阶</span>
+        <h1 class="title" data-i18n="对话助手也能配">对话助手也能配</h1>
+        <p class="sub" data-i18n="不想手动填？让对话助手（agent）代劳。">不想手动填？让对话助手（agent）代劳。</p>
         <div class="chat">
           <div class="chat-bubble">
-            <span class="who">对话助手</span>
+            <span class="who" data-i18n="对话助手">对话助手</span data-i18n="在 Hana 里直接说：">
             在 Hana 里直接说：<br>
-            「<b>给 OC-GO 添加一个 DeepSeek 供应商</b>」<br>
-            它会调 <b>cli.py</b> 帮你配好，软件自动重载。
+            「<b data-i18n="给 OC-GO 添加一个 DeepSeek 供应商">给 OC-GO 添加一个 DeepSeek 供应商</b>」<br data-i18n="它会调">
+            它会调 <b>cli.py</b data-i18n="帮你配好，软件自动重载。"> 帮你配好，软件自动重载。
           </div>
         </div>
-        <div class="p5-hint">也可以在项目目录手动跑命令，<span class="mono">--api-key -</span> 表示从 stdin 读，不留在命令行里。</div>
+        <div class="p5-hint" data-i18n="也可以在项目目录手动跑命令，">也可以在项目目录手动跑命令，<span class="mono">--api-key -</span data-i18n="表示从 stdin 读，不留在命令行里。"> 表示从 stdin 读，不留在命令行里。</div>
       </div>
       <div class="p5-right">
         <div class="term">
           <div class="line"><span class="p">$</span> python cli.py add deepseek-main --type deepseek <span class="path">\</span></div>
           <div class="line">&nbsp;&nbsp;&nbsp;&nbsp;--name "DeepSeek" --api-key sk-****</div>
-          <div class="line ok">✓ 已添加供应商 'deepseek-main'</div>
-          <div class="line ok">&nbsp;&nbsp;运行中的软件将自动重载</div>
+          <div class="line ok" data-i18n="✓ 已添加供应商 'deepseek-main'">✓ 已添加供应商 'deepseek-main'</div>
+          <div class="line ok" data-i18n="&nbsp;&nbsp;运行中的软件将自动重载">&nbsp;&nbsp;运行中的软件将自动重载</div>
           <div class="line"><span class="p">$</span> python cli.py list</div>
           <div class="line">deepseek-main&nbsp;&nbsp;DeepSeek&nbsp;&nbsp;type=deepseek&nbsp;&nbsp;enabled ✓</div>
         </div>
@@ -512,13 +517,13 @@ h1.title{font-size:24px; letter-spacing:1px; font-weight:700;}
 </main>
 
 <footer id="foot">
-  <button id="btnNever" title="永久跳过引导，下次启动不再显示">不再显示</button>
+  <button id="btnNever" title="永久跳过引导，下次启动不再显示" data-i18n="不再显示">不再显示</button>
   <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
   <div class="nav-btns">
-    <button id="btnSkipOnce" title="本次跳过，下次启动还会显示">跳过指引</button>
-    <button id="btnPrev" class="ghost-invisible">上一步</button>
-    <button id="btnNext" class="primary">下一步 →</button>
-    <button id="btnStart" class="primary" style="display:none">开始使用 →</button>
+    <button id="btnSkipOnce" title="本次跳过，下次启动还会显示" data-i18n="跳过指引">跳过指引</button>
+    <button id="btnPrev" class="ghost-invisible" data-i18n="上一步">上一步</button>
+    <button id="btnNext" class="primary" data-i18n="下一步 →">下一步 →</button>
+    <button id="btnStart" class="primary" style="display:none" data-i18n="开始使用 →">开始使用 →</button>
   </div>
 </footer>
 
@@ -567,6 +572,24 @@ function render(){
 }
 
 /* 永久完成/跳过：写 onboarded 标记后进主面板 */
+
+/* 引导页语言切换 */
+var langBtns = document.querySelectorAll('#langSwitch .lang-btn');
+function syncLangBtns(){ langBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lang') === I18N.getLang()); }); }
+syncLangBtns();
+langBtns.forEach(function(b){
+  b.addEventListener('click', function(){
+    var l = b.getAttribute('data-lang');
+    if(l === I18N.getLang()) return;
+    I18N.setLang(l);
+    syncLangBtns();
+    I18N.apply();
+    var st = state.settings || {};
+    var ui2 = Object.assign({}, st.ui || {}, { lang: l });
+    call('save_settings', { ui: ui2 }).catch(function(){});
+  });
+});
+
 function doneGuide(){
   call('save_settings', { ui: { onboarded: true } })
     .catch(function(){})

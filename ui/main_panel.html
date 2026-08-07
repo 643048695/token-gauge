@@ -172,7 +172,7 @@ main{display:flex; height:calc(100% - 36px);}
   background:var(--card);
   border:1px solid var(--border);
   border-radius:var(--radius);
-  padding:var(--pad);
+  padding:calc(var(--pad) - 4px);
 }
 .card:hover{border-color:rgba(255,255,255,0.16);}
 
@@ -208,9 +208,9 @@ main{display:flex; height:calc(100% - 36px);}
 .pcard.stale{border-left-color:var(--warn);}
 .pcard.failed{border-left-color:var(--danger); background:rgba(255,77,109,0.05);}
 .pcard.off{opacity:.55; border-left-color:#4a5a52;}
-.pcard-head{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+.pcard-head{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
 /* 按量余额卡（DeepSeek/Kimi 等） */
-.bal-main{display:flex; align-items:baseline; gap:8px; margin:4px 0 6px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03); flex-wrap:wrap;}
+.bal-main{display:flex; align-items:baseline; gap:8px; margin:2px 0 4px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03); flex-wrap:wrap;}
 .peak-tag{margin-left:auto; font-size:10px; padding:2px 8px; border-radius:10px; background:rgba(255,196,0,.15); color:var(--warn); border:1px solid rgba(255,196,0,.4); font-weight:600; letter-spacing:1px;}
 .peak-tag.off{background:rgba(255,255,255,.05); color:var(--muted); border-color:var(--line);}
 .demo-tag{margin-left:6px; font-size:9px; padding:1px 6px; border-radius:8px; background:rgba(255,255,255,.06); color:var(--muted); border:1px dashed var(--line); letter-spacing:1px;}
@@ -251,7 +251,7 @@ main{display:flex; height:calc(100% - 36px);}
 .spark-col.dim{opacity:.15;}
 .model-row.model-head{font-size:10px; color:var(--muted); font-weight:600;}
 .model-row.peak .m-price{color:var(--warn);}
-.bal-amount{font-size:26px; font-weight:700; font-family:Consolas,monospace; color:var(--accent); text-shadow:0 0 12px var(--glow);}
+.bal-amount{font-size:22px; font-weight:700; font-family:Consolas,monospace; color:var(--accent); text-shadow:0 0 12px var(--glow);}
 .bal-cur{font-size:11px; color:var(--muted);}
 .bal-sub{font-size:11px; color:var(--muted); margin-bottom:8px;}
 .model-table{margin:8px 0 10px; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
@@ -270,7 +270,7 @@ main{display:flex; height:calc(100% - 36px);}
   font-size:11px; font-weight:800;
 }
 .brand-badge img{ width:100%; height:100%; object-fit:contain; display:block; }
-.pcard-name{font-size:14px; font-weight:700;}
+.pcard-name{font-size:13px; font-weight:700;}
 .pcard-plan{
   font-size:10px; color:var(--accent2); border:1px solid rgba(0,201,255,0.3);
   padding:1px 7px; border-radius:20px; font-family:Consolas,monospace; letter-spacing:.5px;
@@ -308,8 +308,8 @@ main{display:flex; height:calc(100% - 36px);}
 }
 .lim-reset{font-size:10px; color:var(--muted); margin-top:3px; font-family:Consolas,monospace;}
 
-.card-meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; padding-top:9px; border-top:1px dashed var(--border);}
-.meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; margin-top:4px;}
+.card-meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; padding-top:6px; border-top:1px dashed var(--border);}
+.meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; margin-top:2px;}
 .meta-grid.tri{grid-template-columns:repeat(3,1fr);}
 .meta-cell{min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03);}
 .meta-k{font-size:9px; color:var(--muted); letter-spacing:.5px;}
@@ -681,7 +681,7 @@ input[type=range]:disabled{opacity:.4;}
 #dashGrid .pcard.drag-src{opacity:.35;outline:2px dashed var(--accent);outline-offset:2px;}
 #dashGrid .pcard.drag-over{outline:2px solid var(--accent);outline-offset:2px;box-shadow:0 0 14px var(--glow);}
 /* ---- 卡片分页（任务A：每页2张，translateX 滑动 + 指示点） ---- */
-.pager{overflow:hidden; border-radius:var(--radius);}
+.pager{overflow:hidden; border-radius:var(--radius); grid-column:1 / -1;}
 .pager-track{display:flex; transition:transform .42s cubic-bezier(.25,.75,.3,1); will-change:transform;}
 .pager-page{min-width:100%; flex:none; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:var(--gap); align-content:start;}
 @media (max-width:640px){.pager-page{grid-template-columns:1fr;}}
@@ -1679,6 +1679,18 @@ function themeChartColors(n){
   return out;
 }
 /* 任务B：柱体圆角随主题 --radius（8bit/粗野=0 直角，纸面=6 圆角） */
+
+/* 主题 → 柱形图视觉形态（不同主题不同柱形语言） */
+function themeBarStyle(){
+  var tid = (state.settings.theme || {}).id || 'paper';
+  switch(tid){
+    case '8-bit':     return { rx:0, wd:0.72, op:1,   stroke:'#000', sw:1,    gap:3, glow:false };  // 像素方块 + 黑描边
+    case 'matrix':    return { rx:1, wd:0.4,  op:1,   stroke:null,   sw:0,    gap:6, glow:true };   // 细高柱 + 光晕
+    case 'brutalist': return { rx:0, wd:0.84, op:1,   stroke:'currentColor', sw:1.5, gap:2, glow:false }; // 粗黑边实心
+    case 'classified':return { rx:1, wd:0.26, op:0.95, stroke:null,  sw:0,    gap:9, glow:false };  // 档案细条
+    default:          return { rx:6, wd:0.6,  op:0.92, stroke:null,  sw:0,    gap:4, glow:false };  // paper 圆角柔柱
+  }
+}
 function statsRadiusPx(){
   var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--radius'));
   if(isNaN(v)) v = 3;   /* 注意：8bit/粗野 --radius 为 0px，0 是合法值不能用 || 兜底 */
@@ -1781,13 +1793,21 @@ function statsSectionHtml(v, s){
     bar += '<text class="sb-day" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+18)+'" font-size="9" text-anchor="middle">'+lbl+'</text>';
     var cum = 0;
     var x = 32 + d2*bw;
+    var _bs = themeBarStyle();
+    var _cw = (bw - 18) * _bs.wd;
+    var _gx = ((bw - 18) - _cw) / 2;
     rows.forEach(function(r){
       var uv = unitVal(r.aligned[d2], r.cur, r.meta);
       var val = uv ? uv.v : 0;
       if(val <= 0) return;
       var hh = Math.max(2, val / mx * (bh - 10));
       var y = topBar + (bh - 10) - cum - hh;
-      bar += '<rect x="'+x+'" y="'+y+'" width="'+(bw-18)+'" height="'+hh+'" fill="'+r.color+'" rx="'+statsRadiusPx()+'" opacity="0.92"><title>'+esc(r.name)+': '+fmtStatNum(val)+'</title></rect>';
+      var px = x + _gx;
+      if(_bs.glow){
+        bar += '<rect x="'+(px-2)+'" y="'+(y-1)+'" width="'+(_cw+4)+'" height="'+(hh+2)+'" fill="'+r.color+'" opacity="0.28" rx="'+_bs.rx+'"/>';
+      }
+      bar += '<rect x="'+px+'" y="'+y+'" width="'+_cw+'" height="'+hh+'" fill="'+r.color+'" rx="'+_bs.rx+'" opacity="'+_bs.op+'"'
+        + (_bs.stroke ? ' stroke="'+_bs.stroke+'" stroke-width="'+_bs.sw+'"' : '') + '><title>'+esc(r.name)+': '+fmtStatNum(val)+'</title></rect>';
       cum += hh;
     });
     /* 任务B：柱顶标数字（所有单位模式；auto 为各供应商原币种之和） */
