@@ -692,6 +692,15 @@ input[type=range]:disabled{opacity:.4;}
 #dashGrid{display:block; columns:2; column-gap:var(--gap);}
 #dashGrid > .pcard{break-inside:avoid; margin-bottom:var(--gap); min-width:0;}
 @media (max-width:640px){#dashGrid{columns:1;}}
+
+/* ---- 今日消耗成就行 ---- */
+.achv{display:flex; align-items:center; gap:8px; margin:2px 0 8px; padding:8px 11px; border:1px solid var(--line); border-radius:10px; background:linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.01));}
+.achv.muted{opacity:.55; justify-content:center;}
+.achv-emoji{font-size:20px; line-height:1; flex:none;}
+.achv-main{font-size:12px; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.achv-main b{font-family:Consolas,monospace; font-size:15px; color:var(--accent);}
+.achv-tag{font-size:10px; color:var(--accent2); border:1px solid rgba(0,201,255,.35); padding:2px 8px; border-radius:20px; flex:none; letter-spacing:.5px;}
+.achv.muted .achv-tag{display:none;}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -1180,6 +1189,20 @@ function moneyUnit(amt, cur, meta){
   }
   return money(amt, cur);
 }
+
+/* 今日消耗成就行：按 token 量分级，给用户成就感 */
+function achvHtml(tokens){
+  if(tokens == null || isNaN(tokens) || tokens <= 0){
+    return '<div class="achv muted"><span class="achv-emoji">🤖</span><span class="achv-main">'+I18N.t('今天还没消耗，来一发？')+'</span></div>';
+  }
+  var lv = { emoji:'☕', tag: I18N.t('热身完成') };
+  if(tokens >= 50000)     lv = { emoji:'⚡', tag: I18N.t('渐入佳境') };
+  if(tokens >= 500000)    lv = { emoji:'🔥', tag: I18N.t('火力全开') };
+  if(tokens >= 2000000)   lv = { emoji:'👑', tag: I18N.t('卷王本王') };
+  return '<div class="achv"><span class="achv-emoji">'+lv.emoji+'</span>'+
+    '<span class="achv-main">'+I18N.t('今日消耗')+' <b>≈ '+fmtTokens(tokens)+'</b> tokens</span>'+
+    '<span class="achv-tag">'+lv.tag+'</span></div>';
+}
 function maxLimit(limits){
   if(!limits || !limits.length) return null;
   var mx = null;
@@ -1504,6 +1527,10 @@ function dashCardHtml(pid, cfg, pv){
 
   var metaChips = '';
   if(!off && pvKind !== 'balance'){
+    var _tt = pv && pv.meta && pv.meta.today_tokens;
+    if(_tt != null && dmQuota.tokens !== false){
+      limitsHtml += achvHtml(Number(_tt));
+    }
     var cells = [];
     // 订阅型/中转站 token 量
     var rt = pv && pv.meta && pv.meta.remaining_tokens;
@@ -1897,6 +1924,14 @@ function balanceCardHtml(pv, dm){
     else if(m.available === true) availTxt = I18N.t('<div class="bal-avail">余额充足 · 可正常调用</div>');
     h += '<div class="bal-bar"><div class="bal-fill '+barCls+'" style="width:'+barPct+'%"></div></div>'+availTxt;
   }
+  // 今日消耗成就行（金额 → token，需输出价）
+  if(dm.meta_grid && m.models && m.models.length && sp.today_amount != null){
+    var outP0 = Number(m.models[0].output) || 0;
+    if(outP0 > 0){
+      var _cny = (cur === 'USD' || cur === 'US$' || cur === '$') ? sp.today_amount * (Number(state.settings.display.fx_rate) || 7.2) : sp.today_amount;
+      h += achvHtml(_cny / outP0 * 1000000);
+    }
+  }
   // 三格指标：今日消耗 / 日均消耗 / 还能撑
   if(dm.meta_grid){
     var cells = [
@@ -2111,6 +2146,15 @@ async function renderProviders(){
   await ensureProviderTypes();   /* 编辑表单需要 schema（get_provider_types） */
   var s = state.settings || {};
   var pids = Object.keys(s.providers || {});
+  var provOrder2 = (s.order && s.order.providers) || [];
+  if(provOrder2.length){
+    pids.sort(function(a, b){
+      var ia = provOrder2.indexOf(a), ib = provOrder2.indexOf(b);
+      if(ia < 0) ia = provOrder2.length + pids.indexOf(a);
+      if(ib < 0) ib = provOrder2.length + pids.indexOf(b);
+      return ia - ib;
+    });
+  }
   var box = $('#providersList');
   if(!pids.length){
     box.innerHTML = I18N.t('<div class="empty-box"><b>暂无供应商</b><br>点击右上角「添加供应商」开始配置。</div>');
@@ -2125,6 +2169,45 @@ async function renderProviders(){
     inp.addEventListener('change', function(){
       var pid = inp.dataset.pid;
       saveProvider(pid, function(p){ p.enabled = inp.checked; return p; });
+    });
+  });
+  /* 供应商页拖拽排序（与仪表盘同 order） */
+  var pDrag = null;
+  $$('#providersList .prow-card').forEach(function(card){
+    card.draggable = true;
+    card.addEventListener('dragstart', function(e){
+      pDrag = card.dataset.pid;
+      card.classList.add('drag-src');
+      try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', pDrag); } catch(_e){}
+    });
+    card.addEventListener('dragend', function(){
+      card.classList.remove('drag-src');
+      $$('#providersList .prow-card').forEach(function(c){ c.classList.remove('drag-over'); });
+      pDrag = null;
+    });
+    card.addEventListener('dragover', function(e){
+      e.preventDefault();
+      if(pDrag && pDrag !== card.dataset.pid) card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', function(){ card.classList.remove('drag-over'); });
+    card.addEventListener('drop', function(e){
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      if(!pDrag || pDrag === card.dataset.pid) return;
+      var from = pDrag, to = card.dataset.pid;
+      var s3 = state.settings || {};
+      var allP = Object.keys(s3.providers || {});
+      var o3 = ((s3.order || {}).providers || []).slice();
+      var list = o3.length ? o3.filter(function(p){ return allP.indexOf(p) >= 0; }) : allP.slice();
+      if(list.indexOf(from) < 0) list.push(from);
+      var fi = list.indexOf(from);
+      if(fi >= 0) list.splice(fi, 1);
+      var ti = list.indexOf(to);
+      if(ti < 0) ti = 0;
+      list.splice(ti, 0, from);
+      allP.forEach(function(p){ if(list.indexOf(p) < 0) list.push(p); });
+      save(patchTop('order', { providers: list }));
+      renderProviders();
     });
   });
   $$('#providersList .prow-name-input').forEach(function(inp){
@@ -2217,7 +2300,7 @@ function providerRowHtml(pid, cfg){
   var dataTxt = (pv && pv.fetched_at) ? I18N.t('抓取于 ')+fmtClock(pv.fetched_at) : I18N.t('暂无数据');
   var trHtml = tr ? '<div class="test-result '+(tr.ok?'ok':'fail')+'">'+(tr.ok?I18N.t('连接成功'):I18N.t('连接失败'))+' · '+esc(tr.message)+'</div>' : '';
 
-  return '<div class="card prow-card '+(cfg.enabled===false?'off':'')+'">'+
+  return '<div class="card prow-card '+(cfg.enabled===false?'off':'')+'" data-pid="'+esc(pid)+'">'+
     '<div class="prow-head">'+
       '<label class="switch"><input type="checkbox" class="sw-enabled" data-pid="'+esc(pid)+'" '+(cfg.enabled?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label>'+
       brandBadgeHtml(pid)+
@@ -2324,6 +2407,7 @@ function renderAppearance(){
   var dUnit = (s.display || {}).unit || 'auto';
   var fxRate = (s.display || {}).fx_rate || 7.2;
   var diyMini = diy.mini_provider || '';
+  var miniStyle = s.mini_style || 'classic';
   var diyMods = diy.modules || { balance:{bal_main:true,meta_grid:true,token_est:true,chart:true}, quota:{progress:true,tokens:true,chart:true} };
   diyMods.balance = Object.assign({bal_main:true,meta_grid:true,token_est:true,chart:true}, diyMods.balance||{});
   diyMods.quota = Object.assign({progress:true,tokens:true,chart:true}, diyMods.quota||{});
@@ -2394,6 +2478,13 @@ function renderAppearance(){
               return '<option value="'+esc(pid)+'"'+sel2+'>'+esc(cfg2.name||pid)+'</option>';
             }).join('')+
           '</select>'+
+        '</div>'+
+        '<div class="diy-row" style="margin-top:10px"><span class="diy-lbl">迷你窗形态</span>'+
+          '<div class="opt-group">'+
+            '<button class="opt-btn'+(miniStyle==='classic'?' active':'')+'" data-mstyle="classic" '+(disabled?'disabled':'')+I18N.t('>卡片</button>')+
+            '<button class="opt-btn'+(miniStyle==='ball'?' active':'')+'" data-mstyle="ball" '+(disabled?'disabled':'')+I18N.t('>悬浮球</button>')+
+            '<button class="opt-btn'+(miniStyle==='pet'?' active':'')+'" data-mstyle="pet" '+(disabled?'disabled':'')+I18N.t('>桌宠</button>')+
+          '</div>'+
         '</div>'+
       '</div>'+
     '</div>'+
@@ -2528,6 +2619,12 @@ function renderAppearance(){
   var miniProvider = $('#miniProvider');
   if(miniProvider) miniProvider.addEventListener('change', function(){
     saveDiy({ mini_provider: miniProvider.value });
+  });
+  /* 迷你窗形态 */
+  $$('#appearanceBody .opt-btn[data-mstyle]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      save(patchTop('mini_style', btn.dataset.mstyle));
+    });
   });
   var DIY_MAP = [
     ['diyBalMain',   'balance', 'bal_main'],

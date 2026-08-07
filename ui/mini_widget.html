@@ -254,6 +254,18 @@
   }
   .drow .reset { width: 46px; text-align: right; flex: none; font-size: 8px; }
   .dempty { font-size: 9px; color: var(--muted); opacity: 0.7; text-align: center; margin-top: 12px; }
+
+/* ---- 悬浮球形态 ---- */
+.ball-wrap{display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:3px; padding:6px; cursor:pointer; user-select:none;}
+.ball-svg{width:104px; height:104px; flex:none;}
+.ball-name{font-size:10px; color:var(--muted); max-width:92%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.ball-hint{font-size:8px; color:var(--muted); opacity:.65;}
+.ball-svg.dim{display:flex; align-items:center; justify-content:center; color:var(--muted);}
+/* ---- 桌宠形态 ---- */
+.pet-wrap{display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:5px; padding:8px; cursor:pointer; user-select:none;}
+.pet-face{font-size:44px; line-height:1; animation:pet-breathe 2.4s ease-in-out infinite; filter:drop-shadow(0 0 10px var(--glow));}
+@keyframes pet-breathe{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+.pet-bubble{font-size:10px; color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:10px; padding:4px 10px; max-width:96%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -325,8 +337,22 @@
 
   function setLive(state) {
     const el = $('live');
+    if (!el) return;
     el.className = 'live' + (state === 'ok' ? '' : state === 'stale' ? ' stale' : ' dead');
     el.lastChild.textContent = state === 'ok' ? 'LIVE' : state === 'stale' ? 'STALE' : 'EXPIRED';
+  }
+  /* 形态切换：显示/隐藏经典内容区 */
+  function setStyleHost(show) {
+    const els = ['.today', '.barwrap', '.subrow', '.foot', '.detail-overlay'];
+    els.forEach(function(sel){ $$(sel).forEach(function(e){ e.style.display = show ? '' : 'none'; }); });
+    const host = $('styleHost');
+    if (show && host) host.parentNode.removeChild(host);
+    if (!show && !host) {
+      const d = document.createElement('div');
+      d.id = 'styleHost';
+      $('hud').appendChild(d);
+    }
+    return show ? null : $('styleHost');
   }
 
   function esc(s) {
@@ -338,6 +364,14 @@
     return '$' + (v == null ? 0 : v).toFixed(2);
   }
 
+  function fmtTokens(v) {
+    const n = Number(v);
+    if (n == null || isNaN(n)) return '—';
+    if (Math.abs(n) >= 100000000) return (n / 100000000).toFixed(1) + '亿';
+    if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (Math.abs(n) >= 10000) return Math.round(n / 10000) + '万';
+    return Math.round(n) + '';
+  }
   function fmtMoney(v, cur) {
     if (v == null || isNaN(v)) return '—';
     if (cur === 'CNY') return '¥' + Number(v).toFixed(2);
@@ -418,6 +452,10 @@
     } catch (e) {
       // 主题注入失败不阻断数据渲染
     }
+    const _style = (v && v.settings && v.settings.mini_style) || 'classic';
+    if (_style === 'ball') { renderBall(v); return; }
+    if (_style === 'pet') { renderPet(v); return; }
+    setStyleHost(true);
     const p = firstProvider(v);
     if (!p) {
       setLive('dead');
@@ -555,7 +593,102 @@
     $('foot').textContent = I18N.t('更新 ') + new Date(p.fetched_at * 1000).toLocaleTimeString() + (stale ? I18N.t(' · 延迟') : '');
   }
 
-  async function pull() {
+  
+/* ---- 形态：悬浮球（类似 360 安全球） ---- */
+var _ballIdx = 0;
+function renderBall(v) {
+  const hud = $('hud');
+  const host = setStyleHost(false);
+  const p = firstProvider(v);
+  if (!p) {
+    host.innerHTML = '<div class="ball-wrap"><div class="ball-hint">' + I18N.t('等待数据') + '</div></div>';
+    setLive('dead'); return;
+  }
+  const m = p.meta || {};
+  const kind = m.kind || '';
+  const limits = p.limits || [];
+  let pct = 0, core = '—', lbl = I18N.t('已用');
+  if (kind === 'quota' && limits.length) {
+    pct = Math.max.apply(null, limits.map(function(l){ return l.used_pct || 0; }));
+    core = Math.round(pct) + '%';
+  } else {
+    const b = p.balance || {};
+    const amt = b.amount != null ? Number(b.amount) : null;
+    core = amt != null ? ((b.currency === 'CNY' ? '¥' : '$') + amt.toFixed(amt < 10 ? 2 : 0)) : '—';
+    lbl = I18N.t('余额');
+    const lm = limits[0];
+    pct = lm ? (lm.used_pct || 0) : 0;
+  }
+  const R = 52, C = 2 * Math.PI * R;
+  const dash = Math.max(0, Math.min(100, pct)) / 100 * C;
+  host.innerHTML =
+    '<div class="ball-wrap">' +
+      '<svg viewBox="0 0 140 140" class="ball-svg">' +
+        '<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="var(--line)" stroke-width="9"/>' +
+        '<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+dash.toFixed(1)+' '+(C-dash).toFixed(1)+'" transform="rotate(-90 70 70)"/>' +
+        '<text x="70" y="64" text-anchor="middle" font-size="11" fill="var(--muted)">'+lbl+'</text>' +
+        '<text x="70" y="90" text-anchor="middle" font-size="24" font-weight="700" fill="var(--accent)" font-family="Consolas,monospace">'+core+'</text>' +
+      '</svg>' +
+      '<div class="ball-name">'+esc(p.name || '')+'</div>' +
+      '<div class="ball-hint">'+I18N.t('点击切换 · 拖动移动')+'</div>' +
+    '</div>';
+  setLive(p.ok !== false ? 'ok' : 'dead');
+  _ballIdx = 0;
+  const views = [
+    { l: kind === 'quota' ? I18N.t('已用') : I18N.t('余额'), c: core },
+    { l: I18N.t('进度'), c: Math.round(pct) + '%' },
+    { l: I18N.t('今日'), c: (m.today_tokens != null ? fmtTokens(m.today_tokens) : '—') }
+  ];
+  const bw = host.querySelector('.ball-wrap');
+  if (bw) bw.addEventListener('click', function(ev){
+    ev.stopPropagation();
+    _ballIdx = (_ballIdx + 1) % 3;
+    const vv = views[_ballIdx];
+    const t1 = host.querySelector('.ball-svg text:nth-of-type(1)');
+    const t2 = host.querySelector('.ball-svg text:nth-of-type(2)');
+    if (t1) t1.textContent = vv.l;
+    if (t2) t2.textContent = vv.c;
+  });
+}
+
+/* ---- 形态：桌宠 ---- */
+var _petIdx = 0;
+function renderPet(v) {
+  const host = setStyleHost(false);
+  const p = firstProvider(v);
+  const faces = ['🤖', '🐱', '🐹', '🦊'];
+  const face = faces[(p ? ((p.name || '') + (p.id || '')).length : 0) % faces.length];
+  if (!p) {
+    host.innerHTML = '<div class="pet-wrap"><div class="pet-face">' + face + '</div><div class="pet-bubble">' + I18N.t('等待数据') + '</div></div>';
+    setLive('dead'); return;
+  }
+  const m = p.meta || {};
+  const kind = m.kind || '';
+  const b = p.balance || {};
+  const amt = b.amount != null ? Number(b.amount) : null;
+  const lines = [
+    kind === 'quota' ? (m.today_tokens != null ? I18N.t('今日消耗 ') + fmtTokens(m.today_tokens) : I18N.t('今日暂无消耗')) : (amt != null ? ((b.currency === 'CNY' ? '¥' : '$') + amt.toFixed(2)) : '—'),
+    kind === 'quota' ? (m.available_tokens != null ? I18N.t('可用 ') + fmtTokens(m.available_tokens) : '—') : I18N.t('余额如上'),
+    I18N.t('点击我切换数据哦')
+  ];
+  host.innerHTML =
+    '<div class="pet-wrap">' +
+      '<div class="pet-face">' + face + '</div>' +
+      '<div class="pet-bubble" id="petBubble">' + esc(p.name || '') + ' · ' + lines[0] + '</div>' +
+    '</div>';
+  setLive(p.ok !== false ? 'ok' : 'dead');
+  _petIdx = 0;
+  const pw = host.querySelector('.pet-wrap');
+  if (pw) pw.addEventListener('click', function(ev){
+    ev.stopPropagation();
+    _petIdx = (_petIdx + 1) % 3;
+    const bb = $('#petBubble');
+    if (bb) bb.textContent = lines[_petIdx];
+  });
+}
+
+
+async function pull() {
     try {
       const v = await pywebview.api.get_view();
       render(v);

@@ -36,6 +36,7 @@ DEFAULTS: dict = {
         "mini_corner": "bottom-right",
     },
     "mini_widget_enabled": True,
+    "mini_style": "classic",  # classic / ball / pet
     "diy": {
         "mini_provider": "",
         "modules": {
