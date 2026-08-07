@@ -693,7 +693,13 @@ class DashboardApp:
             log.warning(f"_mini_toolwindow 异常: {e}")
 
     def _mini_color_key(self, *_a, **_k):
-        """迷你窗 LayeredWindow + 品红 color-key（球/宠物形态透明背景；classic 无品红像素无影响）。"""
+        """迷你窗真透明：WS_EX_NOREDIRECTIONBITMAP（Win10 1809+）。
+
+        pywebview 6.2.1 的 transparent 只设 WebView2 DefaultBackgroundColor，
+        Win11 下窗口层仍显示主题色（GitHub #1611）。NOREDIRECTIONBITMAP 让
+        DirectComposition 内容（WebView2）直接合成到 DWM，配合页面透明区域
+        即实现真正的透明窗口（color-key 对 WebView2 无效，已弃用）。
+        """
         try:
             hwnd = self._window_hwnd(self.mini_window)
             if not hwnd:
@@ -701,13 +707,10 @@ class DashboardApp:
             import ctypes
             u32 = ctypes.windll.user32
             GWL_EXSTYLE = -20
-            WS_EX_LAYERED = 0x00080000
-            LWA_COLORKEY = 0x00000001
+            WS_EX_NOREDIRECTIONBITMAP = 0x00200000
             style = u32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            u32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_LAYERED)
-            # COLORREF 品红：R=FF G=00 B=FF → 0x00FF00FF
-            u32.SetLayeredWindowAttributes(hwnd, 0x00FF00FF, 0, LWA_COLORKEY)
-            log.debug("mini color-key 透明已启用")
+            u32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_NOREDIRECTIONBITMAP)
+            log.debug("mini NOREDIRECTIONBITMAP 透明已启用")
         except Exception as e:
             log.warning(f"_mini_color_key 异常: {e}")
 

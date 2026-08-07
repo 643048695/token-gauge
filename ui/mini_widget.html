@@ -268,12 +268,15 @@
 .pet-bubble{font-size:10px; color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:10px; padding:4px 10px; max-width:96%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 
 /* 形态：整窗透明（球/宠物外形即窗口） */
-body.style-ball, body.style-pet{background:#ff00ff !important;}
+body.style-ball, body.style-pet{background:transparent !important;}
 body.style-ball #hud, body.style-pet #hud{background:transparent; border:none; box-shadow:none; padding:0; overflow:visible;}
-body.style-ball .ball-wrap{height:100%; padding:4px;}
-body.style-ball .ball-svg{width:96%; max-width:132px; height:auto; flex:none; margin-top:10px;}
-body.style-pet .pet-wrap{height:100%;}
-body.style-pet .pet-face{font-size:52px;}
+body.style-ball .topbar, body.style-pet .topbar{display:none;}
+body.style-ball #hud, body.style-pet #hud{justify-content:center; align-items:center;}
+body.style-ball .ball-wrap, body.style-pet .pet-wrap{height:100%; padding:0;}
+body.style-ball .ball-wrap{justify-content:center;}
+body.style-ball .liquid-ball{width:126px; height:126px;}
+body.style-ball .ball-name, body.style-ball .ball-hint{display:none;}
+body.style-pet .pet-face{font-size:56px;}
 
 /* ---- 360 液体球 ---- */
 .liquid-ball{position:relative; width:118px; height:118px; border-radius:50%; overflow:hidden; border:2px solid var(--accent); background:rgba(255,255,255,.03); box-shadow:0 0 20px var(--glow), inset 0 0 16px rgba(0,0,0,.3); flex:none;}
@@ -650,18 +653,19 @@ function renderBall(v) {
       '</div>' +
     '</div>';
   setLive(p.ok !== false ? 'ok' : 'dead');
-  /* 点击：quota 循环 已用%/今日消耗；balance 显示余额 */
+  /* 球 = 系统拖拽区（pywebview-drag-region）+ 右键切换数据 */
   const lb = host.querySelector('.liquid-ball');
   const liquid = host.querySelector('#lbLiquid');
   const pctEl = host.querySelector('#lbPct');
   const unitEl = host.querySelector('.lb-unit');
+  if (lb) lb.classList.add('pywebview-drag-region');
   let idx = 0;
   const views = [
     { c: kind === 'quota' ? Math.round(pct) : core, u: kind === 'quota' ? '%' : lbl, h: liquidH },
     { c: m.today_tokens != null ? fmtTokens(m.today_tokens) : '—', u: kind === 'quota' ? I18N.t('今日') : '', h: 0 }
   ];
-  if (lb) lb.addEventListener('click', function(ev){
-    ev.stopPropagation();
+  if (lb) lb.addEventListener('contextmenu', function(ev){
+    ev.preventDefault();
     idx = (idx + 1) % 2;
     const vv = views[idx];
     pctEl.textContent = vv.c;
@@ -698,8 +702,9 @@ function renderPet(v) {
   setLive(p.ok !== false ? 'ok' : 'dead');
   _petIdx = 0;
   const pw = host.querySelector('.pet-wrap');
-  if (pw) pw.addEventListener('click', function(ev){
-    ev.stopPropagation();
+  if (pw) pw.classList.add('pywebview-drag-region');
+  if (pw) pw.addEventListener('contextmenu', function(ev){
+    ev.preventDefault();
     _petIdx = (_petIdx + 1) % 3;
     const bb = $('#petBubble');
     if (bb) bb.textContent = lines[_petIdx];
