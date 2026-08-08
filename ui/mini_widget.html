@@ -102,6 +102,7 @@
        导致按钮整体低于 drag-top(z9) 被拦截点击——drag-top 透明，logo 区仍可拖 */
   }
   .logo { display: flex; align-items: center; gap: 6px; }
+  .logo .pname { color: var(--accent); font-weight: 700; letter-spacing: 1px; font-size: 10px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .logo .dot {
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--accent);
@@ -357,7 +358,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
   <div class="hud" id="hud">
     <div class="drag-top pywebview-drag-region"></div>
     <div class="topbar">
-      <div class="logo"><span class="dot"></span><b>OC-GO</b>&nbsp;MONITOR</div>
+      <div class="logo"><span class="dot"></span><b>OC-GO</b>&nbsp;MONITOR&nbsp;<span class="pname" id="pname"></span></div>
       <div class="topbtns">
         <span class="live" id="live"><span class="dot"></span>LIVE</span>
         <button class="refresh" id="refresh" data-i18n-title="立即刷新" title="立即刷新" onclick="if(window.__miniRefresh)window.__miniRefresh()">↻</button>
@@ -524,19 +525,21 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     return m + I18N.t('分钟');
   }
 
-  function firstProvider(v) {
+  function firstProvider(v, wantPid) {
     if (!v || !v.providers) return null;
     const keys = Object.keys(v.providers);   // 对象键顺序 = config 顺序
     if (!keys.length) return null;
+    // 显式指定 pid（点击大数字切换）优先
+    if (wantPid && v.providers[wantPid]) return { pid: wantPid, p: v.providers[wantPid] };
     // DIY：迷你窗指定供应商（diy.mini_provider，空 = 拖拽顺序第一个 / 自动第一个启用）
     const diyPid = v.settings && v.settings.diy && v.settings.diy.mini_provider;
-    if (diyPid && v.providers[diyPid]) return v.providers[diyPid];
+    if (diyPid && v.providers[diyPid]) return { pid: diyPid, p: v.providers[diyPid] };
     const orderPids = (v.settings && v.settings.order && v.settings.order.providers) || [];
     if (orderPids.length) {
-      const o = orderPids.find(p => v.providers[p]);
-      if (o) return v.providers[o];
+      const o = orderPids.find(pid => v.providers[pid]);
+      if (o) return { pid: o, p: v.providers[o] };
     }
-    return v.providers[keys[0]];
+    return { pid: keys[0], p: v.providers[keys[0]] };
   }
 
   function renderDetail(limits) {
@@ -583,7 +586,11 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
       // 主题注入失败不阻断数据渲染
     }
     setStyleHost(true);
-    const p = firstProvider(v);
+    const fp = firstProvider(v, window.__miniCur && window.__miniCur.pid);
+    if (fp) { window.__miniCur = window.__miniCur || {}; window.__miniCur.pid = fp.pid; }
+    const p = fp ? fp.p : null;
+    const pnameEl = $('pname');
+    if (pnameEl) pnameEl.textContent = fp ? (p.name || fp.pid) : '';
     if (!p) {
       setLive('dead');
       $('todayBig').textContent = '—';
@@ -765,6 +772,23 @@ async function pull() {
   // 数据刷新：立即尝试一次（api 可能已就绪），每 30 秒定时刷新，pywebviewready 兜底
   pull();
   setInterval(pull, 10000);   // 10s 自拉兜底（pusher 推送为主，30s 感知太慢）
+
+  /* 点击大数字切换供应商（与主界面卡片对齐） */
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.id === 'todayBig'){
+      var v = window.__mini && window.__mini.getViewData ? window.__mini.getViewData() : null;
+      if(!v || !v.providers) return;
+      var orderPids = (v.settings && v.settings.order && v.settings.order.providers) || Object.keys(v.providers);
+      var cur = window.__miniCur && window.__miniCur.pid;
+      var list = orderPids.filter(function(pid){ return v.providers[pid]; });
+      if(list.length < 2) return;
+      var idx = list.indexOf(cur);
+      var next = list[(idx + 1) % list.length];
+      window.__miniCur = window.__miniCur || {};
+      window.__miniCur.pid = next;
+      pull();
+    }
+  });
   window.addEventListener('pywebviewready', () => { pull(); });
 
   // 右侧竖条：左右拖动改宽度

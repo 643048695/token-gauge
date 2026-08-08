@@ -809,13 +809,6 @@ body::before{
   pointer-events:none;
 }
 .pcard:hover::after{left:135%;}
-/* 动态燃烧太阳（统计区环形图 2026-08-08）：核心脉动 + 日冕光线公转 */
-.sun-core{transform-origin:70px 70px; animation:sunPulse 3.2s ease-in-out infinite;}
-.sun-switch{margin-left:8px; padding:2px 7px; border-radius:6px; border:1px solid var(--line);
-  background:transparent; cursor:pointer; font-size:11px; line-height:1.2; transition:all .15s;}
-.sun-switch:hover{border-color:var(--accent); box-shadow:0 0 8px var(--glow);}
-@keyframes sunPulse{
-  0%,100%{transform:scale(1); filter:drop-shadow(0 0 6px rgba(0,255,156,.5));}
   50%{transform:scale(1.07); filter:drop-shadow(0 0 16px rgba(0,255,156,.85));}
 }
 /* 成就解锁数字 pulse（成就页总览数字轻微呼吸） */
@@ -1305,7 +1298,6 @@ var MOCK = {
 
 /* ================= 全局状态 ================= */
 var state = {
-  sunStyle: 'plasma',   // 统计区太阳风格：plasma / lava / cyber
   page: 'dashboard',
   mode: 'mock',            // mock | real
   settings: deepCopy(MOCK.settings),
@@ -1507,11 +1499,23 @@ function todayText(p){
 
 /* ================= js_api 调用封装 ================= */
 var viewFetching = false;
+var lastViewOkAt = 0;      // 最近一次成功拉取时间戳（失败重试判定）
+var viewRetryTimer = null; // 失败自动重试定时器
+
+function withTimeout(promise, ms, tag){
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise(function(_, reject){
+      setTimeout(function(){ reject(new Error((tag || '') + '超时 ' + ms + 'ms')); }, ms);
+    })
+  ]);
+}
+
 async function fetchView(){
   if(viewFetching) return;
   viewFetching = true;
   try {
-    var v = await call('get_view');
+    var v = await withTimeout(call('get_view'), 8000, 'get_view');
     state.view = v;
     if(v.settings) state.settings = v.settings;
     if(v.theme_css) injectTheme(v.theme_css);
@@ -1520,6 +1524,17 @@ async function fetchView(){
     renderAll();
     updateHeader();
     loadAchievements(false);   /* 抓取循环可能解锁了 burn 类成就 → 差异 toast */
+    lastViewOkAt = Date.now();
+    /* 成功：清掉失败重试定时器 */
+    if(viewRetryTimer){ clearInterval(viewRetryTimer); viewRetryTimer = null; }
+  } catch(e){
+    /* 失败：10s 后自动重试（避免 api 未就绪/瞬时错误导致数据永久冻结） */
+    if(!viewRetryTimer){
+      viewRetryTimer = setInterval(function(){
+        fetchView().catch(function(){});
+      }, 10000);
+    }
+    throw e;
   } finally {
     viewFetching = false;
   }
@@ -2065,25 +2080,6 @@ function fmtStatNum(n){
   return (Math.round(n*10)/10)+'';
 }
 /* ---- 3D 球体太阳（3 风格 GIF：plasma 等离子 / lava 熔岩 / cyber 赛博）---- */
-var SUN_GIFS = { plasma: 'sun_plasma.gif', lava: 'sun_lava.gif', cyber: 'sun_cyber.gif' };
-function sunGroupHtml(style){
-  var f = SUN_GIFS[style] || SUN_GIFS.plasma;
-  /* 黑底 GIF + screen 混合 = 透明发光（规避透明 GIF 兼容坑）；g 包裹保留脉动动画 */
-  return '<g class="sun-core" style="mix-blend-mode:screen">'+
-    '<image href="ui/assets/'+f+'" x="37" y="37" width="66" height="66" preserveAspectRatio="xMidYMid meet"/>'+
-    '</g>';
-}
-function cycleSunStyle(){
-  var list = ['plasma', 'lava', 'cyber'];
-  state.sunStyle = list[(list.indexOf(state.sunStyle) + 1) % list.length];
-  renderAll();
-}
-/* 太阳风格切换：事件委托（动态渲染按钮，与项目其他按钮同模式） */
-document.addEventListener('click', function(e){
-  if(e.target && e.target.classList && e.target.classList.contains('sun-switch')){
-    cycleSunStyle();
-  }
-});
 function statsSectionHtml(v, s){
   var dm = (s.diy && s.diy.modules) || {};
   var balMod = dm.balance || { chart:true };
@@ -2189,9 +2185,7 @@ function statsSectionHtml(v, s){
     var pieTotal = 0;
     pieRows.forEach(function(r){ var uv = unitVal(r.today, r.cur, r.meta); pieTotal += uv ? uv.v : 0; });
     var R = 50, C = 2 * Math.PI * R;
-    var pieSvg = '<svg viewBox="0 0 140 140" style="width:150px;height:150px;display:block;margin:0 auto;">'+
-      /* 动态燃烧的太阳（3D 球体 3 风格，defs 在 sunGroupHtml 内生成） */
-      '';
+    var pieSvg = '<svg viewBox="0 0 140 140" style="width:150px;height:150px;display:block;margin:0 auto;">';
     /* 能量光环底座 */
     pieSvg += '<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="var(--accent)" stroke-width="21" opacity="0.07"/>';
     var offset = 0;
@@ -2206,11 +2200,9 @@ function statsSectionHtml(v, s){
         + ' stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 70 70)"><title>'+esc(r.name)+'</title></circle>';
       offset += dash;
     });
-    /* 太阳核心（3D 球体，按当前风格）——置于环形与光线之上 */
-    pieSvg += sunGroupHtml(state.sunStyle || 'plasma');
     /* 中心：今日总消耗（深色大数值，在亮色太阳核心上对比清晰） */
-    pieSvg += '<text x="70" y="60" text-anchor="middle" font-size="9.5" fill="#0a3d2a">'+I18N.t('今日消耗')+'</text>';
-    pieSvg += '<text x="70" y="86" text-anchor="middle" font-size="17" font-weight="800" fill="#04261a" style="font-family:Consolas,monospace">'+fmtStatNum(pieTotal)+'</text>';
+    pieSvg += '<text x="70" y="60" text-anchor="middle" font-size="9.5" fill="var(--muted)">'+I18N.t('今日消耗')+'</text>';
+    pieSvg += '<text x="70" y="86" text-anchor="middle" font-size="17" font-weight="800" fill="var(--accent)" style="font-family:Consolas,monospace">'+fmtStatNum(pieTotal)+'</text>';
     pieSvg += '</svg>';
     var legend = pieRows.map(function(r){
       var uv = unitVal(r.today, r.cur, r.meta);
@@ -2219,8 +2211,6 @@ function statsSectionHtml(v, s){
       return '<div class="lg-row"><i style="background:'+r.color+'"></i><span>'+esc(r.name)+'</span><b>'+esc(uv ? uv.label : '—')+'</b><em>'+pct+'%</em></div>';
     }).join('');
     pieHtml = '<div class="stats-card"><h4>'+I18N.t('今日消耗占比')+
-      '<button class="sun-switch" data-i18n-title="切换太阳风格" title="切换太阳风格">'+
-      (state.sunStyle === 'lava' ? '🌋' : state.sunStyle === 'cyber' ? '🛰️' : '☀️')+'</button>'+
       '</h4><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;"><div>'+pieSvg+'</div><div style="flex:1;min-width:120px;">'+legend+'</div></div></div>';
   }
 
