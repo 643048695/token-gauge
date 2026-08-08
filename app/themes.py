@@ -48,7 +48,7 @@ _8BIT_NES = {
 }
 _8BIT_GB = {
     "accent": "#9bbc0f", "accent2": "#8bac0f",
-    "bg": "#0f380f", "text": "#e0e6c3", "muted": "#758c4e",
+    "bg": "#0f380f", "text": "#e0e6c3", "muted": "#a9c98a",   # muted 提亮（原 #758c4e 与深绿 bg 对比低，字体不清晰）
     "glow": "rgba(155,188,15,0.45)",
     "card": "rgba(155,188,15,0.08)", "card-hi": "rgba(155,188,15,0.14)",
     "line": "rgba(155,188,15,0.35)", "panel": "rgba(155,188,15,0.08)",
