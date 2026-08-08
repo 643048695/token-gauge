@@ -38,8 +38,7 @@ body[data-density="comfortable"]{--pad:14px;--gap:14px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.22);}
 
 /* ============ 标题栏（36px 拖动区） ============ */
-#titlebar{
-  height:36px; display:flex; align-items:center; gap:10px;
+#titlebar{  height:36px; display:flex; align-items:center; gap:10px;
   padding:0 10px 0 14px;
   border-bottom:1px solid var(--border);
   background:rgba(0,0,0,0.22);
@@ -47,6 +46,17 @@ body[data-density="comfortable"]{--pad:14px;--gap:14px;}
   position:relative; z-index:20;
 }
 #titlebar .no-drag{-webkit-app-region:no-drag;}
+
+/* 右下角 resize 把手（frameless 窗口鼠标调大小，2026-08-08） */
+.resize-handle{
+  position:fixed; right:0; bottom:0; width:18px; height:18px;
+  cursor:nwse-resize; z-index:999;
+  -webkit-app-region:no-drag;
+  background:linear-gradient(135deg, transparent 62%, var(--accent) 62%, var(--accent) 74%, transparent 74%),
+             linear-gradient(135deg, transparent 78%, var(--accent) 78%, var(--accent) 88%, transparent 88%);
+  opacity:.45; transition:opacity .15s;
+}
+.resize-handle:hover{opacity:1;}
 .logo-dot{
   width:10px;height:10px;border-radius:50%;
   background:var(--accent);
@@ -3325,6 +3335,13 @@ async function init(){
   /* 手动刷新 */
   $('#btnRefresh').addEventListener('click', manualRefresh);
 
+  /* 右下角 resize 把手：frameless 窗口鼠标调大小 */
+  var rh = $('#resizeHandle');
+  if(rh) rh.addEventListener('mousedown', function(e){
+    e.preventDefault();
+    call('drag_start', 'resize', 'main').catch(function(){});
+  });
+
   /* 关闭 = 隐藏到托盘 */
   $('#btnClose').addEventListener('click', async function(){
     try {
@@ -3444,5 +3461,6 @@ document.addEventListener('DOMContentLoaded', init);
   };
 })();
 </script>
+<div class="resize-handle" id="resizeHandle" data-i18n-title="拖动调整大小" title="拖动调整大小"></div>
 </body>
 </html>

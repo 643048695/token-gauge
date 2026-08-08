@@ -102,7 +102,7 @@
        导致按钮整体低于 drag-top(z9) 被拦截点击——drag-top 透明，logo 区仍可拖 */
   }
   .logo { display: flex; align-items: center; gap: 6px; }
-  .logo .pname { color: var(--accent); font-weight: 700; letter-spacing: 1px; font-size: 10px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .logo .pname { color: var(--accent); font-weight: 700; letter-spacing: 1px; font-size: 9.5px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: 1px; }
   .logo .dot {
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--accent);
@@ -140,9 +140,9 @@
   }
   .today .big {
     font-family: Consolas, "JetBrains Mono", monospace;
-    font-size: clamp(20px, 12.8vh, 27px); font-weight: 700;
+    font-size: clamp(24px, 15vh, 33px); font-weight: 800;
     color: var(--accent);
-    text-shadow: 0 0 10px var(--glow);
+    text-shadow: 0 0 12px var(--glow), 0 0 28px var(--glow);
     font-variant-numeric: tabular-nums;
     letter-spacing: 1px;
     white-space: nowrap;
@@ -151,7 +151,7 @@
     font-size: 9px; color: var(--muted); line-height: 1.35;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   }
-  .today .meta b { color: var(--text); font-weight: 400; }
+  .today .meta b { color: var(--accent); font-weight: 700; }
 
   /* 月度进度条 */
   .barwrap { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
@@ -590,7 +590,12 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     if (fp) { window.__miniCur = window.__miniCur || {}; window.__miniCur.pid = fp.pid; }
     const p = fp ? fp.p : null;
     const pnameEl = $('pname');
-    if (pnameEl) pnameEl.textContent = fp ? (p.name || fp.pid) : '';
+    if (pnameEl) {
+      /* 显示名优先用设置里的配置名（用户可改中文名），其次 provider 自带名 */
+      const dispName = (v.settings && v.settings.providers && v.settings.providers[fp.pid] && v.settings.providers[fp.pid].name)
+        || p.name || fp.pid;
+      pnameEl.textContent = fp ? dispName : '';
+    }
     if (!p) {
       setLive('dead');
       $('todayBig').textContent = '—';
@@ -616,15 +621,21 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     const pvKind = p.meta && p.meta.kind;
     const pvBal = (pvKind === 'balance' || pvKind === 'relay');
 
-    // 中部大数字：余额型显示可用余额；否则今日 delta / monthly
-    if (pvBal && p.balance && p.balance.amount != null) {
+    // 中部大数字：今日消耗优先（与主界面"今日"口径一致，余额/月度降级到说明文字）
+    const balSpeed2 = (p.meta && p.meta.speed) || {};
+    if (t && t.delta_pct != null) {
+      $('todayBig').textContent = (t.delta_pct > 0 ? '+' : '') + Number(t.delta_pct).toFixed(1) + '%';
+      const since = t.since_midnight ? '00:00' : (t.base_label || '');
+      $('todayMeta').innerHTML = '<b>' + I18N.t('今日') + '</b>' + I18N.t(' 消耗 ') + fmtUsd(t.delta_usd)
+        + (since ? I18N.t(' · 自 ') + esc(since) : '') + I18N.t(' 起算');
+    } else if (pvBal && balSpeed2.today_amount != null && p.balance && p.balance.amount != null) {
+      $('todayBig').textContent = fmtMoney(balSpeed2.today_amount, p.balance.currency);
+      $('todayMeta').innerHTML = '<b>' + I18N.t('今日') + '</b>' + I18N.t(' 消耗 · 余额 ')
+        + fmtMoney(p.balance.amount, p.balance.currency);
+    } else if (pvBal && p.balance && p.balance.amount != null) {
       $('todayBig').textContent = fmtMoney(p.balance.amount, p.balance.currency);
       $('todayMeta').textContent = (p.balance.currency || '') + I18N.t(' 可用余额')
         + (isPeakNow() ? I18N.t(' · 高峰贵一倍') : '');
-    } else if (t && t.delta_pct != null) {
-      $('todayBig').textContent = (t.delta_pct > 0 ? '+' : '') + Number(t.delta_pct).toFixed(1) + '%';
-      const since = t.since_midnight ? '00:00' : (t.base_label || '');
-      $('todayMeta').textContent = I18N.t('今日 ') + fmtUsd(t.delta_usd) + (since ? I18N.t(' · 自 ') + since : '') + I18N.t(' 起算');
     } else if (monthly && monthly.used_pct != null) {
       $('todayBig').textContent = Math.round(monthly.used_pct) + '%';
       $('todayMeta').textContent = I18N.t('月度用量 · ') + esc(monthly.label || I18N.t('每月'));

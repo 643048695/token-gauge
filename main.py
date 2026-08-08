@@ -256,9 +256,9 @@ class _Api:
         """主窗口滑条：按逻辑宽度等比改迷你窗尺寸（实时预览+写回）。"""
         return self._app.resize_mini_main(width)
 
-    def drag_start(self, kind):
-        """JS mousedown：启动 Python 鼠标轮询拖拽（kind: move/resizeX/resizeY/resize）。"""
-        return self._app.drag.drag_start(kind)
+    def drag_start(self, kind, target="mini"):
+        """JS mousedown：启动 Python 鼠标轮询拖拽（kind: move/resizeX/resizeY/resize）。target: mini/main。"""
+        return self._app.drag.drag_start(kind, target)
 
     def drag_stop(self):
         """JS mouseup：停止轮询拖拽并写回配置。"""

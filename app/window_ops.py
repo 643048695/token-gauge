@@ -32,12 +32,13 @@ class DragController:
 
     # ------------------------------------------------------------ 入口
 
-    def drag_start(self, kind):
-        """JS mousedown：启动轮询拖拽（kind: move/resizeX/resizeY/resize）。"""
-        if self._app.mini_window is None or kind not in ("move", "resizeX", "resizeY", "resize"):
+    def drag_start(self, kind, target="mini"):
+        """JS mousedown：启动轮询拖拽（kind: move/resizeX/resizeY/resize）。target: mini/main。"""
+        win = self._app.mini_window if target == "mini" else self._app.main_window
+        if win is None or kind not in ("move", "resizeX", "resizeY", "resize"):
             return {"ok": False, "message": "参数错误"}
         try:
-            hwnd = self._app._window_hwnd(self._app.mini_window)
+            hwnd = self._app._window_hwnd(win)
             if not hwnd:
                 return {"ok": False, "message": "无句柄"}
             pt = ctypes.wintypes.POINT()
