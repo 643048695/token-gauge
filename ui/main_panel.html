@@ -798,8 +798,6 @@ input[type=range]:disabled{opacity:.4;}
 @keyframes nucPulse{0%,100%{opacity:.55;}50%{opacity:1;}}
 .tt-atom-e{fill:var(--accent); stroke:none; animation:orbitSpin 3s linear infinite; transform-origin:32px 32px;}
 @keyframes orbitSpin{to{transform:rotate(360deg);}}
-/* 测试模式角标（点击阶梯元素循环档位） */
-.tt-test-badge{font-size:8px; color:var(--accent); border:1px solid var(--accent); border-radius:99px; padding:1px 7px; letter-spacing:1px; opacity:.85; margin-top:2px;}
 @media (max-width:760px){.mot-tier-box{width:100%; border-left:none; border-top:1px dashed var(--border); padding:10px 0 0; margin-top:8px;}}
 .mot-bench{flex-wrap:wrap;}
 .mot-energy{margin-top:8px; padding-top:7px; border-top:1px dashed rgba(255,255,255,.08); display:flex; gap:12px; flex-wrap:wrap; align-items:baseline;}
@@ -2300,40 +2298,6 @@ function fmtStatNum(n){
   return (Math.round(n*10)/10)+'';
 }
 /* ---- 成就激励卡片（仪表盘，2026-08-08）：本月燃烧 + 连续天数 + 行业基准 ---- */
-/* 碳足迹阶梯测试模式：点击元素循环 6 档（事件委托） */
-document.addEventListener('click', function(e){
-  var box = e.target.closest ? e.target.closest('.mot-tier-box') : null;
-  if(!box) return;
-  var real = parseFloat(box.getAttribute('data-real-kwh') || '0');
-  var badge = box.querySelector('.tt-test-badge');
-  var testing = badge && !badge.hidden;   /* 未测试=真实档 → 从 lv1 开始；测试中 → 下一档 */
-  function backToReal(){
-    var realT = TT_TIERS[0];
-    for(var j = TT_TIERS.length - 1; j >= 0; j--){ if(real >= TT_TIERS[j].min){ realT = TT_TIERS[j]; break; } }
-    var rv = Math.max(1, Math.round(real * realT.per));
-    box.setAttribute('data-tier', realT.key);
-    box.querySelector('.tt-stage').innerHTML = TT_ELS[realT.key];
-    box.querySelector('.tt-label').textContent = I18N.t(realT.name);
-    box.querySelector('.tt-note').textContent = I18N.t(realT.notePre) + rv + I18N.t(realT.notePost);
-    if(badge) badge.hidden = true;
-  }
-  function showTier(t){
-    var v = Math.max(1, Math.round((t.min + 0.5) * t.per));
-    box.setAttribute('data-tier', t.key);
-    box.querySelector('.tt-stage').innerHTML = TT_ELS[t.key];
-    box.querySelector('.tt-label').textContent = I18N.t(t.name);
-    box.querySelector('.tt-note').textContent = I18N.t(t.notePre) + v + I18N.t(t.notePost);
-    if(badge) badge.hidden = false;
-  }
-  if(!testing){
-    showTier(TT_TIERS[0]);   /* 进入测试：从 lv1 开始，6 档全覆盖 */
-    return;
-  }
-  var idx = 0;
-  for(var i = 0; i < TT_TIERS.length; i++){ if(TT_TIERS[i].key === box.getAttribute('data-tier')){ idx = i; break; } }
-  if(idx >= TT_TIERS.length - 1){ backToReal(); }
-  else { showTier(TT_TIERS[idx + 1]); }
-});
 /* 单次用量递增：手机 0.02 度 / 咖啡 0.05 / 面包 0.4 / 开车 1.5(10km) / 服务器 2.4(天) / 核能 280(秒) */
 var TT_ELS = {
   lv1: '<svg class="tt-svg" viewBox="0 0 64 64"><rect class="tt-phone" x="22" y="10" width="20" height="40" rx="3"/><rect class="tt-phone-screen" x="25" y="16" width="14" height="24" rx="1.5"/><rect class="tt-batt" x="25" y="33" width="14" height="7" rx="1"/><rect x="28.5" y="50" width="7" height="3" rx="1"/></svg>',
@@ -2356,11 +2320,10 @@ function motTierHtml(kwh){
   var t = TT_TIERS[0];
   for(var i = TT_TIERS.length - 1; i >= 0; i--){ if(kwh >= TT_TIERS[i].min){ t = TT_TIERS[i]; break; } }
   var v = Math.max(1, Math.round(kwh * t.per));
-  return '<div class="mot-tier-box" data-tier="'+t.key+'" data-real-kwh="'+kwh.toFixed(2)+'" title="'+I18N.t('点击切换档位（测试模式）')+'">'+
+  return '<div class="mot-tier-box" data-tier="'+t.key+'">'+
     '<div class="tt-stage">'+TT_ELS[t.key]+'</div>'+
     '<div class="tt-label">'+I18N.t(t.name)+'</div>'+
     '<div class="tt-note">'+I18N.t(t.notePre)+v+I18N.t(t.notePost)+'</div>'+
-    '<div class="tt-test-badge" hidden>🎛 '+I18N.t('测试档位 · 点击返回真实')+'</div>'+
   '</div>';
 }
 function motivateCardHtml(m, todayKwh){
