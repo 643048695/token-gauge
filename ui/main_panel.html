@@ -777,19 +777,6 @@ body::before{
   from{transform:translate(0,0);}
   to{transform:translate(46px,46px);}
 }
-/* 顶部扫描光带：HUD 式周期扫过（透明渐变，不挡交互） */
-body::after{
-  content:''; position:fixed; left:0; right:0; top:0; height:130px; z-index:900;
-  pointer-events:none;
-  background:linear-gradient(180deg, rgba(0,255,156,.06), transparent);
-  animation: scanSweep 10s ease-in-out infinite;
-}
-@keyframes scanSweep{
-  0%{transform:translateY(-150px); opacity:0;}
-  10%{opacity:1;}
-  85%{opacity:1;}
-  100%{transform:translateY(112vh); opacity:0;}
-}
 /* 进度条流动光泽：亮带从 fill 左端流到右端（视觉焦点 = 能量在流动） */
 .bar .fill::before{
   content:''; position:absolute; top:0; bottom:0; left:-30%; width:24%;
