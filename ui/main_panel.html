@@ -741,7 +741,8 @@ input[type=range]:disabled{opacity:.4;}
 }
 .mot-cell b{display:block; font-size:16px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; text-shadow:0 0 8px var(--glow);}
 .mot-cell span{display:block; font-size:9px; color:var(--muted); margin-top:1px; letter-spacing:1px;}
-.mot-bench{margin-top:9px;}
+.mot-bench{margin-top:9px; display:flex; gap:18px; align-items:stretch;}
+.mot-bench-l{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center;}
 .mot-bench-t{font-size:10px; color:var(--muted); letter-spacing:.5px;}
 .mot-bench-t b{color:var(--text); font-variant-numeric:tabular-nums;}
 .mot-src{font-size:8.5px; color:var(--muted); opacity:.7;}
@@ -753,6 +754,51 @@ input[type=range]:disabled{opacity:.4;}
   transition:width .5s ease;
 }
 .mot-tip{font-size:9.5px; color:var(--accent); margin-top:4px; letter-spacing:.5px; opacity:.9;}
+
+/* ===== 碳足迹阶梯（2026-08-09 v7 审批：6 档动作型换算，全主题变量） ===== */
+.mot-tier-box{
+  flex:0 0 auto; width:172px; border-left:1px dashed var(--border); padding-left:16px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+}
+.tt-stage{width:84px; height:64px; display:flex; align-items:flex-end; justify-content:center;}
+.tt-svg{width:100%; height:100%; overflow:visible;}
+.tt-svg *{stroke:var(--text); fill:var(--text); opacity:.92;}
+.tt-svg .tt-hole{fill:var(--bg); stroke:none;}
+.tt-label{font-size:10px; color:var(--text); font-weight:700; letter-spacing:1px;}
+.tt-note{font-size:8.5px; color:var(--muted); letter-spacing:.5px; text-align:center;}
+/* 手机充电：电量格爬升 */
+.tt-phone{fill:none; stroke-width:2.5;}
+.tt-phone-screen{fill:var(--accent); stroke:none; opacity:.35;}
+.tt-batt{fill:var(--accent); stroke:none; animation:battRise 1.6s ease-in-out infinite;}
+@keyframes battRise{0%,100%{opacity:.45;}50%{opacity:1;}}
+/* 咖啡：热气升腾 */
+.tt-cup{fill:none; stroke-width:2.5;}
+.tt-cup-handle{fill:none; stroke-width:2;}
+.tt-steam{fill:none; stroke:var(--accent); stroke-width:1.6; stroke-linecap:round; animation:steamRise 2.2s ease-out infinite;}
+.tt-steam:nth-child(2){animation-delay:.7s;}
+@keyframes steamRise{0%{transform:translateY(6px); opacity:0;}30%{opacity:.85;}100%{transform:translateY(-10px); opacity:0;}}
+/* 烤面包：吐司弹起 */
+.tt-toaster{fill:none; stroke-width:2.5;}
+.tt-toast{fill:var(--warn); stroke:var(--warn); animation:toastPop 2.4s ease-in-out infinite;}
+@keyframes toastPop{0%,100%{transform:translateY(0); opacity:.6;}35%{transform:translateY(-9px); opacity:1;}70%{transform:translateY(0); opacity:.6;}}
+/* 汽车：尾气烟团 */
+.tt-car{fill:none; stroke-width:2.5;}
+.tt-wheel{fill:var(--text); stroke:none;}
+.tt-exhaust{fill:none; stroke:var(--muted); stroke-width:1.8; stroke-linecap:round; animation:exSmoke 1.8s ease-out infinite;}
+@keyframes exSmoke{0%{transform:translate(0,0) scale(.5); opacity:0;}25%{opacity:.8;}100%{transform:translate(6px,-10px) scale(1.25); opacity:0;}}
+/* 服务器：指示灯闪烁 */
+.tt-rack{fill:none; stroke-width:2.5;}
+.tt-rack-line{stroke-width:1.6;}
+.tt-led{fill:var(--accent); stroke:none; animation:ledBlink 1.2s ease-in-out infinite;}
+.tt-led2{fill:var(--accent2); stroke:none; animation:ledBlink 1.2s ease-in-out .4s infinite;}
+@keyframes ledBlink{0%,100%{opacity:.3;}50%{opacity:1;}}
+/* 核能：原子轨道 + 电子绕转 + 核心脉动 */
+.tt-atom-orbit{fill:none; stroke:var(--accent); stroke-width:1.4;}
+.tt-atom-nucleus{fill:var(--warn); stroke:none; animation:nucPulse 1.8s ease-in-out infinite;}
+@keyframes nucPulse{0%,100%{opacity:.55;}50%{opacity:1;}}
+.tt-atom-e{fill:var(--accent); stroke:none; animation:orbitSpin 3s linear infinite; transform-origin:32px 32px;}
+@keyframes orbitSpin{to{transform:rotate(360deg);}}
+@media (max-width:1100px){.mot-tier-box{display:none;}}
 .mot-energy{margin-top:8px; padding-top:7px; border-top:1px dashed rgba(255,255,255,.08); display:flex; gap:12px; flex-wrap:wrap; align-items:baseline;}
 .mot-energy .mot-e-t{font-size:9.5px; color:var(--muted); letter-spacing:1.5px; font-weight:700;}
 .mot-energy .mot-e-i{font-size:10.5px; color:var(--text); font-variant-numeric:tabular-nums;}
@@ -1789,9 +1835,18 @@ function renderDashboard(){
       '<button class="btn sm btn-refresh-all" id="btnRefreshAll" '+(disabled?'disabled':'')+'>'+ICONS.zap+I18N.t('全部刷新</button>')+
     '</div>';
 
-  /* 成就激励卡片（本月燃烧/连续天数/行业基准） */
+  /* 成就激励卡片（本月燃烧/连续天数/行业基准/碳足迹阶梯） */
   var mc = $('#motivateCard');
-  if(mc) mc.innerHTML = motivateCardHtml(v.motivate);
+  if(mc){
+    /* 今日电量（碳足迹阶梯数据源）：汇总各供应商今日 token → 度电 */
+    var tkTodayTotal = 0;
+    Object.keys(v.providers || {}).forEach(function(pid){
+      var p = v.providers[pid];
+      var tt = p && p.today && p.today.tokens;
+      if(tt != null) tkTodayTotal += Number(tt);
+    });
+    mc.innerHTML = motivateCardHtml(v.motivate, tkTodayTotal / 1e6);
+  }
 
   /* 卡片（任务A：每页 2 张分页） */
   var grid = $('#dashGrid');
@@ -2240,7 +2295,36 @@ function fmtStatNum(n){
   return (Math.round(n*10)/10)+'';
 }
 /* ---- 成就激励卡片（仪表盘，2026-08-08）：本月燃烧 + 连续天数 + 行业基准 ---- */
-function motivateCardHtml(m){
+/* ---- 碳足迹阶梯（2026-08-09 用户方案 v7 审批通过）：6 档动作型换算，按今日电量切换 ---- */
+/* 单次用量递增：手机 0.02 度 / 咖啡 0.05 / 面包 0.4 / 开车 1.5(10km) / 服务器 2.4(天) / 核能 280(秒) */
+var TT_ELS = {
+  lv1: '<svg class="tt-svg" viewBox="0 0 64 64"><rect class="tt-phone" x="22" y="10" width="20" height="40" rx="3"/><rect class="tt-phone-screen" x="25" y="16" width="14" height="24" rx="1.5"/><rect class="tt-batt" x="25" y="33" width="14" height="7" rx="1"/><rect x="28.5" y="50" width="7" height="3" rx="1"/></svg>',
+  lv2: '<svg class="tt-svg" viewBox="0 0 64 64"><path class="tt-steam" d="M26 22 Q29 16 26 11"/><path class="tt-steam" d="M36 22 Q39 16 36 11"/><path class="tt-cup" d="M20 22 L44 22 L41 46 Q32 49 23 46 Z"/><path class="tt-cup-handle" d="M44 27 Q54 28 52 38 Q50 45 41 45"/><rect x="18" y="48" width="28" height="3" rx="1.5"/></svg>',
+  lv3: '<svg class="tt-svg" viewBox="0 0 64 64"><rect class="tt-toaster" x="14" y="30" width="36" height="22" rx="5"/><rect x="24" y="26" width="5" height="7" rx="2" class="tt-hole"/><rect x="36" y="26" width="5" height="7" rx="2" class="tt-hole"/><rect class="tt-toast" x="22" y="16" width="8" height="11" rx="2"/><rect class="tt-toast" x="34" y="16" width="8" height="11" rx="2" style="animation-delay:.3s"/><rect x="26" y="52" width="12" height="3" rx="1.5"/></svg>',
+  lv4: '<svg class="tt-svg" viewBox="0 0 64 64"><path class="tt-exhaust" d="M50 36 Q55 33 57 28"/><g class="tt-car"><path d="M8 32 L16 20 L36 20 L46 32 L54 32 A4 4 0 0 1 58 36 L58 40 L8 40 Z"/><rect x="15" y="23" width="11" height="8" rx="1"/><rect x="30" y="23" width="11" height="8" rx="1"/><circle class="tt-wheel" cx="20" cy="42" r="4.5"/><circle class="tt-wheel" cx="45" cy="42" r="4.5"/></g></svg>',
+  lv5: '<svg class="tt-svg" viewBox="0 0 64 64"><rect class="tt-rack" x="16" y="8" width="32" height="48" rx="3"/><line class="tt-rack-line" x1="20" y1="18" x2="44" y2="18"/><line class="tt-rack-line" x1="20" y1="28" x2="44" y2="28"/><line class="tt-rack-line" x1="20" y1="38" x2="44" y2="38"/><line class="tt-rack-line" x1="20" y1="48" x2="44" y2="48"/><circle class="tt-led" cx="22" cy="14" r="1.8"/><circle class="tt-led2" cx="22" cy="24" r="1.8"/><circle class="tt-led" cx="22" cy="34" r="1.8"/><circle class="tt-led2" cx="22" cy="44" r="1.8"/></svg>',
+  lv6: '<svg class="tt-svg" viewBox="0 0 64 64"><g class="tt-atom-orbit"><ellipse cx="32" cy="32" rx="22" ry="8"/><ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(60 32 32)"/><ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(120 32 32)"/></g><g class="tt-atom-e"><circle cx="54" cy="32" r="2"/></g><circle class="tt-atom-nucleus" cx="32" cy="32" r="4.5"/></svg>'
+};
+var TT_TIERS = [
+  { min: 0,   key: 'lv1', name: '📱 手机充电', note: '今日 ≈ 充 {v} 次手机',   per: 50 },
+  { min: 1,   key: 'lv2', name: '☕ 煮咖啡',   note: '今日 ≈ 煮 {v} 杯咖啡',   per: 20 },
+  { min: 3,   key: 'lv3', name: '🍞 烤面包',   note: '今日 ≈ 烤 {v} 次面包',   per: 2.5 },
+  { min: 10,  key: 'lv4', name: '🚗 开车',     note: '今日 ≈ 开车 {v} 公里',   per: 6.7 },
+  { min: 50,  key: 'lv5', name: '🖥️ 服务器跑', note: '今日 ≈ 服务器跑 {v} 天', per: 0.42 },
+  { min: 200, key: 'lv6', name: '⚛️ 核能',     note: '今日 ≈ 核电站发电 {v} 秒', per: 0.0036 },
+];
+function motTierHtml(kwh){
+  kwh = Number(kwh) || 0;
+  var t = TT_TIERS[0];
+  for(var i = TT_TIERS.length - 1; i >= 0; i--){ if(kwh >= TT_TIERS[i].min){ t = TT_TIERS[i]; break; } }
+  var v = Math.max(1, Math.round(kwh * t.per));
+  return '<div class="mot-tier-box" data-tier="'+t.key+'">'+
+    '<div class="tt-stage">'+TT_ELS[t.key]+'</div>'+
+    '<div class="tt-label">'+I18N.t(t.name)+'</div>'+
+    '<div class="tt-note">'+I18N.t(t.note.replace('{v}', String(v)))+'</div>'+
+  '</div>';
+}
+function motivateCardHtml(m, todayKwh){
   if(!m || !m.month_tokens) return '';
   var fmt = function(n){
     n = Number(n) || 0;
@@ -2265,10 +2349,13 @@ function motivateCardHtml(m){
       cell(m.streak_days + (m.streak_days > 1 ? I18N.t(' 天') : I18N.t(' 天')), I18N.t('连续燃烧'))+
     '</div>'+
     '<div class="mot-bench">'+
-      '<div class="mot-bench-t">⚡ '+I18N.t('行业基准：普通开发者月烧 ')+'<b>'+fmt(m.median_tokens)+'</b> token'+
-      (m.benchmark_note ? ' <span class="mot-src">('+esc(m.benchmark_note)+')</span>' : '')+'</div>'+
-      '<div class="mot-bar"><div class="mot-fill" style="width:'+pct+'%"></div></div>'+
-      '<div class="mot-tip">'+I18N.t('已达成中位数 ')+pct+'%'+(left > 0 ? I18N.t(' · 再烧 ')+fmt(left)+I18N.t(' token 即可追平普通开发者') : I18N.t(' · 已超过普通开发者！'))+'</div>'+
+      '<div class="mot-bench-l">'+
+        '<div class="mot-bench-t">⚡ '+I18N.t('行业基准：普通开发者月烧 ')+'<b>'+fmt(m.median_tokens)+'</b> token'+
+        (m.benchmark_note ? ' <span class="mot-src">('+esc(m.benchmark_note)+')</span>' : '')+'</div>'+
+        '<div class="mot-bar"><div class="mot-fill" style="width:'+pct+'%"></div></div>'+
+        '<div class="mot-tip">'+I18N.t('已达成中位数 ')+pct+'%'+(left > 0 ? I18N.t(' · 再烧 ')+fmt(left)+I18N.t(' token 即可追平普通开发者') : I18N.t(' · 已超过普通开发者！'))+'</div>'+
+      '</div>'+
+      motTierHtml(todayKwh)+
     '</div>'+
     /* 能量足迹（成就感知）：烧掉的电够做什么（1 度电 ≈ 手机充 50 次 / LED 亮 100 小时 / 空调 1.5 小时，公开科普口径） */
     '<div class="mot-energy">'+
