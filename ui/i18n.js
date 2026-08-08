@@ -26,6 +26,7 @@ window.I18N = (function () {
     '分钟': 'min',
     '/天': '/day',
     '近1h': 'last 1h',
+    '近3日日均': '3d avg',
     '近': 'last ',
     '5h 滚动': '5h rolling',
     '/百万估': '/M est',

@@ -1634,7 +1634,7 @@ function maxLimit(limits){
 function speedText(p){
   var m = p.meta || {};
   var sp = m.speed || {};
-  if(sp.days_left_text) return sp.days_left_text;
+  if(sp.days_left_text) return fmtDaysText(sp.days_left_text);
   if(sp.days_left != null) return Number(sp.days_left).toFixed(1)+I18N.t(' 天');
   return null;
 }
@@ -1645,7 +1645,7 @@ function speedChips(p){
   // 余额型（按量）：消耗速度 + 还能撑
   if(m.kind === 'balance' || m.kind === 'relay'){
     if(sp.data_ready){
-      out.push({ text:I18N.t('还能撑 ')+sp.days_left_text, main:true });
+      out.push({ text:I18N.t('还能撑 ')+fmtDaysText(sp.days_left_text), main:true });
       out.push({ text:I18N.t('日均消耗 ')+(p.balance&&p.balance.currency?money(sp.daily_amount,p.balance.currency):sp.daily_text)+(sp.sample_days?I18N.t('·近')+sp.sample_days+I18N.t('日'):''), main:false });
     } else {
       out.push({ text:I18N.t('消耗速度积累中·需3天'), main:true });
@@ -1654,14 +1654,14 @@ function speedChips(p){
   }
   // 主：科学日均（近 N 天），来源内联
   if(sp.avg_days_left_text && sp.avg_days_left_text !== '—'){
-    out.push({ text:I18N.t('还能撑 ')+sp.avg_days_left_text+(sp.avg_source?'·'+sp.avg_source:''), main:true });
+    out.push({ text:I18N.t('还能撑 ')+fmtDaysText(sp.avg_days_left_text)+(sp.avg_source?'·'+I18N.t(sp.avg_source):''), main:true });
   } else if(sp.data_ready === false){
     out.push({ text:I18N.t('日均积累中·需3天'), main:true });
   }
   // 副：当前烧速，来源内联
   if(sp.days_left_text && sp.days_left_text !== '—'){
     var srcName = sp.source === 'today' ? I18N.t('今日') : sp.source === 'short' ? I18N.t('近1h') : sp.source === 'trend' ? I18N.t('趋势') : (sp.source || '');
-    out.push({ text:I18N.t('当前 ~')+sp.days_left_text+(srcName?'·'+srcName:''), main:false });
+    out.push({ text:I18N.t('当前 ~')+fmtDaysText(sp.days_left_text)+(srcName?'·'+srcName:''), main:false });
   }
   return out;
 }
@@ -3535,6 +3535,11 @@ var achFilter = 'all';
 var achUnlockedBase = {};    // 已 toast 过的解锁集合（首次加载为基线，之后差异才弹）
 function achLangName(a){ return I18N.getLang() === 'en' ? (a.name_en || a.name) : a.name; }
 function achLangDesc(a){ return I18N.getLang() === 'en' ? (a.desc_en || a.desc) : a.desc; }
+/* 后端中文单位文本（days_left_text "X 天"/"Xh"）→ 英文单位（d/h） */
+function fmtDaysText(txt){
+  if(!txt || I18N.getLang() !== 'en') return txt;
+  return String(txt).replace(/天/g, 'd').replace(/小时/g, 'h').replace(/时/g, 'h');
+}
 function fmtNum(n){
   if(n == null) return '0';
   if(I18N.getLang() === 'en'){

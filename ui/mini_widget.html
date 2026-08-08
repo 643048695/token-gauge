@@ -498,6 +498,11 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     return '$' + (v == null ? 0 : v).toFixed(2);
   }
 
+  /* 后端中文单位文本 → 英文单位（d/h） */
+  function fmtDaysText(txt) {
+    if (!txt || I18N.getLang() !== 'en') return txt;
+    return String(txt).replace(/天/g, 'd').replace(/小时/g, 'h').replace(/时/g, 'h');
+  }
   function fmtTokens(v) {
     const n = Number(v);
     if (n == null || isNaN(n)) return '—';
@@ -647,7 +652,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
         + (isPeakNow() ? I18N.t(' · 高峰贵一倍') : '');
     } else if (monthly && monthly.used_pct != null) {
       $('todayBig').textContent = Math.round(monthly.used_pct) + '%';
-      $('todayMeta').textContent = I18N.t('月度用量 · ') + esc(monthly.label || I18N.t('每月'));
+      $('todayMeta').textContent = I18N.t('月度用量 · ') + I18N.t(esc(monthly.label || I18N.t('每月')));
     } else {
       $('todayBig').textContent = '—';
       $('todayMeta').textContent = I18N.t('暂无用量数据');
@@ -658,7 +663,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     if (pvBal) {
       // 余额型：卡片显示 还能撑 / 日均消耗
       $('barLabel').textContent = 'BALANCE';
-      $('monthlyVal').textContent = balSpeed.data_ready ? balSpeed.days_left_text : I18N.t('积累中');
+      $('monthlyVal').textContent = balSpeed.data_ready ? fmtDaysText(balSpeed.days_left_text) : I18N.t('积累中');
       const fill2 = $('monthlyFill');
       fill2.style.width = '0%';
       fill2.className = 'fill';
@@ -684,7 +689,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     // 还能撑 / 滚动 / 每周
     const speed = meta.speed || {};
     if (pvBal) {
-      $('daysLeft').textContent = balSpeed.data_ready ? balSpeed.days_left_text : I18N.t('积累中');
+      $('daysLeft').textContent = balSpeed.data_ready ? fmtDaysText(balSpeed.days_left_text) : I18N.t('积累中');
       $('rollVal').textContent = balSpeed.data_ready
         ? fmtMoney(balSpeed.daily_amount, p.balance && p.balance.currency) + I18N.t('/天') : '--';
       $('weekVal').textContent = balSpeed.data_ready
@@ -692,11 +697,11 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     } else {
       // 优先科学日均（近 N 天），否则数据不足显示积累中，再否则当前烧速
       if (speed.avg_days_left_text && speed.avg_days_left_text !== '—') {
-        $('daysLeft').textContent = speed.avg_days_left_text;
+        $('daysLeft').textContent = fmtDaysText(speed.avg_days_left_text);
       } else if (speed.data_ready === false) {
         $('daysLeft').textContent = I18N.t('积累中');
       } else {
-        $('daysLeft').textContent = speed.days_left_text || '—';
+        $('daysLeft').textContent = fmtDaysText(speed.days_left_text) || '—';
       }
       const rolling = limits.find(l => l.id === 'rolling');
       const weekly = limits.find(l => l.id === 'weekly');
@@ -730,13 +735,13 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
         $('dBal').textContent = '—';
       }
       // 当前速度
-      const curTxt = (speed.days_left_text && speed.days_left_text !== '—') ? '~' + speed.days_left_text : '—';
+      const curTxt = (speed.days_left_text && speed.days_left_text !== '—') ? '~' + fmtDaysText(speed.days_left_text) : '—';
       const curSrc = speed.source === 'today' ? I18N.t('今日') : speed.source === 'short' ? I18N.t('近1h') : speed.source === 'trend' ? I18N.t('趋势') : (speed.source || '');
       $('dCur').textContent = curTxt + (curSrc ? ' · ' + curSrc : '');
       $('dCur').className = (speed.days_left_text && speed.days_left_text !== '—') ? 'good' : 'dim';
       // 3日趋势
       if (speed.avg_days_left_text && speed.avg_days_left_text !== '—') {
-        $('dAvg').textContent = '~' + speed.avg_days_left_text + ' · ' + (speed.avg_source || '');
+        $('dAvg').textContent = '~' + fmtDaysText(speed.avg_days_left_text) + ' · ' + (speed.avg_source ? I18N.t(speed.avg_source) : '');
         $('dAvg').className = 'good';
       } else {
         $('dAvg').textContent = I18N.t('积累中');
