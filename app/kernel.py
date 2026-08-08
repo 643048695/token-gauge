@@ -30,7 +30,7 @@ from app.notifier import Notifier
 
 # 燃烧/成就推算口径（与 opencode_go.py 保持一致）
 MONTHLY_LIMIT_USD = 60.0   # opencode Go 月度限额（美元）
-DEFAULT_PRICE = 2.0        # 默认输出费率（美元/百万 token，DeepSeek V4 Flash 口径）
+DEFAULT_PRICE = 0.28       # 默认输出费率（美元/百万 token，deepseek-v4-flash 真实价，与 provider OC_MODEL_PRICES 一致）
 
 
 class Kernel:
@@ -223,53 +223,58 @@ class Kernel:
         # 抓取完成后检查成就（消耗/坚持/配置类都依赖最新快照）
         self.check_achievements()
 
-    def _today_burn(self, snaps: list) -> dict:
+    def _today_burn(self, snaps: list, price_per_m: float | None = None) -> dict:
         """今日消耗推算：{tokens, usd, kwh}。
 
-        - opencode 类（有 monthly_pct）：今日增量 = 最新 pct − 今日 0 点前最后一条的 pct
-          （今日全部快照 → 以今日首条为基准，只算今日内的增长）
-        - API 类（仅 balance）：今日余额差值 → 按 $2/M 费率折算（v0.1 简化口径）
+        - 今日增量 = max(rolling 口径, monthly 口径)：rolling（5h 滚动）粒度细、凌晨可感知；
+          5h 窗口回跳使 rolling 增量变负被钳 0 时，monthly 口径兜底（不回跳），避免「今日烧了 0」误报
+        - 单价：优先 provider 的 est_price_per_mtok（与迷你窗 meta.today 同源同价），缺省 DEFAULT_PRICE
         - 1M token ≈ 1 度电（比喻换算，非精确能耗）
         """
+        empty = {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0,
+                 "delta_pct": 0.0, "yesterday_tokens": 0, "yesterday_usd": 0.0, "yesterday_kwh": 0.0, "yesterday_books": 0.0}
         if not snaps:
-            return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0,
-                    "delta_pct": 0.0, "yesterday_tokens": 0, "yesterday_usd": 0.0, "yesterday_kwh": 0.0, "yesterday_books": 0.0}
+            return empty
+        price = float(price_per_m) if price_per_m else DEFAULT_PRICE
         from datetime import datetime, timedelta
         now = datetime.now()
         today0 = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         yest0 = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
-        pct_snaps = [s for s in snaps if (s.get("monthly_pct") or 0) > 0]
-        # 优先 rolling（5h 滚动）口径：粒度细，凌晨/当天刚用就能感知；monthly 兜底
+
+        def span_delta(seq, key, start_ts, end_ts):
+            """区间 [start_ts, end_ts) 内 key 的增长；区间外最后一条为基准，不足返回 None。"""
+            in_s = [s for s in seq if start_ts <= (s.get("ts") or 0) < end_ts]
+            if not in_s:
+                return None
+            pre = [s for s in seq if (s.get("ts") or 0) < start_ts]
+            base = pre[-1][key] if pre else in_s[0][key]
+            return max(0.0, float(in_s[-1][key]) - float(base))
+
         r_snaps = [s for s in snaps if s.get("rolling_pct") is not None]
-        use_rolling = bool(r_snaps)
-        seq = r_snaps if use_rolling else pct_snaps
-        if seq:
-            before = [s for s in seq if (s.get("ts") or 0) < today0]
-            today = [s for s in seq if (s.get("ts") or 0) >= today0]
-            # 昨日增量（昨日 0 点前最后一条 → 昨日最后一条），key 带 yesterday_ 前缀避免冲突
-            yest = [s for s in seq if yest0 <= (s.get("ts") or 0) < today0]
-            y_before = [s for s in seq if (s.get("ts") or 0) < yest0]
-            yesterday = {"yesterday_tokens": 0, "yesterday_usd": 0.0, "yesterday_kwh": 0.0, "yesterday_books": 0.0}
-            if yest:
-                y_start = y_before[-1]["rolling_pct"] if (use_rolling and y_before) else (y_before[-1]["monthly_pct"] if y_before else (yest[0]["rolling_pct"] if use_rolling else yest[0]["monthly_pct"]))
-                y_key = "rolling_pct" if use_rolling else "monthly_pct"
-                y_delta = max(0.0, float(yest[-1][y_key]) - float(y_start))
-                y_tokens = int(y_delta / 100.0 * MONTHLY_LIMIT_USD / DEFAULT_PRICE * 1_000_000)
-                yp = self._burn_pack(y_tokens, round(y_delta / 100.0 * MONTHLY_LIMIT_USD, 2))
-                yesterday = {"yesterday_" + k: v for k, v in yp.items() if k in ("tokens", "usd", "kwh", "books")}
-            if not today:
-                return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0, "delta_pct": 0.0, **yesterday}
-            key = "rolling_pct" if use_rolling else "monthly_pct"
-            pct_start = before[-1][key] if before else today[0][key]
-            pct_end = today[-1][key]
-            delta = max(0.0, float(pct_end) - float(pct_start))
-            tokens = int(delta / 100.0 * MONTHLY_LIMIT_USD / DEFAULT_PRICE * 1_000_000)
-            usd = round(delta / 100.0 * MONTHLY_LIMIT_USD, 2)
-            pack = self._burn_pack(tokens, usd)
-            pack["delta_pct"] = round(delta, 1)
-            pack.update(yesterday)
-            return pack
-        # API 类：余额差值（原币种金额 → 按 $2/M 与 7.2 汇率折算）
+        pct_snaps = [s for s in snaps if (s.get("monthly_pct") or 0) > 0]
+        d_roll = span_delta(r_snaps, "rolling_pct", today0, now.timestamp()) if r_snaps else None
+        d_pct = span_delta(pct_snaps, "monthly_pct", today0, now.timestamp()) if pct_snaps else None
+        if d_roll is None and d_pct is None:
+            return empty
+        delta = max(v for v in (d_roll, d_pct) if v is not None)
+
+        # 昨日增量（昨日 0 点 → 今日 0 点），同样 rolling/monthly 取大，key 带 yesterday_ 前缀避免冲突
+        yesterday = {"yesterday_tokens": 0, "yesterday_usd": 0.0, "yesterday_kwh": 0.0, "yesterday_books": 0.0}
+        y_roll = span_delta(r_snaps, "rolling_pct", yest0, today0) if r_snaps else None
+        y_pct = span_delta(pct_snaps, "monthly_pct", yest0, today0) if pct_snaps else None
+        if y_roll is not None or y_pct is not None:
+            yd = max(v for v in (y_roll, y_pct) if v is not None)
+            y_tokens = int(yd / 100.0 * MONTHLY_LIMIT_USD / price * 1_000_000)
+            yp = self._burn_pack(y_tokens, round(yd / 100.0 * MONTHLY_LIMIT_USD, 2))
+            yesterday = {"yesterday_" + k: v for k, v in yp.items() if k in ("tokens", "usd", "kwh", "books")}
+
+        tokens = int(delta / 100.0 * MONTHLY_LIMIT_USD / price * 1_000_000)
+        usd = round(delta / 100.0 * MONTHLY_LIMIT_USD, 2)
+        pack = self._burn_pack(tokens, usd)
+        pack["delta_pct"] = round(delta, 1)
+        pack.update(yesterday)
+        return pack
+        # API 类：余额差值（原币种金额 → 按 DEFAULT_PRICE 与 7.2 汇率折算）
         bal_snaps = [(s.get("ts") or 0, s.get("balance") or 0) for s in snaps if "balance" in s]
         bal_snaps.sort()
         if len(bal_snaps) >= 2:
@@ -392,7 +397,9 @@ class Kernel:
                         from app import store
                         snaps = store.snapshots(pid)
                         if snaps:
-                            r["today"] = self._today_burn(snaps)
+                            # 单价与迷你窗 meta.today 同源（est_price_per_mtok），保证两窗口口径一致
+                            _meta = r.get("meta") or {}
+                            r["today"] = self._today_burn(snaps, _meta.get("est_price_per_mtok"))
                     except Exception:
                         pass
                     providers_view[pid] = r

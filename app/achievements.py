@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """成就系统 v0.1（2026-08-08）。
 
-- 23 个成就，5 类：燃烧(burn) / 坚持(stick) / 配置(setup) / 探索(explore)
+- 36 个成就，5 类：燃烧(burn) / 坚持(stick) / 配置(setup) / 探索(explore)
 - 状态持久化：app/data/achievements.json  {unlocked: {id: ts}, flags: {...}}
 - 统计全部从真实数据推导（快照历史 + settings），不造假
 - token 估算口径与 opencode_go 一致：月度限额 × 用量% × 默认输出费率折算
@@ -268,7 +268,7 @@ def _is_unlocked(ach_id, stats):
         if ach_id == "setup_dual":
             return stats["has_cookie"] and stats["has_api"]
         if ach_id == "explore_all":
-            return len(set(stats["pages"])) >= 5
+            return len(set(stats["pages"])) >= 6   # 主面板全部 6 页（QA #8：原 5/6 与文案不符）
         if ach_id == "explore_tray":
             return stats["hide_tray"]
         if ach_id == "explore_mini":

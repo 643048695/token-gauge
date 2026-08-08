@@ -93,9 +93,9 @@ class TestAchievements(unittest.TestCase):
         self.assertNotIn("setup_6", ids)          # 只有 3 个
 
     def test_explore_via_flags(self):
-        """探索类：5 页面 → 全知者；托盘/迷你窗 flag。"""
+        """探索类：全部 6 页面 → 全知者（QA #8：与文案一致）；托盘/迷你窗 flag。"""
         settings = {"ui": {}, "providers": {}}
-        for p in ["dashboard", "providers", "appearance", "notify", "about"]:
+        for p in ["dashboard", "providers", "appearance", "notify", "achievements", "about"]:
             ach.record_flag("page_visited", p)
         ach.record_flag("hide_tray")
         ach.record_flag("mini")

@@ -997,12 +997,28 @@ class DashboardApp:
             except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
     # ---------- 启动 ----------
+    def _notify_main_failed(self, err: str):
+        """WebView2/主面板启动失败的用户可见提示（QA #6：此前仅日志，用户无感知）。"""
+        try:
+            log.error("主面板启动失败: %s", err)
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(
+                0,
+                f"主面板启动失败：{err}\n\n请确认 WebView2 Runtime 已安装/可初始化（可在「设置-应用」查 Edge WebView2），修复后重启本程序。\n提示框关闭后应用仍在托盘运行。",
+                "OC-GO 额度监控", 0x10)
+        except Exception as _e:
+            log.error("启动失败提示弹出异常: %s", _e)
+
     def run(self):
         self.kernel.start()
         self.kernel.check_achievements()   # 启动即检查成就（历史数据解锁 + 记录基线）
-        self.create_main_window()
-        # 迷你窗启动时总是创建（webview.start 前创建可靠），开关只控制显隐
-        self.create_mini_window()
+        try:
+            self.create_main_window()
+            # 迷你窗启动时总是创建（webview.start 前创建可靠），开关只控制显隐
+            self.create_mini_window()
+        except Exception as _e:
+            # QA #6：窗口创建失败（如 CO_E_SERVER_EXEC_FAILURE）给用户可见提示，应用仍托盘运行
+            self._notify_main_failed(str(_e))
         # 初始显隐状态（游戏/免打扰场景由 agent 或用户通过 .ui_state.json 控制）
         st = read_ui_state() or {}
         if st.get("main_hidden"):
@@ -1014,7 +1030,22 @@ class DashboardApp:
         threading.Thread(target=self.start_tray, daemon=True).start()
         self.pusher.start()
         threading.Thread(target=self._ui_state_loop, daemon=True).start()
-        webview.start()  # 阻塞主线程；窗口隐藏时 WebView 继续运行（默认行为）
+        try:
+            webview.start()  # 阻塞主线程；窗口隐藏时 WebView 继续运行（默认行为）
+        except Exception as _e:
+            # QA #6：WebView2 初始化失败（如 CO_E_SERVER_EXEC_FAILURE）用户可见提示
+            self._notify_main_failed(str(_e))
+            self._keep_alive_after_webview_fail()
+
+
+    def _keep_alive_after_webview_fail(self):
+        """WebView2 初始化失败后保持进程存活（托盘仍在，用户可托盘退出/稍后手动重启）。"""
+        try:
+            import time as _t
+            while True:
+                _t.sleep(5)
+        except KeyboardInterrupt:
+            pass
 
 
 def run_once():

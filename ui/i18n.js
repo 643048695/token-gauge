@@ -8,13 +8,15 @@
 window.I18N = (function () {
   var EN = {
     /* ---- 单位/数字碎片 ---- */
-    ' 万': ' 万',
     ' 亿': ' B',
     ' 百万': ' M',
     ' 分 ': ' min ',
     ' 分钟': ' min',
     ' 秒': ' s',
     ' 天': ' days',
+    ' 消耗 ': ' spent',
+    '总量': 'Total',
+    'API 导入': 'API Import',
     ' 日': ' d',
     ' 时': ' h',
     ' 分': ' m',
@@ -34,7 +36,6 @@ window.I18N = (function () {
     '按': 'by ',
     '估': ' est',
     '估算': 'est.',
-    '探': ' ',
     '·近': '·last ',
     '· 近': '· last ',
     '· 自 ': '· since ',
@@ -230,7 +231,7 @@ window.I18N = (function () {
     /* ---- 设置反馈 ---- */
     '设置已保存': 'Settings saved',
     '演示数据': 'DEMO',
-    'secret 字段已加密显示': 'secret fields are encrypted',
+    'secret 字段已加密显示': 'shown decrypted on this machine only',
     '最后更新 ': 'Updated ',
 
     /* ---- HTML 模板碎片 ---- */

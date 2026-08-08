@@ -503,20 +503,6 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     if (!txt || I18N.getLang() !== 'en') return txt;
     return String(txt).replace(/天/g, 'd').replace(/小时/g, 'h').replace(/时/g, 'h');
   }
-  function fmtTokens(v) {
-    const n = Number(v);
-    if (n == null || isNaN(n)) return '—';
-    if (I18N.getLang() === 'en') {
-      if (Math.abs(n) >= 1000000000) return (n / 1000000000).toFixed(1) + 'B';
-      if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-      if (Math.abs(n) >= 10000) return Math.round(n / 1000) + 'K';
-      return Math.round(n) + '';
-    }
-    if (Math.abs(n) >= 100000000) return (n / 100000000).toFixed(1) + '亿';
-    if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (Math.abs(n) >= 10000) return Math.round(n / 10000) + '万';
-    return Math.round(n) + '';
-  }
   function fmtMoney(v, cur) {
     if (v == null || isNaN(v)) return '—';
     if (cur === 'CNY') return '¥' + Number(v).toFixed(2);
@@ -619,7 +605,9 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     }
 
     const age = Date.now() / 1000 - (p.fetched_at || 0);
-    const stale = p.stale || (age > 600);
+    // STALE 阈值跟随可配置抓取间隔（60~1800s）：间隔 ×2 且至少 10 分钟，避免长间隔周期误报
+    const refreshSec = (v && v.refresh_interval_sec) || 300;
+    const stale = p.stale || (age > Math.max(600, refreshSec * 2));
     setLive(p.ok ? (stale ? 'stale' : 'ok') : 'dead');
 
     if (!p.ok) {
