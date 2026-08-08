@@ -409,6 +409,41 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .p6-ico{flex:none; font-size:18px; line-height:1.3;}
 .p6-point b{display:block; font-size:12px; color:var(--text); margin-bottom:2px;}
 .p6-point span{font-size:11px; color:var(--muted); line-height:1.5;}
+/* ---------- 快速配置（引导页内嵌） ---------- */
+.quick-cfg{
+  margin-top:10px; padding:12px 14px;
+  background:var(--card); border:1px dashed var(--border); border-radius:var(--radius);
+  display:flex; flex-direction:column; gap:8px;
+}
+.qc-title{font-size:12px; font-weight:700; color:var(--accent);}
+.qc-row{display:flex; align-items:center; gap:8px;}
+.qc-select{
+  flex:1; min-width:0; padding:6px 8px; font-size:12px; font-family:inherit;
+  background:var(--card-hi); color:var(--text);
+  border:1px solid var(--border); border-radius:6px;
+}
+.qc-select:focus{border-color:var(--accent); box-shadow:var(--focus-ring);}
+.qc-fields{display:flex; flex-direction:column; gap:6px;}
+.qc-field{display:flex; align-items:center; gap:8px;}
+.qc-field label{flex:none; width:70px; font-size:11px; color:var(--muted);}
+.qc-field input{
+  flex:1; min-width:0; padding:6px 8px; font-size:12px; font-family:inherit;
+  background:var(--card-hi); color:var(--text);
+  border:1px solid var(--border); border-radius:6px;
+}
+.qc-field input:focus{border-color:var(--accent); box-shadow:var(--focus-ring);}
+.qc-actions{justify-content:flex-start;}
+.qc-btn{
+  padding:6px 14px; font-size:12px; font-family:inherit; cursor:pointer;
+  border-radius:7px; border:1px solid var(--accent); color:var(--accent);
+  background:rgba(0,255,156,0.08);
+}
+.qc-btn:hover{background:rgba(0,255,156,0.16); box-shadow:0 0 10px var(--glow);}
+.qc-btn:disabled{opacity:.5; cursor:default;}
+.qc-result{font-size:11px; color:var(--muted); min-height:14px; line-height:1.4;}
+.qc-result.ok{color:var(--accent);}
+.qc-result.err{color:var(--danger);}
+.qc-result.pending{color:var(--warn);}
 /* 页面切换淡入（克制） */
 .page{animation:pageIn .26s ease-out;}
 @keyframes pageIn{from{opacity:0; transform:translateY(5px);}to{opacity:1; transform:none;}}
@@ -577,8 +612,8 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
         <p class="sub" data-i18n="不想手动填？让对话助手（agent）代劳。">不想手动填？让对话助手（agent）代劳。</p>
         <div class="chat">
           <div class="chat-bubble">
-            <span class="who" data-i18n="对话助手">对话助手</span data-i18n="在 Hana 里直接说：">
-            在 Hana 里直接说：<br>
+            <span class="who" data-i18n="对话助手">对话助手</span data-i18n="在 agent 里直接说（Codex / WorkBuddy 等常用 agent）：">
+            在 agent 里直接说（Codex / WorkBuddy 等常用 agent）：<br>
             「<b data-i18n="给 OC-GO 添加一个 DeepSeek 供应商">给 OC-GO 添加一个 DeepSeek 供应商</b>」<br data-i18n="它会调">
             它会调 <b>cli.py</b data-i18n="帮你配好，软件自动重载。"> 帮你配好，软件自动重载。
           </div>
@@ -607,6 +642,22 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
         <p class="sub" data-i18n="配好一个供应商，看数据活起来——这是最后一步。">配好一个供应商，看数据活起来——这是最后一步。</p>
         <div class="cfg-status" id="cfgStatus">
           <div class="cfg-loading" data-i18n="检查配置中…">检查配置中…</div>
+        </div>
+        <!-- 引导页内嵌快速配置：选类型 → 填 Key → 测试连接 → 保存成功 -->
+        <div class="quick-cfg" id="quickCfg" style="display:none">
+          <div class="qc-title" data-i18n="⚡ 快速配置一个 API">⚡ 快速配置一个 API</div>
+          <div class="qc-row">
+            <select id="qcType" class="qc-select"></select>
+            <button type="button" id="qcHelp" class="guide-help-btn" data-guide="api-key">❓</button>
+          </div>
+          <div class="qc-fields" id="qcFields"></div>
+          <div class="qc-row qc-actions">
+            <button type="button" id="qcTest" class="qc-btn primary" data-i18n="测试连接">测试连接</button>
+            <span id="qcResult" class="qc-result"></span>
+          </div>
+          <div class="qc-row" id="qcSaveRow" style="display:none">
+            <button type="button" id="qcSave" class="qc-btn primary" data-i18n="保存配置 ✓">保存配置 ✓</button>
+          </div>
         </div>
         <div class="p6-hint" data-i18n="凭据会过期（软件会提示 EXPIRED / 失效），届时点卡片上的 ❓ 看获取步骤即可。">凭据会过期（软件会提示 EXPIRED / 失效），届时点卡片上的 ❓ 看获取步骤即可。</div>
       </div>
@@ -638,7 +689,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 'use strict';
 var $ = function(s){ return document.querySelector(s); };
 var TOTAL = 6;
-var state = { step: 1, booted: false, settings: null };
+var state = { step: 1, booted: false, settings: null, types: null };
 
 function currentApi(){ return (window.pywebview && window.pywebview.api) || null; }
 function call(name){
@@ -746,15 +797,17 @@ function configuredCount(){
   for(var pid in provs){ if(hasCreds(provs[pid])) n++; }
   return n;
 }
-/* 渲染 step6 配置状态卡 + 切换「开始使用 / 去配置」按钮行为 */
+/* 渲染 step6 配置状态卡 + 切换「开始使用 / 配置一个供应商」按钮行为 */
 function renderCfg(){
   var box = $('#cfgStatus');
   if(!box) return;
   var provs = (state.settings && state.settings.providers) || {};
   var pids = Object.keys(provs);
   if(!pids.length){
-    box.innerHTML = '<div class="cfg-row cfg-empty" data-i18n="还没有配置供应商——点右下角「去配置供应商」开始。">还没有配置供应商——点右下角「去配置供应商」开始。</div>';
+    box.innerHTML = '<div class="cfg-head">'+I18N.t('还没有配置供应商，在下方快速配置一个')+'</div>'+
+      '<div class="cfg-row cfg-empty" data-i18n="选择类型 → 填 Key → 测试连接 → 保存，一分钟搞定。">选择类型 → 填 Key → 测试连接 → 保存，一分钟搞定。</div>';
     setStartBtn(false);
+    renderQuickCfg();
     return;
   }
   var done = 0;
@@ -767,31 +820,140 @@ function renderCfg(){
       '<span class="cfg-state">'+(ok ? I18N.t('已配置') : I18N.t('未配置'))+'</span>'+
     '</div>';
   }).join('');
-  var allDone = done >= pids.length && pids.length > 0;
-  box.innerHTML = '<div class="cfg-head'+(allDone?' all':'')+'">'+
-    (allDone ? I18N.t('🎉 全部就绪，可以开始用了') : I18N.t('已配置 ')+done+'/'+pids.length+' · '+I18N.t('还需配置 ')+(pids.length-done))+
+  var anyDone = done >= 1;
+  box.innerHTML = '<div class="cfg-head'+(anyDone?' all':'')+'">'+
+    (anyDone
+      ? I18N.t('🎉 已成功配置 ')+done+I18N.t(' 个供应商，可以开始用了')
+      : I18N.t('已配置 ')+done+'/'+pids.length+' · '+I18N.t('还需配置 ')+(pids.length-done))+
     '</div>'+rows;
-  setStartBtn(allDone);
+  setStartBtn(anyDone);
+  renderQuickCfg();
 }
-/* 「开始使用」按钮：全配好 → 完成引导；否则 → 去主面板供应商页配置 */
-function setStartBtn(allDone){
+/* 「开始使用 / 配置」按钮：≥1 个配好 → 完成引导；否则 → 聚焦下方快速配置表单 */
+function setStartBtn(anyDone){
   var btn = $('#btnStart');
-  if(allDone){
+  if(anyDone){
     btn.style.display = '';
     btn.textContent = I18N.t('开始使用 →');
     btn.onclick = doneGuide;
   } else {
     btn.style.display = '';
-    btn.textContent = I18N.t('去配置供应商 →');
+    btn.textContent = I18N.t('配置一个供应商 →');
     btn.onclick = function(){
-      call('enter_dashboard')
-        .then(function(res){
-          var url = (res && res.url) ? res.url : 'main_panel.html';
-          location.href = url + (url.indexOf('?') < 0 ? '?' : '&') + 'page=providers';
-        })
-        .catch(function(){ location.href = 'main_panel.html?page=providers'; });
+      var qc = $('#quickCfg');
+      if(qc){ qc.scrollIntoView({behavior:'smooth', block:'center'}); }
+      var k = $('#qcKey');
+      if(k) setTimeout(function(){ k.focus(); }, 400);
     };
   }
+}
+
+/* ---- 快速配置（引导页内嵌：选类型 → 填 Key → 测试连接 → 保存成功） ---- */
+var qcToken = 0;
+/* 可快速配置的类型 = schema 含 api_key 的（13 模板；opencode-go 的 cookie 走主面板 ❓ 引导） */
+function apiTypes(){
+  return (state.types || []).filter(function(t){
+    return t.schema && t.schema.some(function(f){ return f.key === 'api_key'; });
+  });
+}
+function renderQuickCfg(){
+  var box = $('#quickCfg');
+  if(!box) return;
+  var types = apiTypes();
+  if(!types.length){ box.style.display = 'none'; return; }   /* 后端未连接（示例模式）隐藏 */
+  box.style.display = '';
+  var sel = $('#qcType');
+  sel.innerHTML = types.map(function(t){
+    return '<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';
+  }).join('');
+  sel.onchange = renderQcFields;
+  renderQcFields();
+}
+function renderQcFields(){
+  var types = apiTypes();
+  var t = types.find(function(x){ return x.id === $('#qcType').value; }) || types[0];
+  if(!t) return;
+  var needBase = t.schema.some(function(f){ return f.key === 'base_url'; });
+  var needUser = t.schema.some(function(f){ return f.key === 'user_id'; });
+  $('#qcFields').innerHTML =
+    '<div class="qc-field"><label>API Key</label>'+
+      '<input type="password" id="qcKey" autocomplete="off" placeholder="sk-..."></div>'+
+    (needBase ? '<div class="qc-field"><label>Base URL</label>'+
+      '<input type="text" id="qcBase" placeholder="https://api.example.com"></div>' : '')+
+    (needUser ? '<div class="qc-field"><label>User ID</label>'+
+      '<input type="text" id="qcUid" placeholder="123456"></div>' : '');
+  var help = $('#qcHelp');
+  if(help) help.setAttribute('data-guide', t.guide || 'api-key');
+  $('#qcResult').textContent = '';
+  $('#qcResult').className = 'qc-result';
+  $('#qcSaveRow').style.display = 'none';
+}
+function qcConfig(){
+  var c = { api_key: $('#qcKey').value.trim() };
+  var base = $('#qcBase'), uid = $('#qcUid');
+  if(base && base.value.trim()) c.base_url = base.value.trim();
+  if(uid && uid.value.trim()) c.user_id = uid.value.trim();
+  return c;
+}
+function showQcResult(msg, cls){
+  var el = $('#qcResult');
+  el.textContent = msg;
+  el.className = 'qc-result' + (cls ? ' ' + cls : '');
+}
+function testQuickCfg(){
+  var types = apiTypes();
+  var t = types.find(function(x){ return x.id === $('#qcType').value; }) || types[0];
+  if(!t) return;
+  var cfg = qcConfig();
+  if(!cfg.api_key){ showQcResult(I18N.t('请先填写 API Key'), 'err'); return; }
+  var token = 'qc' + (++qcToken);
+  showQcResult(I18N.t('测试中…'), 'pending');
+  $('#qcTest').disabled = true;
+  call('test_provider_config', t.id, cfg, token)
+    .catch(function(){
+      $('#qcTest').disabled = false;
+      showQcResult(I18N.t('后端未连接（示例模式），无法测试'), 'err');
+    })
+    .then(function(r){
+      if(!r || r.running !== true) return;
+      var timer = setInterval(function(){
+        call('test_provider_config_result', token).then(function(rr){
+          if(!rr || !rr.done) return;
+          clearInterval(timer);
+          $('#qcTest').disabled = false;
+          if(rr.ok){
+            showQcResult('✓ ' + (rr.latency_ms != null ? rr.latency_ms + ' ms · ' : '') + (rr.message || ''), 'ok');
+            $('#qcSaveRow').style.display = '';
+          } else {
+            showQcResult('✗ ' + (rr.message || I18N.t('连接失败')), 'err');
+          }
+        }).catch(function(){
+          clearInterval(timer);
+          $('#qcTest').disabled = false;
+          showQcResult(I18N.t('测试失败'), 'err');
+        });
+      }, 500);
+    });
+}
+function saveQuickCfg(){
+  var types = apiTypes();
+  var t = types.find(function(x){ return x.id === $('#qcType').value; }) || types[0];
+  if(!t) return;
+  var cfg = qcConfig();
+  var provs = JSON.parse(JSON.stringify((state.settings && state.settings.providers) || {}));
+  var pid = t.id, n = 2;
+  while(provs[pid]){ pid = t.id + '-' + n; n++; }
+  provs[pid] = { enabled: true, name: t.name, type: t.id, config: cfg };
+  call('save_settings', { providers: provs })
+    .then(function(){
+      state.settings = Object.assign({}, state.settings || {}, { providers: provs });
+      renderCfg();
+      showQcResult(I18N.t('✓ 已保存「') + t.name + I18N.t('」，数据开始抓取'), 'ok');
+      $('#qcSaveRow').style.display = 'none';
+      var k = $('#qcKey');
+      if(k) k.value = '';
+    })
+    .catch(function(){ showQcResult(I18N.t('保存失败：后端未连接（示例模式）'), 'err'); });
 }
 
 /* P3 测试连接模拟（纯前端演示） */
@@ -816,10 +978,11 @@ function mockTest(){
 function boot(){
   if(state.booted) return;
   state.booted = true;
-  Promise.all([call('get_settings'), call('get_theme_css')])
+  Promise.all([call('get_settings'), call('get_theme_css'), call('get_provider_types')])
     .then(function(res){
       var settings = res[0] || {};
       state.settings = settings;   /* Step 6 配置状态检测用 */
+      state.types = res[2] || [];  /* Step 6 快速配置类型清单 */
       var tc = res[1] || {};
       injectTheme(tc.css);
       var tid = tc.theme_id || (settings.theme && settings.theme.id) || 'paper';
@@ -840,6 +1003,8 @@ $('#btnNext').addEventListener('click', function(){ if(state.step < TOTAL){ stat
 $('#btnPrev').addEventListener('click', function(){ if(state.step > 1){ state.step--; render(); } });
 $('#btnStart').addEventListener('click', doneGuide);
 $('#btnTestMock').addEventListener('click', mockTest);
+$('#qcTest').addEventListener('click', testQuickCfg);
+$('#qcSave').addEventListener('click', saveQuickCfg);
 
 window.addEventListener('pywebviewready', boot);
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 600); });

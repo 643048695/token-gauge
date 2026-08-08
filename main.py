@@ -161,6 +161,36 @@ class _Api:
         return {"done": True, "ok": r["ok"], "message": r["message"],
                 "latency_ms": r.get("latency_ms")}
 
+    def test_provider_config(self, ptype, config, token):
+        """引导页：测试一个「还没保存」的供应商配置（异步，前端按 token 轮询结果）。"""
+        key = "cfg:" + str(token)
+        self._app._test_threads[key] = True
+        threading.Thread(target=self._run_test_cfg_bg,
+                         args=(ptype, config, key), daemon=True).start()
+        return {"running": True, "token": token}
+
+    def _run_test_cfg_bg(self, ptype, config, key):
+        try:
+            _t0 = time.time()
+            result = self._app.kernel.test_provider_config(ptype, config)
+            _latency = int((time.time() - _t0) * 1000)
+            self._app._test_results[key] = {
+                "ok": bool(result.get("ok")),
+                "message": result.get("message", ""),
+                "latency_ms": _latency,
+            }
+        except Exception as e:
+            self._app._test_results[key] = {"ok": False,
+                                            "message": f"测试异常: {e}",
+                                            "latency_ms": None}
+
+    def test_provider_config_result(self, token):
+        r = self._app._test_results.get("cfg:" + str(token))
+        if r is None:
+            return {"done": False}
+        return {"done": True, "ok": r["ok"], "message": r["message"],
+                "latency_ms": r.get("latency_ms")}
+
     def get_provider_types(self):
         return self._app.kernel.get_provider_types()
 

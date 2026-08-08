@@ -348,6 +348,26 @@ class Kernel:
             return {"ok": False, "message": f"{type(exc).__name__}: {exc}"}
         return {"ok": True, "provider": provider_id}
 
+    def test_provider_config(self, ptype: str, config: dict) -> dict:
+        """引导页用：按类型+配置临时实例化测试连接（不落盘、不加入 providers）。
+
+        与 test_provider 的区别：测试一个「还没保存」的供应商（开屏引导第 6 步内嵌配置）。
+        """
+        from app.providers import PROVIDERS
+        cls = PROVIDERS.get(str(ptype or ""))
+        if cls is None:
+            return {"ok": False, "message": f"未知供应商类型: {ptype}"}
+        try:
+            prov = cls(dict(config or {}))
+            res = prov.verify()
+            return {
+                "ok": bool(res.get("ok")),
+                "message": str(res.get("message", "")),
+                "detail": res.get("detail"),
+            }
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "message": f"{type(exc).__name__}: {exc}"}
+
     def test_provider(self, provider_id: str) -> dict:
         """同步调用 provider.verify()，返回 {"ok", "message", "detail"}。"""
         prov = self._providers.get(provider_id)
