@@ -232,21 +232,37 @@ class Kernel:
         - 1M token ≈ 1 度电（比喻换算，非精确能耗）
         """
         if not snaps:
-            return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0}
-        from datetime import datetime
-        today0 = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+            return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0,
+                    "delta_pct": 0.0, "yesterday_tokens": 0, "yesterday_usd": 0.0, "yesterday_kwh": 0.0, "yesterday_books": 0.0}
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        today0 = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        yest0 = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         pct_snaps = [s for s in snaps if (s.get("monthly_pct") or 0) > 0]
         if pct_snaps:
             before = [s for s in pct_snaps if (s.get("ts") or 0) < today0]
             today = [s for s in pct_snaps if (s.get("ts") or 0) >= today0]
+            # 昨日增量（昨日 0 点前最后一条 → 昨日最后一条），key 带 yesterday_ 前缀避免冲突
+            yest = [s for s in pct_snaps if yest0 <= (s.get("ts") or 0) < today0]
+            y_before = [s for s in pct_snaps if (s.get("ts") or 0) < yest0]
+            yesterday = {"yesterday_tokens": 0, "yesterday_usd": 0.0, "yesterday_kwh": 0.0, "yesterday_books": 0.0}
+            if yest:
+                y_start = y_before[-1]["monthly_pct"] if y_before else yest[0]["monthly_pct"]
+                y_delta = max(0.0, float(yest[-1]["monthly_pct"]) - float(y_start))
+                y_tokens = int(y_delta / 100.0 * MONTHLY_LIMIT_USD / DEFAULT_PRICE * 1_000_000)
+                yp = self._burn_pack(y_tokens, round(y_delta / 100.0 * MONTHLY_LIMIT_USD, 2))
+                yesterday = {"yesterday_" + k: v for k, v in yp.items() if k in ("tokens", "usd", "kwh", "books")}
             if not today:
-                return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0}
+                return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0, "delta_pct": 0.0, **yesterday}
             pct_start = before[-1]["monthly_pct"] if before else today[0]["monthly_pct"]
             pct_end = today[-1]["monthly_pct"]
             delta = max(0.0, float(pct_end) - float(pct_start))
             tokens = int(delta / 100.0 * MONTHLY_LIMIT_USD / DEFAULT_PRICE * 1_000_000)
             usd = round(delta / 100.0 * MONTHLY_LIMIT_USD, 2)
-            return self._burn_pack(tokens, usd)
+            pack = self._burn_pack(tokens, usd)
+            pack["delta_pct"] = round(delta, 1)
+            pack.update(yesterday)
+            return pack
         # API 类：余额差值（原币种金额 → 按 $2/M 与 7.2 汇率折算）
         bal_snaps = [(s.get("ts") or 0, s.get("balance") or 0) for s in snaps if "balance" in s]
         bal_snaps.sort()
