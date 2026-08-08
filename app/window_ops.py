@@ -165,5 +165,6 @@ class Pusher:
                 js = _json.dumps(v, ensure_ascii=False)
                 self._app.mini_window.evaluate_js(
                     "window.__pushView && window.__pushView(%s)" % js)
+                log.info("MINI-PUSH ok bytes=%d", len(js))
         except Exception as _e:
-            log.debug(f"push_once 异常: {_e}")
+            log.warning("MINI-PUSH fail: %s", _e)

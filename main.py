@@ -102,6 +102,12 @@ class _Api:
 
     def refresh_now(self, provider_id=None):
         self._app.kernel.refresh_now(provider_id)
+        # 手动刷新后立即推送迷你窗（数据同步不等 8s 轮询）
+        try:
+            if self._app.pusher:
+                self._app.pusher.push_once()
+        except Exception:
+            pass
         return {"refreshing": True}
 
     def mini_ping(self, tag):

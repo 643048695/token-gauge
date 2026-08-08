@@ -447,6 +447,14 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     probe('boot:' + (window.pywebview && window.pywebview.api ? 'api-ok' : 'NO-API') +
       '|' + String(location.href).slice(-24) +
       '|err:' + (window.__initErr || 'none'));
+    /* 延迟重试（桥可能晚注入；拿页面 JS 错误证据） */
+    setTimeout(function(){
+      probe('boot2:' + (window.pywebview && window.pywebview.api ? 'api-ok' : 'NO-API') +
+        '|err:' + (window.__initErr || 'none'));
+    }, 2000);
+    setTimeout(function(){
+      probe('boot3:err:' + (window.__initErr || 'none'));
+    }, 6000);
   })();
 
   /* DOM 交互绑定统一延迟到 DOM 就绪（WebView2 解析时序下立即执行可能取不到元素） */
@@ -756,7 +764,7 @@ async function pull() {
 
   // 数据刷新：立即尝试一次（api 可能已就绪），每 30 秒定时刷新，pywebviewready 兜底
   pull();
-  setInterval(pull, 30000);
+  setInterval(pull, 10000);   // 10s 自拉兜底（pusher 推送为主，30s 感知太慢）
   window.addEventListener('pywebviewready', () => { pull(); });
 
   // 右侧竖条：左右拖动改宽度
@@ -782,7 +790,12 @@ async function pull() {
   } catch(e) { window.__initErr = window.__initErr || ('ry:' + e.message); }
 
   // 主进程主动推送（多窗口下最可靠的数据通道，绕开 mini 侧 js_api）
-  window.__pushView = function(v){ render(v); };
+  window.__pushView = function(v){
+    try{ render(v); }
+    catch(e){
+      if(window.__miniProbe) window.__miniProbe('render-err:' + String(e && e.message).slice(0, 80));
+    }
+  };
   window.__scriptEnd = true;
   // mini 窗口隐藏后 evaluate_js 不可用，恢复显示时再拉一次兜底
   document.addEventListener('visibilitychange', () => { if(!document.hidden) pull(); });
