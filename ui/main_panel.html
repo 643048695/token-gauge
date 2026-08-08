@@ -756,6 +756,22 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 }
 /* 卡片 hover 光晕微增强：边框变亮同时带一层柔和辉光（克制） */
 .pcard:hover{box-shadow:var(--shadow-sm), 0 0 18px var(--glow);}
+/* ===== 凭据获取引导浮层（2026-08-08） ===== */
+.guide-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.guide-modal{width:min(560px,86vw);max-height:82vh;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 24px var(--glow);padding:18px 20px 14px;position:relative;}
+.guide-modal h3{margin:0 0 10px;font-size:14px;color:var(--accent);letter-spacing:.5px;display:flex;align-items:center;gap:8px;}
+.guide-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.guide-close:hover{color:var(--text);background:var(--card-hi);}
+.guide-step{display:flex;gap:10px;margin:10px 0;align-items:flex-start;}
+.guide-num{flex:none;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.guide-step p{margin:0;font-size:12px;line-height:1.55;color:var(--text);}
+.guide-step svg{width:100%;height:auto;margin-top:8px;border-radius:8px;background:var(--panel);}
+.guide-tips{margin-top:12px;padding:10px 12px;background:rgba(255,196,0,.07);border:1px solid rgba(255,196,0,.3);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;}
+.guide-tips div{margin:3px 0;}
+.guide-tips b{color:var(--warn);margin-right:4px;}
+.guide-help-btn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:11px;padding:0 2px;opacity:.75;font-family:inherit;}
+.guide-help-btn:hover{opacity:1;text-decoration:underline;}
+.guide-inline{display:inline-flex;align-items:center;gap:2px;}
 </style>
 <script src="i18n.js"></script>
 </head>
@@ -935,6 +951,42 @@ function esc(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
+/* ---- 凭据获取引导（2026-08-08）：guide id → 浮层；❓ 按钮事件委托全局生效 ---- */
+function guideFor(pid, cfg){
+  var t = (providerTypesCache || []).find(function(x){ return x.id === ((cfg && cfg.type) || pid); });
+  if (t && t.guide) return t.guide;
+  if (pid === 'opencode-go') return 'opencode-cookie';
+  if (cfg && cfg.type) return 'api-key';
+  return '';
+}
+function helpBtnHtml(gid, label){
+  if (!gid) return '';
+  return '<button type="button" class="guide-help-btn" data-guide="'+esc(gid)+'" title="'+esc(I18N.t('获取指引'))+'">'+(label||'❓')+'</button>';
+}
+function showGuide(gid){
+  if (!gid || !window.GUIDES || !window.GUIDES[gid]) return null;
+  var lang = I18N.getLang() === 'en' ? 'en' : 'zh';
+  var g = window.GUIDES[gid][lang];
+  var mask = document.createElement('div');
+  mask.className = 'guide-mask';
+  var steps = g.steps.map(function(s, i){
+    return '<div class="guide-step"><span class="guide-num">'+(i+1)+'</span><div><p>'+esc(s.t)+'</p>'+
+      (s.svg && window.GUIDE_SVGS && window.GUIDE_SVGS[s.svg] ? window.GUIDE_SVGS[s.svg] : '')+'</div></div>';
+  }).join('');
+  var tips = '<div class="guide-tips"><b>⚠</b>'+g.tips.map(function(t){ return '<div>· '+esc(t)+'</div>'; }).join('')+'</div>';
+  mask.innerHTML = '<div class="guide-modal">'+
+    '<button type="button" class="guide-close" title="'+esc(I18N.t('关闭'))+'">✕</button>'+
+    '<h3>❓ '+esc(g.title)+'</h3>'+steps+tips+'</div>';
+  function close(){ mask.remove(); }
+  mask.addEventListener('click', function(e){ if (e.target === mask) close(); });
+  mask.querySelector('.guide-close').addEventListener('click', close);
+  document.body.appendChild(mask);
+  return mask;
+}
+document.addEventListener('click', function(e){
+  var btn = e.target && e.target.closest ? e.target.closest('.guide-help-btn') : null;
+  if (btn) { e.stopPropagation(); showGuide(btn.getAttribute('data-guide')); }
+});
 function deepCopy(o){ return JSON.parse(JSON.stringify(o)); }
 function fmtClock(t){
   if(!t) return '--:--:--';
@@ -1640,7 +1692,8 @@ function dashCardHtml(pid, cfg, pv){
       (note ? '<span class="pcard-note" title="'+note+'">'+note+'</span>' : '')+
       '<span class="status-pill '+st.key+'"><span class="health-dot '+st.key+'"></span>'+st.label+'</span>'+
     '</div>'+
-    (cookieBad ? '<div class="cookie-bar">'+ICONS.warn+I18N.t('Cookie 已失效，请到「供应商」页更新凭据</div>') : '')+
+    (cookieBad ? '<div class="cookie-bar">'+ICONS.warn+I18N.t('Cookie 已失效，请到「供应商」页更新凭据</div>')
+      .replace('</div>', '')+helpBtnHtml(guideFor(pid, cfg), I18N.t('如何获取？'))+'</div>' : '')+
     limitsHtml+
     metaChips+
     '<div class="card-foot">'+
@@ -2126,10 +2179,10 @@ function renderApFields(type){
       var opts = f.options.map(function(o){
         return '<option value="'+esc(o.value)+'">'+esc(I18N.t(o.label))+'</option>';
       }).join('');
-      return '<div class="field"><label>'+esc(I18N.t(f.label))+'</label>'+
+      return '<div class="field"><label>'+esc(I18N.t(f.label))+helpBtnHtml(f.help)+'</label>'+
         '<select data-key="'+esc(f.key)+'">'+opts+'</select></div>';
     }
-    return '<div class="field"><label>'+esc(I18N.t(f.label))+'</label>'+
+    return '<div class="field"><label>'+esc(I18N.t(f.label))+helpBtnHtml(f.help)+'</label>'+
       '<input type="'+(f.secret?'password':'text')+'" data-key="'+esc(f.key)+'" autocomplete="off"></div>';
   }).join('');
   /* API 导入：有 api_key 字段的类型显示唯一标识输入框（支持多实例） */
@@ -2163,7 +2216,9 @@ function renderApiAddFields(type){
 /* 按模板 needs 渲染剩余字段：api_key 恒有，base_url/user_id 按需 */
 function renderApiFieldsFor(tid){
   var needs = apiTplNeeds[tid] || [];
-  var html = '<div class="field"><label>API Key</label>'+
+  var tObj2 = (providerTypesCache || []).find(function(x){ return x.id === tid; });
+  var gid2 = (tObj2 && tObj2.guide) ? tObj2.guide : 'api-key';
+  var html = '<div class="field"><label>API Key'+helpBtnHtml(gid2)+'</label>'+
     '<input type="password" data-key="api_key" autocomplete="off" placeholder="sk-..."></div>';
   if(needs.indexOf('base_url') >= 0){
     html += '<div class="field"><label>Base URL</label>'+
@@ -2353,14 +2408,13 @@ function providerRowHtml(pid, cfg){
           return '<option value="'+esc(o.value)+'"'+(String(val)===String(o.value)?' selected':'')+'>'+esc(I18N.t(o.label))+'</option>';
         }).join('');
         return '<div class="field">'+
-          '<label>'+esc(I18N.t(f.label))+'</label>'+
+          '<label>'+esc(I18N.t(f.label))+helpBtnHtml(f.help)+'</label>'+
           '<select data-pid="'+esc(pid)+'" data-key="'+esc(f.key)+'" '+(disabled?'disabled':'')+'>'+opts+'</select>'+
         '</div>';
       }
       return '<div class="field">'+
-        '<label>'+esc(I18N.t(f.label))+'</label>'+
-        '<input type="'+(f.secret?'password':'text')+'" data-pid="'+esc(pid)+'" data-key="'+esc(f.key)+'" value="'+esc(val)+'" autocomplete="off" '+(disabled?'disabled':'')+'>'+
-      '</div>';
+        '<label>'+esc(I18N.t(f.label))+helpBtnHtml(f.help)+'</label>'+
+        '<input type="'+(f.secret?'password':'text')+'" data-pid="'+esc(pid)+'" data-key="'+esc(f.key)+'" value="'+esc(val)+'" '+(disabled?'disabled':'')+'></div>';
     }).join('');
   }
 
@@ -2379,6 +2433,7 @@ function providerRowHtml(pid, cfg){
       '</div>'+
       '<div class="prow-right">'+
         '<span class="status-pill '+st.key+'"><span class="health-dot '+st.key+'"></span>'+statusTxt+'</span>'+
+        helpBtnHtml(guideFor(pid, cfg), '❓')+
         '<span class="prow-status">'+esc(dataTxt)+'</span>'+
       '</div>'+
     '</div>'+
@@ -2413,8 +2468,10 @@ function apiEditFieldsHtml(pid, cfg, schema, disabled){
       }).join('')+
     '</select></div>';
   var keyVal = (cfg.config && cfg.config.api_key != null) ? cfg.config.api_key : '';
+  var tObj3 = (providerTypesCache || []).find(function(x){ return x.id === (cfg && cfg.type); });
+  var gid3 = (tObj3 && tObj3.guide) ? tObj3.guide : 'api-key';
   var keyHtml = '<div class="field">'+
-    '<label>API Key</label>'+
+    '<label>API Key'+helpBtnHtml(gid3)+'</label>'+
     '<input type="password" data-pid="'+esc(pid)+'" data-key="api_key" value="'+esc(keyVal)+'" autocomplete="off" '+(disabled?'disabled':'')+'>'+
     '</div>';
   return selHtml + keyHtml +

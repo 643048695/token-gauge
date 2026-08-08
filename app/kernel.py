@@ -366,7 +366,7 @@ class Kernel:
             return {"ok": False, "message": f"{type(exc).__name__}: {exc}"}
 
     def get_provider_types(self) -> list:
-        """列出可添加的供应商类型（id / 显示名 / 配置字段 schema）。"""
+        """列出可添加的供应商类型（id / 显示名 / 配置字段 schema / 凭据引导）。"""
         from app.providers import PROVIDERS
         types = []
         for pid, cls in PROVIDERS.items():
@@ -375,6 +375,7 @@ class Kernel:
                 "name": getattr(cls, "name", pid),
                 "plan_name": getattr(cls, "plan_name", ""),
                 "schema": list(getattr(cls, "schema", [])),
+                "guide": getattr(cls, "cred_guide", "") or None,
             })
         return types
 

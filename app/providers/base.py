@@ -25,7 +25,9 @@ class Provider(ABC):
     name: str = ""          # 显示名
     schema: list = []       # 配置字段定义，如
                             # [{"key":"workspace_id","label":"工作区 ID","type":"text","secret":False}, ...]
+                            # 字段可带 "help": 引导 id（前端按 id 查 i18n 词典弹获取指引）
     plan_name: str = ""     # 套餐名，如 "Go"
+    cred_guide: str = ""    # 凭据获取引导 id（前端 i18n GUIDES 词典；空 = 无引导）
 
     def __init__(self, config: dict):
         """config 为该 provider 的配置 dict（来自 config.json 的 providers.<id>.config）。"""

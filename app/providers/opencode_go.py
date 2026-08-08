@@ -88,9 +88,12 @@ class OpenCodeGoProvider(Provider):
     name = "OpenCode Go"
     plan_name = "Go"
     site = "https://opencode.ai"
+    cred_guide = "opencode-cookie"  # F12 开发者工具取 auth Cookie 的引导（i18n GUIDES）
     schema = [
-        {"key": "workspace_id", "label": "工作区 ID", "type": "text", "secret": False},
-        {"key": "auth_cookie", "label": "认证 Cookie", "type": "text", "secret": True},
+        {"key": "workspace_id", "label": "工作区 ID", "type": "text", "secret": False,
+         "help": "opencode-cookie"},
+        {"key": "auth_cookie", "label": "认证 Cookie", "type": "text", "secret": True,
+         "help": "opencode-cookie"},
         {"key": "est_model", "label": "常用模型（token 估算按该模型费率）",
          "type": "select", "secret": False,
          "options": [{"value": mid, "label": OC_MODEL_LABELS.get(mid, mid)}

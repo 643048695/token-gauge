@@ -44,6 +44,7 @@ TEMPLATES = {
 
     "deepseek": {
         "site": "https://platform.deepseek.com",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "DeepSeek",
         "kind": "balance",
         "peak": True,   # 峰谷定价（高峰 ×2）
@@ -73,6 +74,7 @@ TEMPLATES = {
 
     "kimi": {
         "site": "https://platform.moonshot.cn",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "Kimi（月之暗面）余额",
         "kind": "balance",
         "url": "https://api.moonshot.cn/v1/users/me/balance",
@@ -98,6 +100,7 @@ TEMPLATES = {
 
     "siliconflow": {
         "site": "https://cloud.siliconflow.cn",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "硅基流动 SiliconFlow",
         "kind": "balance",
         "url": "https://api.siliconflow.cn/v1/user/info",
@@ -125,6 +128,7 @@ TEMPLATES = {
 
     "stepfun": {
         "site": "https://platform.stepfun.com",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "StepFun（阶跃星辰）",
         "kind": "balance",
         "url": "https://api.stepfun.com/v1/accounts",
@@ -151,6 +155,7 @@ TEMPLATES = {
 
     "novita": {
         "site": "https://novita.ai",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "Novita AI",
         "kind": "balance",
         "url": "https://api.novita.ai/v3/user/balance",
@@ -180,6 +185,7 @@ TEMPLATES = {
 
     "openrouter": {
         "site": "https://openrouter.ai",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "OpenRouter",
         "kind": "relay",
         "infinite": True,   # 套餐可能无额度上限（limit_remaining/limit 为 null），按 0 显示
@@ -201,6 +207,7 @@ TEMPLATES = {
 
     "oneapi-relay": {
         "site": "",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "one-api / new-api 中转站",
         "kind": "relay",
         "url": "{base}/api/user/self",
@@ -226,6 +233,7 @@ TEMPLATES = {
 
     "kimi-coding": {
         "site": "https://platform.moonshot.cn",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "Kimi For Coding 订阅",
         "kind": "quota",
         "url": "https://api.kimi.com/coding/v1/usages",
@@ -249,6 +257,7 @@ TEMPLATES = {
 
     "zai-coding": {
         "site": "https://open.bigmodel.cn",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "z.ai / 智谱 GLM Coding Plan",
         "kind": "quota",
         "url": "{base}/api/monitor/usage/quota/limit",
@@ -274,6 +283,7 @@ TEMPLATES = {
 
     "minimax-token": {
         "site": "https://platform.minimaxi.com",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "MiniMax Token Plan",
         "kind": "quota",
         "url": "{base}/v1/api/openplatform/coding_plan/remains",
@@ -302,6 +312,7 @@ TEMPLATES = {
 
     "groq": {
         "site": "https://console.groq.com",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "Groq",
         "kind": "quota",
         "url": "https://api.groq.com/openai/v1/usage",
@@ -316,6 +327,7 @@ TEMPLATES = {
 
     "volcengine": {
         "site": "https://console.volcengine.com",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "火山引擎（豆包）",
         "kind": "quota",
         "url": "",
@@ -331,6 +343,7 @@ TEMPLATES = {
 
     "qiniu": {
         "site": "https://ai.qiniu.com",
+        "guide": "api-key",  # 凭据获取引导（前端 ❓ 弹步骤）
         "name": "七牛云 AI",
         "kind": "balance",
         "url": "",

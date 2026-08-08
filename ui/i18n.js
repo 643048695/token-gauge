@@ -169,6 +169,8 @@ window.I18N = (function () {
     'Cookie 失效': 'Cookie expired',
     'Cookie 失效，请更新认证信息': 'Cookie expired, update credentials',
     'Cookie 已失效，请到「供应商」页更新凭据</div>': 'Cookie expired, update it on the Providers page</div>',
+    '如何获取？': 'How to get it?',
+    '获取指引': 'How to get credentials',
     '凭据过期立即提醒': 'Notify on credential expiry',
 
     /* ---- 测试连接 ---- */
@@ -459,3 +461,103 @@ window.I18N = (function () {
 
   return { t: t, setLang: setLang, getLang: getLang, apply: apply };
 })();
+
+/* ===== 凭据获取引导（GUIDES）：后端只传 guide id，文案全部前端维护，双语完整 ===== */
+window.GUIDES = {
+  'opencode-cookie': {
+    zh: {
+      title: '获取 OpenCode Go 登录凭据',
+      steps: [
+        { t: '用浏览器打开 opencode.ai，登录你的账号（Cookie 只能从登录后的页面拿）' },
+        { t: '按键盘 F12 打开开发者工具（或页面空白处右键 → 检查）', svg: 'f12cookie' },
+        { t: '顶部切到「Application（应用）」标签 → 左侧 Storage → Cookies → 点开 opencode.ai' },
+        { t: '找到名为 auth 的 Cookie，双击 Value 列，全选复制整串值（形如 Fe26.2* 开头）' },
+        { t: '回到本软件 → 供应商页 → 粘贴到「认证 Cookie」输入框 → 保存 → 点「测试连接」' }
+      ],
+      tips: [
+        'Cookie 会过期（通常几周），软件提示 EXPIRED 时按同样步骤重新复制一次即可',
+        '工作区 ID：登录后地址栏是 opencode.ai/workspace/<wrk_xxx>/go，复制中间 wrk_ 开头的那段',
+        'Cookie 是本软件唯一需要的凭据，加密保存在本机，不会上传任何第三方'
+      ]
+    },
+    en: {
+      title: 'Get OpenCode Go credentials',
+      steps: [
+        { t: 'Open opencode.ai in a browser and sign in (the cookie only exists after login)' },
+        { t: 'Press F12 to open DevTools (or right-click the page → Inspect)', svg: 'f12cookie' },
+        { t: 'Switch to the Application tab → Storage → Cookies → expand opencode.ai' },
+        { t: 'Find the cookie named auth, double-click the Value column and copy the whole string (starts with Fe26.2*)' },
+        { t: 'Back in this app: Providers page → paste it into the Auth Cookie field → Save → Test' }
+      ],
+      tips: [
+        'The cookie expires (usually after a few weeks); when the app shows EXPIRED, repeat the same steps',
+        'Workspace ID: the address bar shows opencode.ai/workspace/<wrk_xxx>/go after login — copy the wrk_ part',
+        'The cookie is the only credential this app needs; it is encrypted locally and never sent anywhere'
+      ]
+    }
+  },
+  'api-key': {
+    zh: {
+      title: '获取 API Key',
+      steps: [
+        { t: '打开该供应商官网并登录（卡片上的「官网」按钮会直接带你过去）' },
+        { t: '进入「API Keys / 密钥管理」页面（一般在左侧菜单或个人中心）' },
+        { t: '点击「创建 / 新建 API Key」，复制生成的长串（通常 sk- 开头）' },
+        { t: '回到本软件 → 粘贴到 API Key 输入框 → 保存 → 点「测试连接」' }
+      ],
+      tips: [
+        '密钥通常只在创建时完整显示一次，丢了就重新建一个，旧的最好同时删除',
+        '本软件把密钥加密保存在本机，不会上传任何第三方'
+      ]
+    },
+    en: {
+      title: 'Get an API Key',
+      steps: [
+        { t: 'Open the provider website and sign in (the "Site" button on the card takes you there)' },
+        { t: 'Go to the "API Keys" page (usually in the left menu or account section)' },
+        { t: 'Click "Create / New API Key" and copy the generated string (usually starts with sk-)' },
+        { t: 'Back in this app: paste it into the API Key field → Save → Test' }
+      ],
+      tips: [
+        'Keys are usually shown in full only once at creation; if lost, create a new one and delete the old',
+        'This app encrypts keys locally and never sends them anywhere'
+      ]
+    }
+  }
+};
+
+/* F12 开发者工具取 Cookie 示意图（绿色霓虹线框风，跟随主题 accent 变量） */
+window.GUIDE_SVGS = {
+  f12cookie:
+    '<svg viewBox="0 0 480 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DevTools guide">' +
+    '<rect x="8" y="8" width="464" height="284" rx="10" fill="none" stroke="var(--border)" stroke-width="2"/>' +
+    '<rect x="20" y="20" width="440" height="24" rx="6" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>' +
+    '<circle cx="34" cy="32" r="4" fill="var(--danger)"/><circle cx="48" cy="32" r="4" fill="var(--warn)"/><circle cx="62" cy="32" r="4" fill="var(--accent)"/>' +
+    '<rect x="80" y="26" width="260" height="12" rx="6" fill="var(--card-hi)" stroke="var(--line)" stroke-width="1"/>' +
+    '<text x="92" y="35" font-size="9" fill="var(--muted)" font-family="Consolas,monospace">https://opencode.ai/workspace/...</text>' +
+    '<rect x="20" y="54" width="440" height="120" rx="4" fill="var(--card)" stroke="var(--line)" stroke-width="1"/>' +
+    '<rect x="32" y="66" width="180" height="10" rx="5" fill="var(--line)" opacity="0.5"/>' +
+    '<rect x="32" y="84" width="120" height="10" rx="5" fill="var(--line)" opacity="0.3"/>' +
+    '<rect x="32" y="102" width="300" height="10" rx="5" fill="var(--line)" opacity="0.3"/>' +
+    '<rect x="32" y="120" width="260" height="10" rx="5" fill="var(--line)" opacity="0.3"/>' +
+    '<text x="32" y="152" font-size="10" fill="var(--muted)" font-family="Consolas,monospace">press F12 → DevTools opens at the bottom</text>' +
+    '<rect x="20" y="184" width="440" height="96" rx="4" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/>' +
+    '<rect x="24" y="188" width="120" height="20" rx="4" fill="var(--card-hi)"/>' +
+    '<text x="32" y="202" font-size="10" fill="var(--accent)" font-family="Consolas,monospace">Application</text>' +
+    '<rect x="150" y="188" width="80" height="20" rx="4" fill="transparent"/>' +
+    '<text x="158" y="202" font-size="10" fill="var(--muted)" font-family="Consolas,monospace">Elements</text>' +
+    '<rect x="236" y="188" width="90" height="20" rx="4" fill="transparent"/>' +
+    '<text x="244" y="202" font-size="10" fill="var(--muted)" font-family="Consolas,monospace">Console</text>' +
+    '<line x1="24" y1="214" x2="456" y2="214" stroke="var(--line)" stroke-width="1"/>' +
+    '<rect x="24" y="220" width="130" height="56" rx="4" fill="var(--card)" stroke="var(--line)" stroke-width="1"/>' +
+    '<text x="32" y="236" font-size="9" fill="var(--muted)" font-family="Consolas,monospace">▶ Cookies</text>' +
+    '<text x="36" y="252" font-size="9" fill="var(--accent)" font-family="Consolas,monospace">▼ opencode.ai</text>' +
+    '<rect x="162" y="220" width="294" height="56" rx="4" fill="var(--card)" stroke="var(--line)" stroke-width="1"/>' +
+    '<text x="170" y="236" font-size="9" fill="var(--muted)" font-family="Consolas,monospace">Name</text>' +
+    '<text x="300" y="236" font-size="9" fill="var(--muted)" font-family="Consolas,monospace">Value</text>' +
+    '<rect x="170" y="242" width="278" height="20" rx="3" fill="rgba(0,255,156,0.12)" stroke="var(--accent)" stroke-width="1.5"/>' +
+    '<text x="178" y="256" font-size="10" fill="var(--accent)" font-family="Consolas,monospace" font-weight="bold">auth</text>' +
+    '<text x="300" y="256" font-size="9" fill="var(--warn)" font-family="Consolas,monospace">Fe26.2*…………（整串复制）</text>' +
+    '<text x="178" y="272" font-size="8" fill="var(--muted)" font-family="Consolas,monospace">← 双击 Value 全选复制这一行</text>' +
+    '</svg>'
+};

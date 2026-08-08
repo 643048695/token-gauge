@@ -737,8 +737,11 @@ class ApiProvider(Provider):
 def _build_template_schema(tid: str) -> list:
     """按模板 needs 生成类型 schema：无模板下拉，只列实际要填的字段。"""
     needs = tpl.template_field_needs(tid)
+    t = tpl.TEMPLATES.get(tid, {})
+    guide = t.get("guide", "")  # 模板级凭据引导 id（api-key 等），挂到 api_key 字段
     schema = [
-        {"key": "api_key", "label": "API Key", "type": "text", "secret": True},
+        {"key": "api_key", "label": "API Key", "type": "text", "secret": True,
+         "help": guide or None},
         {"key": "demo", "label": "演示模式（无需 API Key）", "type": "select", "secret": False,
          "options": [{"value": "", "label": "否（填真实 Key）"},
                      {"value": "true", "label": "是（内置模拟数据）"}]},
@@ -758,12 +761,14 @@ def _make_template_provider(tid: str):
     """为模板动态生成 Provider 子类：id=模板 id，template_id 固定，schema 按需。"""
     t = tpl.TEMPLATES.get(tid, {})
     tname = t.get("name", tid)
+    tguide = t.get("guide", "")
 
     class _TemplateProvider(ApiProvider):
         id = tid
         name = tname
         plan_name = tname
         template_id = tid
+        cred_guide = tguide  # 凭据引导 id（api-key 等），前端 ❓ 弹获取指引
         schema = _build_template_schema(tid)
 
     _TemplateProvider.__name__ = f"TemplateProvider_{tid}"
