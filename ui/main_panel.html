@@ -236,9 +236,12 @@ main{display:flex; height:calc(100% - 36px);}
 .spark-chart{width:100%; height:auto; display:block; margin:8px 0 2px;}
 .spark-bar{fill:var(--accent); opacity:.72; transition:opacity .15s;}
 .spark-bar:hover{opacity:1;}
-.spark-bar.today{fill:var(--accent); opacity:1; filter:drop-shadow(0 0 4px var(--glow));}
+.spark-bar.today{fill:var(--accent); opacity:1; filter:drop-shadow(0 0 5px var(--glow));}
 .spark-bar.dim{fill:rgba(255,255,255,.12); opacity:1;}
-.spark-val{font-size:9px; fill:var(--text); font-family:Consolas,monospace;}
+.spark-val{font-size:9.5px; fill:var(--accent); font-family:Consolas,monospace; font-weight:600;}
+.spark-val.today{font-size:10.5px; font-weight:800; fill:var(--accent); filter:drop-shadow(0 0 3px var(--glow));}
+.spark-fire{font-size:10px;}
+.spark-max{font-size:8.5px; fill:var(--warn);}
 .spark-day{font-size:8px; fill:var(--muted); font-family:Consolas,monospace;}
 .spark-day.today{fill:var(--accent); font-weight:600;}
 .spark-grid{stroke:rgba(255,255,255,.06); stroke-width:1;}
@@ -670,7 +673,11 @@ input[type=range]:disabled{opacity:.4;}
 /* 任务B：统计区图表主题化 —— SVG 元素用 CSS 变量（--line/--muted/--text/--radius），随 themes.py 5 风格联动 */
 .sb-grid{stroke:var(--line);stroke-width:1;}
 .sb-day{fill:var(--muted);font-family:Consolas,monospace;}
+.sb-day.today{fill:var(--accent);font-weight:700;}
 .sb-val{fill:var(--text);font-family:Consolas,monospace;font-size:9px;font-weight:600;}
+.sb-val.today{fill:var(--accent);font-size:12px;font-weight:800;filter:drop-shadow(0 0 4px var(--glow));}
+.sb-fire{font-size:11px;}
+.sb-max{font-size:9px;fill:var(--warn);}
 /* 任务B：柱形图附近单位快捷切换 */
 .stats-head .stats-unit{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
 .unit-btn{font-size:10px;padding:2px 9px;border-radius:var(--radius);border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font-ui,inherit);transition:all .15s;}
@@ -1836,28 +1843,43 @@ function fmtTokens(n){
   return Math.round(n)+'';
 }
 /* SVG 柱状图：柱顶数值 + 日期标签 + 今天高亮 + 网格线 */
+var sparkGid = 0;
 function sparkChartHtml(series, opts){
   opts = opts || {};
   var fmt = opts.fmt || fmtTokens;
   var todayIdx = series.length - 1;
   var mx = Math.max.apply(null, series.concat([0.01]));
-  var slot = 36, w = series.length * slot + 6, h = 92, top = 18;
-  var barMax = h - 26 - 14;
-  var svg = '<svg class="spark-chart" viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg">';
+  var slot = 36, w = series.length * slot + 6, h = 104, top = 30;
+  var barMax = h - 34 - 14;
+  var gid = 'sg' + (++sparkGid);
+  var svg = '<svg class="spark-chart" viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg">'+
+    '<defs><linearGradient id="'+gid+'" x1="0" y1="1" x2="0" y2="0">'+
+    '<stop offset="0" stop-color="var(--accent)" stop-opacity="0.08"/>'+
+    '<stop offset="0.7" stop-color="var(--accent)" stop-opacity="0.7"/>'+
+    '<stop offset="1" stop-color="var(--accent)" stop-opacity="1"/></linearGradient></defs>';
   for(var g = 0; g < 3; g++){
-    var gy = top + (barMax - 8) * g / 2;
+    var gy = top + (barMax - 10) * g / 2;
     svg += '<line x1="4" y1="'+gy+'" x2="'+(w-4)+'" y2="'+gy+'" class="spark-grid"/>';
   }
   series.forEach(function(v, i){
     var x = 6 + i * slot;
-    var bh = Math.max(3, v / mx * (barMax - 8));
-    var y = top + (barMax - 8) - bh;
+    var bh = Math.max(3, v / mx * (barMax - 10));
+    var y = top + (barMax - 10) - bh;
     var isToday = i === todayIdx;
-    var cls = (v <= 0 ? 'spark-bar dim' : 'spark-bar') + (isToday && v > 0 ? ' today' : '');
+    var isMax = v > 0 && v === mx;
     if(v > 0){
-      svg += '<text x="'+(x+13)+'" y="'+(y-4)+'" class="spark-val" text-anchor="middle">'+fmt(v)+'</text>';
+      /* 柱顶数值：accent 大字；今日发光、峰值金星 */
+      svg += '<text x="'+(x+13)+'" y="'+(y-6)+'" class="spark-val'+(isToday?' today':'')+'" text-anchor="middle">'+fmt(v)+'</text>';
+      if(isToday){
+        svg += '<text x="'+(x+13)+'" y="'+(y-17)+'" class="spark-fire" text-anchor="middle">🔥</text>';
+      } else if(isMax){
+        svg += '<text x="'+(x+13)+'" y="'+(y-15)+'" class="spark-max" text-anchor="middle">★</text>';
+      }
     }
-    svg += '<rect x="'+x+'" y="'+y+'" width="26" height="'+bh+'" rx="3" class="'+cls+'">'+
+    /* 能量柱：渐变 fill（inline style 防 CSS 覆盖）；今日发光 */
+    svg += '<rect x="'+x+'" y="'+y+'" width="26" height="'+bh+'" rx="3"'+
+      (v > 0 ? ' style="fill:url(#'+gid+')"' : '')+
+      ' class="'+(v <= 0 ? 'spark-bar dim' : 'spark-bar')+(isToday && v > 0 ? ' today' : '')+'">'+
       '<title>'+fmt(v)+'</title></rect>';
     var d = new Date(Date.now() - (todayIdx - i) * 86400000);
     svg += '<text x="'+(x+13)+'" y="'+(h-4)+'" class="spark-day'+(isToday?' today':'')+'" text-anchor="middle">'+
@@ -2038,7 +2060,12 @@ function statsSectionHtml(v, s){
   for(var d2=0; d2<DAYS; d2++){
     var dt = new Date(Date.now() - (DAYS-1-d2)*86400000);
     var lbl = (dt.getMonth()+1)+'-'+dt.getDate();
-    bar += '<text class="sb-day" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+18)+'" font-size="9" text-anchor="middle">'+lbl+'</text>';
+    var isTodayD = d2 === DAYS - 1;
+    if(isTodayD){
+      /* 今日柱背景光（能量汇聚感） */
+      bar += '<rect x="'+(32 + d2*bw - 6)+'" y="'+topBar+'" width="'+(bw - 8)+'" height="'+(bh - 10)+'" fill="var(--accent)" opacity="0.05" rx="8"/>';
+    }
+    bar += '<text class="sb-day'+(isTodayD?' today':'')+'" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+18)+'" font-size="9" text-anchor="middle">'+lbl+'</text>';
     var cum = 0;
     var x = 32 + d2*bw;
     var _bs = themeBarStyle();
@@ -2058,13 +2085,20 @@ function statsSectionHtml(v, s){
         + (_bs.stroke ? ' stroke="'+_bs.stroke+'" stroke-width="'+_bs.sw+'"' : '') + '><title>'+esc(r.name)+': '+fmtStatNum(val)+'</title></rect>';
       cum += hh;
     });
-    /* 任务B：柱顶标数字（所有单位模式；auto 为各供应商原币种之和） */
+    /* 任务B：柱顶标数字（所有单位模式；auto 为各供应商原币种之和）+ 能量感标记 */
+    var isTodayD = d2 === DAYS - 1;
+    var isMaxD = !isTodayD && total[d2] > 0 && total[d2] === mx;
     if(total[d2] > 0){
       var ty = topBar + (bh-10) - total[d2]/mx*(bh-10) - 4;
       var _cx = x + _gx + _cw / 2;   // 柱中心（对齐柱体，非槽中心）
-      bar += '<text class="sb-val" x="'+_cx+'" y="'+ty+'" text-anchor="middle" opacity=".9">'
+      bar += '<text class="sb-val'+(isTodayD?' today':'')+'" x="'+_cx+'" y="'+ty+'" text-anchor="middle" opacity=".9">'
         + (u === 'auto' ? '<title>'+esc(I18N.t('自动模式：各供应商原币种之和'))+'</title>' : '')
         + fmtStatNum(total[d2])+'</text>';
+      if(isTodayD){
+        bar += '<text class="sb-fire" x="'+_cx+'" y="'+(ty-14)+'" text-anchor="middle">🔥</text>';
+      } else if(isMaxD){
+        bar += '<text class="sb-max" x="'+_cx+'" y="'+(ty-12)+'" text-anchor="middle">★</text>';
+      }
     }
   }
   bar += '</svg>';
@@ -2077,6 +2111,8 @@ function statsSectionHtml(v, s){
     pieRows.forEach(function(r){ var uv = unitVal(r.today, r.cur, r.meta); pieTotal += uv ? uv.v : 0; });
     var R = 50, C = 2 * Math.PI * R;
     var pieSvg = '<svg viewBox="0 0 140 140" style="width:150px;height:150px;display:block;margin:0 auto;">';
+    /* 能量光环底座 */
+    pieSvg += '<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="var(--accent)" stroke-width="21" opacity="0.07"/>';
     var offset = 0;
     pieRows.forEach(function(r){
       var uv = unitVal(r.today, r.cur, r.meta);
@@ -2089,8 +2125,9 @@ function statsSectionHtml(v, s){
         + ' stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 70 70)"><title>'+esc(r.name)+'</title></circle>';
       offset += dash;
     });
-    pieSvg += '<text x="70" y="66" text-anchor="middle" font-size="10" fill="var(--muted)">'+I18N.t('今日')+'</text>';
-    pieSvg += '<text x="70" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">'+pieRows.length+'</text>';
+    /* 中心：今日总消耗（大数值发光——直观 + 成就感） */
+    pieSvg += '<text x="70" y="60" text-anchor="middle" font-size="9.5" fill="var(--muted)">'+I18N.t('今日消耗')+'</text>';
+    pieSvg += '<text x="70" y="86" text-anchor="middle" font-size="17" font-weight="800" fill="var(--accent)" style="filter:drop-shadow(0 0 5px var(--glow));font-family:Consolas,monospace">'+fmtStatNum(pieTotal)+'</text>';
     pieSvg += '</svg>';
     var legend = pieRows.map(function(r){
       var uv = unitVal(r.today, r.cur, r.meta);
