@@ -3051,6 +3051,14 @@ async function init(){
     renderAll();
   }
 
+  /* 引导页跳转参数：?page=providers 直达供应商页（完成第一次配置流程） */
+  (function(){
+    var pm = /[?&]page=([\w-]+)/.exec(location.search);
+    if(!pm) return;
+    var target = pm[1];
+    var navBtn = $$('#nav .nav-item[data-page="'+target+'"]')[0];
+    if(navBtn) navBtn.click();
+  })();
   /* pywebview API 注入晚于 DOMContentLoaded：就绪后再拉一次真实数据 */
   window.addEventListener('pywebviewready', function(){
     fetchView().catch(function(){});

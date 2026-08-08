@@ -374,6 +374,41 @@ button:active:not(:disabled){transform:scale(.97);}
 button:disabled{opacity:.4; cursor:not-allowed;}
 /* 输入/下拉 focus */
 input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent); box-shadow:var(--focus-ring);}
+/* ---------- P6 完成第一次配置（实操收尾） ---------- */
+.p6-wrap{display:flex; gap:26px; align-items:stretch; margin-top:18px;}
+.p6-left{flex:1.2; min-width:0; display:flex; flex-direction:column;}
+.p6-right{flex:1; min-width:0; display:flex; align-items:center;}
+.cfg-status{
+  flex:1; margin-top:14px; display:flex; flex-direction:column; gap:6px;
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:12px 14px; overflow-y:auto;
+}
+.cfg-loading{font-size:12px; color:var(--muted); padding:8px 2px;}
+.cfg-head{font-size:12px; font-weight:700; color:var(--accent); padding-bottom:8px; border-bottom:1px dashed var(--line); margin-bottom:4px;}
+.cfg-head.all{color:var(--accent);}
+.cfg-row{
+  display:flex; align-items:center; gap:8px; padding:6px 8px;
+  border-radius:8px; font-size:12px;
+}
+.cfg-row.ok{background:rgba(0,255,156,0.06);}
+.cfg-row.todo{background:rgba(255,196,0,0.06);}
+.cfg-row.cfg-empty{background:none; color:var(--muted);}
+.cfg-dot{flex:none; width:16px; color:var(--accent); font-size:13px; text-align:center;}
+.cfg-row.todo .cfg-dot{color:var(--warn);}
+.cfg-name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cfg-state{flex:none; font-size:11px; color:var(--muted);}
+.cfg-row.ok .cfg-state{color:var(--accent);}
+.cfg-row.todo .cfg-state{color:var(--warn);}
+.p6-hint{margin-top:10px; font-size:11px; color:var(--muted); line-height:1.6;}
+.p6-points{display:flex; flex-direction:column; gap:14px; width:100%;}
+.p6-point{
+  display:flex; gap:10px; align-items:flex-start;
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:12px 14px;
+}
+.p6-ico{flex:none; font-size:18px; line-height:1.3;}
+.p6-point b{display:block; font-size:12px; color:var(--text); margin-bottom:2px;}
+.p6-point span{font-size:11px; color:var(--muted); line-height:1.5;}
 /* 页面切换淡入（克制） */
 .page{animation:pageIn .26s ease-out;}
 @keyframes pageIn{from{opacity:0; transform:translateY(5px);}to{opacity:1; transform:none;}}
@@ -563,11 +598,33 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     </div>
   </section>
 
+  <!-- Step 6：完成第一次配置（实操收尾：配好一个供应商才能开始使用） -->
+  <section class="step fade-in hidden" id="step6">
+    <div class="p6-wrap">
+      <div class="p6-left">
+        <span class="step-tag" data-i18n="STEP 6 · 出发">STEP 6 · 出发</span>
+        <h1 class="title" data-i18n="完成第一次配置">完成第一次配置</h1>
+        <p class="sub" data-i18n="配好一个供应商，看数据活起来——这是最后一步。">配好一个供应商，看数据活起来——这是最后一步。</p>
+        <div class="cfg-status" id="cfgStatus">
+          <div class="cfg-loading" data-i18n="检查配置中…">检查配置中…</div>
+        </div>
+        <div class="p6-hint" data-i18n="凭据会过期（软件会提示 EXPIRED / 失效），届时点卡片上的 ❓ 看获取步骤即可。">凭据会过期（软件会提示 EXPIRED / 失效），届时点卡片上的 ❓ 看获取步骤即可。</div>
+      </div>
+      <div class="p6-right">
+        <div class="p6-points">
+          <div class="p6-point"><span class="p6-ico">⚡</span><div><b data-i18n="自动抓取">自动抓取</b><span data-i18n="配好后软件按间隔自动刷新，无需手动操作">配好后软件按间隔自动刷新，无需手动操作</span></div></div>
+          <div class="p6-point"><span class="p6-ico">🖥️</span><div><b data-i18n="迷你窗常驻">迷你窗常驻</b><span data-i18n="悬浮窗随时显示核心额度，一眼看清">悬浮窗随时显示核心额度，一眼看清</span></div></div>
+          <div class="p6-point"><span class="p6-ico">🔔</span><div><b data-i18n="超限有提醒">超限有提醒</b><span data-i18n="接近额度上限、凭据失效都会通知你">接近额度上限、凭据失效都会通知你</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer id="foot">
   <button id="btnNever" title="永久跳过引导，下次启动不再显示" data-i18n="不再显示">不再显示</button>
-  <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="nav-btns">
     <button id="btnSkipOnce" title="本次跳过，下次启动还会显示" data-i18n="跳过指引">跳过指引</button>
     <button id="btnPrev" class="ghost-invisible" data-i18n="上一步">上一步</button>
@@ -580,8 +637,8 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 (function(){
 'use strict';
 var $ = function(s){ return document.querySelector(s); };
-var TOTAL = 5;
-var state = { step: 1, booted: false };
+var TOTAL = 6;
+var state = { step: 1, booted: false, settings: null };
 
 function currentApi(){ return (window.pywebview && window.pywebview.api) || null; }
 function call(name){
@@ -618,6 +675,13 @@ function render(){
   if(sec2){
     sec2.classList.remove('fade-in'); void sec2.offsetWidth; sec2.classList.add('fade-in');
   }
+  if(state.step === TOTAL){ renderCfg(); }   /* 进入 Step 6 时刷新配置状态 */
+}
+
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
 }
 
 /* 永久完成/跳过：写 onboarded 标记后进主面板 */
@@ -668,6 +732,68 @@ function skipOnce(){
     .catch(function(){ location.href = 'main_panel.html'; });
 }
 
+/* ---- Step 6：完成第一次配置（实操收尾） ---- */
+/* 判定某供应商是否已配好凭据：enabled 且 (api_key/auth_cookie 非空 或 demo 模式) */
+function hasCreds(pcfg){
+  if(!pcfg || pcfg.enabled === false) return false;
+  var c = pcfg.config || {};
+  if(String(c.demo || '').toLowerCase() === 'true') return true;
+  return !!(c.api_key || c.auth_cookie);
+}
+function configuredCount(){
+  var provs = (state.settings && state.settings.providers) || {};
+  var n = 0;
+  for(var pid in provs){ if(hasCreds(provs[pid])) n++; }
+  return n;
+}
+/* 渲染 step6 配置状态卡 + 切换「开始使用 / 去配置」按钮行为 */
+function renderCfg(){
+  var box = $('#cfgStatus');
+  if(!box) return;
+  var provs = (state.settings && state.settings.providers) || {};
+  var pids = Object.keys(provs);
+  if(!pids.length){
+    box.innerHTML = '<div class="cfg-row cfg-empty" data-i18n="还没有配置供应商——点右下角「去配置供应商」开始。">还没有配置供应商——点右下角「去配置供应商」开始。</div>';
+    setStartBtn(false);
+    return;
+  }
+  var done = 0;
+  var rows = pids.map(function(pid){
+    var ok = hasCreds(provs[pid]);
+    if(ok) done++;
+    return '<div class="cfg-row '+(ok?'ok':'todo')+'">'+
+      '<span class="cfg-dot">'+(ok?'✓':'○')+'</span>'+
+      '<span class="cfg-name">'+esc(provs[pid].name || pid)+'</span>'+
+      '<span class="cfg-state">'+(ok ? I18N.t('已配置') : I18N.t('未配置'))+'</span>'+
+    '</div>';
+  }).join('');
+  var allDone = done >= pids.length && pids.length > 0;
+  box.innerHTML = '<div class="cfg-head'+(allDone?' all':'')+'">'+
+    (allDone ? I18N.t('🎉 全部就绪，可以开始用了') : I18N.t('已配置 ')+done+'/'+pids.length+' · '+I18N.t('还需配置 ')+(pids.length-done))+
+    '</div>'+rows;
+  setStartBtn(allDone);
+}
+/* 「开始使用」按钮：全配好 → 完成引导；否则 → 去主面板供应商页配置 */
+function setStartBtn(allDone){
+  var btn = $('#btnStart');
+  if(allDone){
+    btn.style.display = '';
+    btn.textContent = I18N.t('开始使用 →');
+    btn.onclick = doneGuide;
+  } else {
+    btn.style.display = '';
+    btn.textContent = I18N.t('去配置供应商 →');
+    btn.onclick = function(){
+      call('enter_dashboard')
+        .then(function(res){
+          var url = (res && res.url) ? res.url : 'main_panel.html';
+          location.href = url + (url.indexOf('?') < 0 ? '?' : '&') + 'page=providers';
+        })
+        .catch(function(){ location.href = 'main_panel.html?page=providers'; });
+    };
+  }
+}
+
 /* P3 测试连接模拟（纯前端演示） */
 function mockTest(){
   var btn = $('#btnTestMock');
@@ -693,6 +819,7 @@ function boot(){
   Promise.all([call('get_settings'), call('get_theme_css')])
     .then(function(res){
       var settings = res[0] || {};
+      state.settings = settings;   /* Step 6 配置状态检测用 */
       var tc = res[1] || {};
       injectTheme(tc.css);
       var tid = tc.theme_id || (settings.theme && settings.theme.id) || 'paper';
