@@ -47,7 +47,7 @@ class DragController:
             ctypes.windll.user32.GetWindowRect(ctypes.c_void_p(hwnd), ctypes.byref(rect))
             self._drag_stop_ev = threading.Event()
             self._drag = {
-                "kind": kind, "hwnd": hwnd,
+                "kind": kind, "hwnd": hwnd, "target": target,
                 "cx": pt.x, "cy": pt.y,
                 "x0": rect.left, "y0": rect.top,
                 "w0": rect.right - rect.left, "h0": rect.bottom - rect.top,
@@ -82,14 +82,19 @@ class DragController:
                         d["x0"] + dx, d["y0"] + dy, 0, 0,
                         SWP_NOSIZE | SWP_NOZORDER2)
                 else:
+                    # 尺寸限制按窗口类型：迷你窗小尺寸；主窗口保底 320x240、上限 4096
+                    if d.get("target") == "main":
+                        wmin, wmax, hmin, hmax = 320, 4096, 240, 4096
+                    else:
+                        wmin, wmax, hmin, hmax = 160, 600, 100, 400
                     w, h = d["w0"], d["h0"]
                     if kind == "resizeX":
-                        w = max(160, min(600, d["w0"] + dx))
+                        w = max(wmin, min(wmax, d["w0"] + dx))
                     elif kind == "resizeY":
-                        h = max(100, min(400, d["h0"] + dy))
+                        h = max(hmin, min(hmax, d["h0"] + dy))
                     else:
-                        w = max(160, min(600, d["w0"] + dx))
-                        h = max(100, min(400, d["h0"] + dy))
+                        w = max(wmin, min(wmax, d["w0"] + dx))
+                        h = max(hmin, min(hmax, d["h0"] + dy))
                     ctypes.windll.user32.SetWindowPos(
                         ctypes.c_void_p(d["hwnd"]), None, 0, 0, w, h,
                         SWP_NOMOVE | SWP_NOZORDER2)
@@ -114,8 +119,12 @@ class DragController:
                 scale = self._app._get_scale(d["hwnd"]) or 1.0
                 settings = self._app.kernel.get_settings()
                 win = dict(settings.get("window") or {})
-                win["mini_width"] = int(round(w / scale))
-                win["mini_height"] = int(round(h / scale))
+                if d.get("target") == "main":
+                    win["main_width"] = int(round(w / scale))
+                    win["main_height"] = int(round(h / scale))
+                else:
+                    win["mini_width"] = int(round(w / scale))
+                    win["mini_height"] = int(round(h / scale))
                 self._app.kernel.save_settings({"window": win})
             except Exception:
                 pass
