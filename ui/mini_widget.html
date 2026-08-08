@@ -101,8 +101,8 @@
     /* z-index 不设（auto）：若设 8 会创建层叠上下文困住内部 topbtns(z10)，
        导致按钮整体低于 drag-top(z9) 被拦截点击——drag-top 透明，logo 区仍可拖 */
   }
-  .logo { display: flex; align-items: center; gap: 6px; }
-  .logo .pname { color: var(--accent); font-weight: 700; letter-spacing: 1px; font-size: 9.5px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: 1px; }
+  .logo { display: flex; align-items: center; gap: 6px; flex-shrink: 0; min-width: 0; }
+  .logo .pname { color: var(--accent); font-weight: 700; letter-spacing: 1px; font-size: 9.5px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: 1px; }
   .logo .dot {
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--accent);
@@ -358,7 +358,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
   <div class="hud" id="hud">
     <div class="drag-top pywebview-drag-region"></div>
     <div class="topbar">
-      <div class="logo"><span class="dot"></span><b>OC-GO</b>&nbsp;MONITOR&nbsp;<span class="pname" id="pname"></span></div>
+      <div class="logo"><span class="dot"></span><b>OC-GO</b>&nbsp;<span class="pname" id="pname"></span></div>
       <div class="topbtns">
         <span class="live" id="live"><span class="dot"></span>LIVE</span>
         <button class="refresh" id="refresh" data-i18n-title="立即刷新" title="立即刷新" onclick="if(window.__miniRefresh)window.__miniRefresh()">↻</button>
