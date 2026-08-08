@@ -452,6 +452,9 @@ window.I18N = (function () {
     '还没有配置供应商，在下方快速配置一个': 'No provider configured — set one up below',
     '选择类型 → 填 Key → 测试连接 → 保存，一分钟搞定。': 'Pick a type → paste the key → Test → Save. Done in a minute.',
     '配置一个供应商 →': 'Configure a provider →',
+    '开始你的第一次配置 →': 'Start your first setup →',
+    '暂不配置，直接进入 →': 'Skip for now, enter the app →',
+    '⚡ 开始你的第一次配置': '⚡ Start your first setup',
     '🎉 已成功配置 ': '🎉 Configured ',
     ' 个供应商，可以开始用了': ' provider(s) — you are ready!',
   };

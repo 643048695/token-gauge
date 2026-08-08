@@ -444,6 +444,21 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .qc-result.ok{color:var(--accent);}
 .qc-result.err{color:var(--danger);}
 .qc-result.pending{color:var(--warn);}
+/* ---------- 凭据获取引导浮层（与主面板同款） ---------- */
+.guide-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.guide-modal{width:min(560px,86vw);max-height:82vh;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 24px var(--glow);padding:18px 20px 14px;position:relative;}
+.guide-modal h3{margin:0 0 10px;font-size:14px;color:var(--accent);letter-spacing:.5px;display:flex;align-items:center;gap:8px;}
+.guide-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.guide-close:hover{color:var(--text);background:var(--card-hi);}
+.guide-step{display:flex;gap:10px;margin:10px 0;align-items:flex-start;}
+.guide-num{flex:none;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.guide-step p{margin:0;font-size:12px;line-height:1.55;color:var(--text);}
+.guide-step svg{width:100%;height:auto;margin-top:8px;border-radius:8px;background:var(--panel);}
+.guide-tips{margin-top:12px;padding:10px 12px;background:rgba(255,196,0,.07);border:1px solid rgba(255,196,0,.3);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;}
+.guide-tips div{margin:3px 0;}
+.guide-tips b{color:var(--warn);margin-right:4px;}
+.guide-help-btn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:11px;padding:0 2px;opacity:.75;font-family:inherit;}
+.guide-help-btn:hover{opacity:1;text-decoration:underline;}
 /* 页面切换淡入（克制） */
 .page{animation:pageIn .26s ease-out;}
 @keyframes pageIn{from{opacity:0; transform:translateY(5px);}to{opacity:1; transform:none;}}
@@ -645,7 +660,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
         </div>
         <!-- 引导页内嵌快速配置：选类型 → 填 Key → 测试连接 → 保存成功 -->
         <div class="quick-cfg" id="quickCfg" style="display:none">
-          <div class="qc-title" data-i18n="⚡ 快速配置一个 API">⚡ 快速配置一个 API</div>
+          <div class="qc-title" data-i18n="⚡ 开始你的第一次配置">⚡ 开始你的第一次配置</div>
           <div class="qc-row">
             <select id="qcType" class="qc-select"></select>
             <button type="button" id="qcHelp" class="guide-help-btn" data-guide="api-key">❓</button>
@@ -680,6 +695,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     <button id="btnSkipOnce" title="本次跳过，下次启动还会显示" data-i18n="跳过指引">跳过指引</button>
     <button id="btnPrev" class="ghost-invisible" data-i18n="上一步">上一步</button>
     <button id="btnNext" class="primary" data-i18n="下一步 →">下一步 →</button>
+    <button id="btnEnter" class="ghost" style="display:none" data-i18n="暂不配置，直接进入 →">暂不配置，直接进入 →</button>
     <button id="btnStart" class="primary" style="display:none" data-i18n="开始使用 →">开始使用 →</button>
   </div>
 </footer>
@@ -722,6 +738,7 @@ function render(){
   $('#btnPrev').className = (state.step === 1) ? 'ghost-invisible' : 'ghost';
   $('#btnNext').style.display = (state.step < TOTAL) ? '' : 'none';
   $('#btnStart').style.display = (state.step === TOTAL) ? '' : 'none';
+  if($('#btnEnter')) $('#btnEnter').style.display = 'none';   /* 非 step6 隐藏；step6 由 setStartBtn 控制 */
   var sec2 = $('#step' + state.step);
   if(sec2){
     sec2.classList.remove('fade-in'); void sec2.offsetWidth; sec2.classList.add('fade-in');
@@ -734,6 +751,32 @@ function esc(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
+
+/* ---- 凭据获取引导浮层（与主面板同款：GUIDES/GUIDE_SVGS 来自 i18n.js 全局） ---- */
+function showGuide(gid){
+  if(!gid || !window.GUIDES || !window.GUIDES[gid]) return null;
+  var lang = I18N.getLang() === 'en' ? 'en' : 'zh';
+  var g = window.GUIDES[gid][lang];
+  var mask = document.createElement('div');
+  mask.className = 'guide-mask';
+  var steps = g.steps.map(function(s, i){
+    return '<div class="guide-step"><span class="guide-num">'+(i+1)+'</span><div><p>'+esc(s.t)+'</p>'+
+      (s.svg && window.GUIDE_SVGS && window.GUIDE_SVGS[s.svg] ? window.GUIDE_SVGS[s.svg] : '')+'</div></div>';
+  }).join('');
+  var tips = '<div class="guide-tips"><b>⚠</b>'+g.tips.map(function(t){ return '<div>· '+esc(t)+'</div>'; }).join('')+'</div>';
+  mask.innerHTML = '<div class="guide-modal">'+
+    '<button type="button" class="guide-close" title="'+esc(I18N.t('关闭'))+'">✕</button>'+
+    '<h3>❓ '+esc(g.title)+'</h3>'+steps+tips+'</div>';
+  function close(){ mask.remove(); }
+  mask.addEventListener('click', function(e){ if(e.target === mask) close(); });
+  mask.querySelector('.guide-close').addEventListener('click', close);
+  document.body.appendChild(mask);
+  return mask;
+}
+document.addEventListener('click', function(e){
+  var btn = e.target && e.target.closest ? e.target.closest('.guide-help-btn') : null;
+  if(btn){ e.stopPropagation(); showGuide(btn.getAttribute('data-guide')); }
+});
 
 /* 永久完成/跳过：写 onboarded 标记后进主面板 */
 
@@ -829,22 +872,27 @@ function renderCfg(){
   setStartBtn(anyDone);
   renderQuickCfg();
 }
-/* 「开始使用 / 配置」按钮：≥1 个配好 → 完成引导；否则 → 聚焦下方快速配置表单 */
+/* 「开始使用 / 开始你的第一次配置」按钮：≥1 个配好 → 完成引导；否则 → 聚焦下方快速配置表单 */
 function setStartBtn(anyDone){
   var btn = $('#btnStart');
+  var enter = $('#btnEnter');
   if(anyDone){
     btn.style.display = '';
     btn.textContent = I18N.t('开始使用 →');
     btn.onclick = doneGuide;
+    if(enter) enter.style.display = 'none';
   } else {
     btn.style.display = '';
-    btn.textContent = I18N.t('配置一个供应商 →');
+    btn.textContent = I18N.t('开始你的第一次配置 →');
     btn.onclick = function(){
       var qc = $('#quickCfg');
-      if(qc){ qc.scrollIntoView({behavior:'smooth', block:'center'}); }
+      /* 后端未连接（示例模式）：配置区不可用 → 直接进主面板 */
+      if(!qc || qc.style.display === 'none'){ skipOnce(); return; }
+      qc.scrollIntoView({behavior:'smooth', block:'center'});
       var k = $('#qcKey');
       if(k) setTimeout(function(){ k.focus(); }, 400);
     };
+    if(enter) enter.style.display = '';
   }
 }
 
@@ -1001,7 +1049,8 @@ $('#btnNever').addEventListener('click', doneGuide);
 $('#btnSkipOnce').addEventListener('click', skipOnce);
 $('#btnNext').addEventListener('click', function(){ if(state.step < TOTAL){ state.step++; render(); } });
 $('#btnPrev').addEventListener('click', function(){ if(state.step > 1){ state.step--; render(); } });
-$('#btnStart').addEventListener('click', doneGuide);
+/* btnStart 的 onclick 由 setStartBtn 统一管理（避免 addEventListener 与 onclick 双重触发） */
+$('#btnEnter').addEventListener('click', skipOnce);
 $('#btnTestMock').addEventListener('click', mockTest);
 $('#qcTest').addEventListener('click', testQuickCfg);
 $('#qcSave').addEventListener('click', saveQuickCfg);
