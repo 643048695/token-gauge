@@ -2064,75 +2064,14 @@ function fmtStatNum(n){
   if(Math.abs(n) >= 1000) return (n/1000).toFixed(1)+'K';
   return (Math.round(n*10)/10)+'';
 }
-/* ---- 3D 球体太阳（3 风格：plasma 等离子 / lava 熔岩 / cyber 赛博）---- */
-var sunGid = 0;
+/* ---- 3D 球体太阳（3 风格 GIF：plasma 等离子 / lava 熔岩 / cyber 赛博）---- */
+var SUN_GIFS = { plasma: 'sun_plasma.gif', lava: 'sun_lava.gif', cyber: 'sun_cyber.gif' };
 function sunGroupHtml(style){
-  sunGid++;
-  var g = 's' + sunGid;
-  var s = '';
-  if(style === 'lava'){
-    /* 熔岩：暗红黑球体 + 高对比亮橙裂纹 */
-    s = '<defs>'+
-      '<radialGradient id="'+g+'b" cx="38%" cy="34%" r="80%">'+
-      '<stop offset="0%" stop-color="#ff9a3c"/><stop offset="42%" stop-color="#8a1c0e"/>'+
-      '<stop offset="76%" stop-color="#3a0a04"/><stop offset="100%" stop-color="#1a0300"/></radialGradient>'+
-      '<filter id="'+g+'f" x="-12%" y="-12%" width="124%" height="124%">'+
-      '<feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="5" seed="11" result="n">'+
-      '<animate attributeName="baseFrequency" dur="14s" values="0.032;0.05;0.032" repeatCount="indefinite"/></feTurbulence>'+
-      '<feComponentTransfer in="n" result="nc"><feFuncA type="linear" slope="1.7" intercept="-0.4"/></feComponentTransfer>'+
-      '<feComposite in="SourceGraphic" in2="nc" operator="in" result="t"/>'+
-      '<feGaussianBlur in="t" stdDeviation="0.8"/></filter>'+
-      '<filter id="'+g+'h" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.6"/></filter>'+
-      '</defs>'+
-      '<g class="sun-core">'+
-      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)"/>'+
-      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)" filter="url(#'+g+'f)"/>'+
-      '<circle cx="60" cy="57" r="7" fill="#ffd9a0" opacity="0.55" filter="url(#'+g+'h)"/>'+
-      '</g>';
-  } else if(style === 'cyber'){
-    /* 赛博：绿霓虹球体 + 扫描线 + 低噪表面 */
-    s = '<defs>'+
-      '<radialGradient id="'+g+'b" cx="40%" cy="36%" r="80%">'+
-      '<stop offset="0%" stop-color="#eafff4"/><stop offset="30%" stop-color="#7dffc4"/>'+
-      '<stop offset="65%" stop-color="#00c96e"/><stop offset="100%" stop-color="#00522e"/></radialGradient>'+
-      '<filter id="'+g+'f" x="-12%" y="-12%" width="124%" height="124%">'+
-      '<feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="5" result="n">'+
-      '<animate attributeName="baseFrequency" dur="10s" values="0.02;0.028;0.02" repeatCount="indefinite"/></feTurbulence>'+
-      '<feComponentTransfer in="n" result="nc"><feFuncA type="linear" slope="0.9" intercept="-0.12"/></feComponentTransfer>'+
-      '<feComposite in="SourceGraphic" in2="nc" operator="in" result="t"/>'+
-      '<feGaussianBlur in="t" stdDeviation="0.7"/></filter>'+
-      '<pattern id="'+g+'p" width="4" height="4" patternUnits="userSpaceOnUse">'+
-      '<rect width="4" height="2" fill="#ffffff" opacity="0.07"/></pattern>'+
-      '<filter id="'+g+'h" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.4"/></filter>'+
-      '</defs>'+
-      '<g class="sun-core">'+
-      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)"/>'+
-      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)" filter="url(#'+g+'f)"/>'+
-      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'p)"/>'+
-      '<circle cx="60" cy="57" r="6.5" fill="#ffffff" opacity="0.6" filter="url(#'+g+'h)"/>'+
-      '</g>';
-  } else {
-    /* 等离子：真实太阳——橙黄球体 + 湍流表面缓慢沸腾 + 白高光 */
-    s = '<defs>'+
-      '<radialGradient id="'+g+'b" cx="38%" cy="34%" r="80%">'+
-      '<stop offset="0%" stop-color="#fff7d6"/><stop offset="22%" stop-color="#ffe873"/>'+
-      '<stop offset="50%" stop-color="#ffab3d"/><stop offset="76%" stop-color="#ff6a00"/>'+
-      '<stop offset="100%" stop-color="#b33a00"/></radialGradient>'+
-      '<filter id="'+g+'f" x="-12%" y="-12%" width="124%" height="124%">'+
-      '<feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="5" seed="7" result="n">'+
-      '<animate attributeName="baseFrequency" dur="20s" values="0.014;0.022;0.014" repeatCount="indefinite"/></feTurbulence>'+
-      '<feComponentTransfer in="n" result="nc"><feFuncA type="linear" slope="1.15" intercept="-0.1"/></feComponentTransfer>'+
-      '<feComposite in="SourceGraphic" in2="nc" operator="in" result="t"/>'+
-      '<feGaussianBlur in="t" stdDeviation="0.9"/></filter>'+
-      '<filter id="'+g+'h" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.8"/></filter>'+
-      '</defs>'+
-      '<g class="sun-core">'+
-      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)"/>'+
-      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)" filter="url(#'+g+'f)"/>'+
-      '<circle cx="60" cy="56" r="7.5" fill="#ffffff" opacity="0.5" filter="url(#'+g+'h)"/>'+
-      '</g>';
-  }
-  return s;
+  var f = SUN_GIFS[style] || SUN_GIFS.plasma;
+  /* 黑底 GIF + screen 混合 = 透明发光（规避透明 GIF 兼容坑）；g 包裹保留脉动动画 */
+  return '<g class="sun-core" style="mix-blend-mode:screen">'+
+    '<image href="ui/assets/'+f+'" x="37" y="37" width="66" height="66" preserveAspectRatio="xMidYMid meet"/>'+
+    '</g>';
 }
 function cycleSunStyle(){
   var list = ['plasma', 'lava', 'cyber'];
