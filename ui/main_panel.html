@@ -813,6 +813,9 @@ body::before{
 .sun-core{transform-origin:70px 70px; animation:sunPulse 3.2s ease-in-out infinite;}
 .sun-rays{transform-origin:70px 70px; animation:sunSpin 26s linear infinite;}
 .sun-ray{stroke:var(--accent); stroke-width:1.6; opacity:.45; stroke-linecap:round;}
+.sun-switch{margin-left:8px; padding:2px 7px; border-radius:6px; border:1px solid var(--line);
+  background:transparent; cursor:pointer; font-size:11px; line-height:1.2; transition:all .15s;}
+.sun-switch:hover{border-color:var(--accent); box-shadow:0 0 8px var(--glow);}
 @keyframes sunPulse{
   0%,100%{transform:scale(1); filter:drop-shadow(0 0 6px rgba(0,255,156,.5));}
   50%{transform:scale(1.07); filter:drop-shadow(0 0 16px rgba(0,255,156,.85));}
@@ -1305,6 +1308,7 @@ var MOCK = {
 
 /* ================= 全局状态 ================= */
 var state = {
+  sunStyle: 'plasma',   // 统计区太阳风格：plasma / lava / cyber
   page: 'dashboard',
   mode: 'mock',            // mock | real
   settings: deepCopy(MOCK.settings),
@@ -2063,6 +2067,87 @@ function fmtStatNum(n){
   if(Math.abs(n) >= 1000) return (n/1000).toFixed(1)+'K';
   return (Math.round(n*10)/10)+'';
 }
+/* ---- 3D 球体太阳（3 风格：plasma 等离子 / lava 熔岩 / cyber 赛博）---- */
+var sunGid = 0;
+function sunGroupHtml(style){
+  sunGid++;
+  var g = 's' + sunGid;
+  var s = '';
+  if(style === 'lava'){
+    /* 熔岩：暗红黑球体 + 高对比亮橙裂纹 */
+    s = '<defs>'+
+      '<radialGradient id="'+g+'b" cx="38%" cy="34%" r="80%">'+
+      '<stop offset="0%" stop-color="#ff9a3c"/><stop offset="42%" stop-color="#8a1c0e"/>'+
+      '<stop offset="76%" stop-color="#3a0a04"/><stop offset="100%" stop-color="#1a0300"/></radialGradient>'+
+      '<filter id="'+g+'f" x="-12%" y="-12%" width="124%" height="124%">'+
+      '<feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="5" seed="11" result="n">'+
+      '<animate attributeName="baseFrequency" dur="14s" values="0.032;0.05;0.032" repeatCount="indefinite"/></feTurbulence>'+
+      '<feComponentTransfer in="n" result="nc"><feFuncA type="linear" slope="1.7" intercept="-0.4"/></feComponentTransfer>'+
+      '<feComposite in="SourceGraphic" in2="nc" operator="in" result="t"/>'+
+      '<feGaussianBlur in="t" stdDeviation="0.8"/></filter>'+
+      '<filter id="'+g+'h" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.6"/></filter>'+
+      '</defs>'+
+      '<g class="sun-core">'+
+      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)"/>'+
+      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)" filter="url(#'+g+'f)"/>'+
+      '<circle cx="60" cy="57" r="7" fill="#ffd9a0" opacity="0.55" filter="url(#'+g+'h)"/>'+
+      '</g>';
+  } else if(style === 'cyber'){
+    /* 赛博：绿霓虹球体 + 扫描线 + 低噪表面 */
+    s = '<defs>'+
+      '<radialGradient id="'+g+'b" cx="40%" cy="36%" r="80%">'+
+      '<stop offset="0%" stop-color="#eafff4"/><stop offset="30%" stop-color="#7dffc4"/>'+
+      '<stop offset="65%" stop-color="#00c96e"/><stop offset="100%" stop-color="#00522e"/></radialGradient>'+
+      '<filter id="'+g+'f" x="-12%" y="-12%" width="124%" height="124%">'+
+      '<feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="5" result="n">'+
+      '<animate attributeName="baseFrequency" dur="10s" values="0.02;0.028;0.02" repeatCount="indefinite"/></feTurbulence>'+
+      '<feComponentTransfer in="n" result="nc"><feFuncA type="linear" slope="0.9" intercept="-0.12"/></feComponentTransfer>'+
+      '<feComposite in="SourceGraphic" in2="nc" operator="in" result="t"/>'+
+      '<feGaussianBlur in="t" stdDeviation="0.7"/></filter>'+
+      '<pattern id="'+g+'p" width="4" height="4" patternUnits="userSpaceOnUse">'+
+      '<rect width="4" height="2" fill="#ffffff" opacity="0.07"/></pattern>'+
+      '<filter id="'+g+'h" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.4"/></filter>'+
+      '</defs>'+
+      '<g class="sun-core">'+
+      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)"/>'+
+      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)" filter="url(#'+g+'f)"/>'+
+      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'p)"/>'+
+      '<circle cx="60" cy="57" r="6.5" fill="#ffffff" opacity="0.6" filter="url(#'+g+'h)"/>'+
+      '</g>';
+  } else {
+    /* 等离子：真实太阳——橙黄球体 + 湍流表面缓慢沸腾 + 白高光 */
+    s = '<defs>'+
+      '<radialGradient id="'+g+'b" cx="38%" cy="34%" r="80%">'+
+      '<stop offset="0%" stop-color="#fff7d6"/><stop offset="22%" stop-color="#ffe873"/>'+
+      '<stop offset="50%" stop-color="#ffab3d"/><stop offset="76%" stop-color="#ff6a00"/>'+
+      '<stop offset="100%" stop-color="#b33a00"/></radialGradient>'+
+      '<filter id="'+g+'f" x="-12%" y="-12%" width="124%" height="124%">'+
+      '<feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="5" seed="7" result="n">'+
+      '<animate attributeName="baseFrequency" dur="20s" values="0.014;0.022;0.014" repeatCount="indefinite"/></feTurbulence>'+
+      '<feComponentTransfer in="n" result="nc"><feFuncA type="linear" slope="1.15" intercept="-0.1"/></feComponentTransfer>'+
+      '<feComposite in="SourceGraphic" in2="nc" operator="in" result="t"/>'+
+      '<feGaussianBlur in="t" stdDeviation="0.9"/></filter>'+
+      '<filter id="'+g+'h" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.8"/></filter>'+
+      '</defs>'+
+      '<g class="sun-core">'+
+      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)"/>'+
+      '<circle cx="70" cy="70" r="26" fill="url(#'+g+'b)" filter="url(#'+g+'f)"/>'+
+      '<circle cx="60" cy="56" r="7.5" fill="#ffffff" opacity="0.5" filter="url(#'+g+'h)"/>'+
+      '</g>';
+  }
+  return s;
+}
+function cycleSunStyle(){
+  var list = ['plasma', 'lava', 'cyber'];
+  state.sunStyle = list[(list.indexOf(state.sunStyle) + 1) % list.length];
+  renderAll();
+}
+/* 太阳风格切换：事件委托（动态渲染按钮，与项目其他按钮同模式） */
+document.addEventListener('click', function(e){
+  if(e.target && e.target.classList && e.target.classList.contains('sun-switch')){
+    cycleSunStyle();
+  }
+});
 function statsSectionHtml(v, s){
   var dm = (s.diy && s.diy.modules) || {};
   var balMod = dm.balance || { chart:true };
@@ -2169,12 +2254,8 @@ function statsSectionHtml(v, s){
     pieRows.forEach(function(r){ var uv = unitVal(r.today, r.cur, r.meta); pieTotal += uv ? uv.v : 0; });
     var R = 50, C = 2 * Math.PI * R;
     var pieSvg = '<svg viewBox="0 0 140 140" style="width:150px;height:150px;display:block;margin:0 auto;">'+
-      /* 动态燃烧的太阳（2026-08-08）：径向渐变核心 + 旋转日冕光线 + 脉动动画 */
-      '<defs><radialGradient id="sunCore" cx="50%" cy="50%" r="50%">'+
-      '<stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>'+
-      '<stop offset="32%" stop-color="var(--accent)" stop-opacity="0.9"/>'+
-      '<stop offset="68%" stop-color="var(--accent2)" stop-opacity="0.5"/>'+
-      '<stop offset="100%" stop-color="var(--accent2)" stop-opacity="0"/></radialGradient></defs>';
+      /* 动态燃烧的太阳（3D 球体 3 风格，defs 在 sunGroupHtml 内生成） */
+      '';
     /* 日冕光线：8 条旋转的光线（慢速公转） */
     pieSvg += '<g class="sun-rays">';
     for(var ri = 0; ri < 8; ri++){
@@ -2198,8 +2279,8 @@ function statsSectionHtml(v, s){
         + ' stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 70 70)"><title>'+esc(r.name)+'</title></circle>';
       offset += dash;
     });
-    /* 太阳核心（脉动燃烧）——置于环形与光线之上 */
-    pieSvg += '<circle cx="70" cy="70" r="26" fill="url(#sunCore)" class="sun-core"/>';
+    /* 太阳核心（3D 球体，按当前风格）——置于环形与光线之上 */
+    pieSvg += sunGroupHtml(state.sunStyle || 'plasma');
     /* 中心：今日总消耗（深色大数值，在亮色太阳核心上对比清晰） */
     pieSvg += '<text x="70" y="60" text-anchor="middle" font-size="9.5" fill="#0a3d2a">'+I18N.t('今日消耗')+'</text>';
     pieSvg += '<text x="70" y="86" text-anchor="middle" font-size="17" font-weight="800" fill="#04261a" style="font-family:Consolas,monospace">'+fmtStatNum(pieTotal)+'</text>';
@@ -2210,7 +2291,10 @@ function statsSectionHtml(v, s){
       var pct = pieTotal > 0 ? Math.round(v / pieTotal * 100) : 0;
       return '<div class="lg-row"><i style="background:'+r.color+'"></i><span>'+esc(r.name)+'</span><b>'+esc(uv ? uv.label : '—')+'</b><em>'+pct+'%</em></div>';
     }).join('');
-    pieHtml = '<div class="stats-card"><h4>'+I18N.t('今日消耗占比')+'</h4><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;"><div>'+pieSvg+'</div><div style="flex:1;min-width:120px;">'+legend+'</div></div></div>';
+    pieHtml = '<div class="stats-card"><h4>'+I18N.t('今日消耗占比')+
+      '<button class="sun-switch" data-i18n-title="切换太阳风格" title="切换太阳风格">'+
+      (state.sunStyle === 'lava' ? '🌋' : state.sunStyle === 'cyber' ? '🛰️' : '☀️')+'</button>'+
+      '</h4><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;"><div>'+pieSvg+'</div><div style="flex:1;min-width:120px;">'+legend+'</div></div></div>';
   }
 
   /* ---- 汇总输出 ---- */
