@@ -26,6 +26,8 @@ window.I18N = (function () {
     '（还需 ': ' (need ',
     '）': ')',
     '已点亮全部 5 档！': 'All 5 tiers lit!',
+    '尚未点亮任何档位 · 继续燃烧！': 'No tier lit yet · keep burning!',
+    '解锁 ': 'UNLOCK ',
     'API 导入': 'API Import',
     ' 日': ' d',
     ' 时': ' h',
