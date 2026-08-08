@@ -750,8 +750,9 @@ input[type=range]:disabled{opacity:.4;}
 .mot-lad-passed.dim{color:var(--muted); opacity:.7;}
 .mot-lad-tier{display:flex; align-items:center; gap:6px; font-size:9.5px; color:var(--text);}
 .mot-lad-tier b{color:var(--accent); font-weight:700; flex:none;}
-.mot-lad-bar{flex:1; position:relative; height:6px; border-radius:99px; background:var(--bg-hi); overflow:hidden;}
-.mot-lad-bar i{position:absolute; top:0; height:100%; background:var(--accent); border-radius:99px; transition:width .4s;}
+.mot-lad-bar{flex:1; position:relative; height:6px; border-radius:99px; background:var(--border); overflow:hidden;}
+.mot-lad-bar::before{content:''; position:absolute; left:50%; top:-3px; width:2px; height:12px; background:var(--muted); opacity:.55; border-radius:1px; z-index:1;}
+.mot-lad-bar i{position:absolute; top:0; left:0; height:100%; background:var(--accent); border-radius:99px; transition:width .4s;}
 .mot-lad-pct{flex:none; font-size:9px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:26px; text-align:right;}
 .mot-lad-unlock{flex:none; font-size:9px; color:var(--warn); font-weight:700; animation:unlockPulse 1.6s ease-in-out infinite;}
 @keyframes unlockPulse{0%,100%{opacity:1;}50%{opacity:.55;}}
