@@ -763,6 +763,67 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 }
 /* 卡片 hover 光晕微增强：边框变亮同时带一层柔和辉光（克制） */
 .pcard:hover{box-shadow:var(--shadow-sm), 0 0 18px var(--glow);}
+/* ===== 动态氛围层（2026-08-08 UI 上强度）：赛博网格 / 扫描光带 / 流动光泽 / 火焰浮动 / hover 扫描 ===== */
+/* 赛博网格背景：细网格缓慢漂移（z-index -1 置于内容下方，不干扰阅读） */
+body::before{
+  content:''; position:fixed; inset:-80% -80%; z-index:-1; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,255,156,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,156,.045) 1px, transparent 1px);
+  background-size: 46px 46px;
+  animation: gridDrift 26s linear infinite;
+}
+@keyframes gridDrift{
+  from{transform:translate(0,0);}
+  to{transform:translate(46px,46px);}
+}
+/* 顶部扫描光带：HUD 式周期扫过（透明渐变，不挡交互） */
+body::after{
+  content:''; position:fixed; left:0; right:0; top:0; height:130px; z-index:900;
+  pointer-events:none;
+  background:linear-gradient(180deg, rgba(0,255,156,.06), transparent);
+  animation: scanSweep 10s ease-in-out infinite;
+}
+@keyframes scanSweep{
+  0%{transform:translateY(-150px); opacity:0;}
+  10%{opacity:1;}
+  85%{opacity:1;}
+  100%{transform:translateY(112vh); opacity:0;}
+}
+/* 进度条流动光泽：亮带从 fill 左端流到右端（视觉焦点 = 能量在流动） */
+.bar .fill::before{
+  content:''; position:absolute; top:0; bottom:0; left:-30%; width:24%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.38), transparent);
+  transform:skewX(-18deg);
+  animation: fillFlow 2.8s linear infinite;
+  pointer-events:none;
+}
+@keyframes fillFlow{
+  from{left:-30%;}
+  to{left:112%;}
+}
+/* 燃烧面板火焰浮动：有消耗的卡片 🔥 轻微上下浮动 + 橙色光晕 */
+.burn-fire{
+  display:inline-block;
+  animation: burnFloat 2.2s ease-in-out infinite;
+  filter:drop-shadow(0 0 5px rgba(255,140,0,.55));
+}
+@keyframes burnFloat{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-2px);}
+}
+/* 卡片 hover 扫描高光：一道斜光扫过（一次，克制） */
+.pcard{position:relative; overflow:hidden;}
+.pcard::after{
+  content:''; position:absolute; top:-10%; bottom:-10%; left:-70%; width:36%;
+  background:linear-gradient(105deg, transparent, rgba(255,255,255,.09), transparent);
+  transform:skewX(-20deg);
+  transition:left .55s ease;
+  pointer-events:none;
+}
+.pcard:hover::after{left:135%;}
+/* 成就解锁数字 pulse（成就页总览数字轻微呼吸） */
+.ach-ov-num{animation:healthPulse 3s ease-in-out infinite;}
 /* ---------- 成就页（2026-08-08） ---------- */
 .ach-loading{color:var(--muted);font-size:12px;padding:20px 4px;}
 .ach-overview{
@@ -1477,6 +1538,7 @@ async function manualRefresh(){
   btn.classList.add('spinning');
   try {
     await call('refresh_now');
+    call('ach_event', 'refresh').catch(function(){});   // 成就：手动刷新计数
     toast(I18N.t('已触发后端刷新'), 'ok');
   } catch(e){
     toast(I18N.t('刷新失败: ')+e.message, 'err');
@@ -1786,7 +1848,7 @@ function dashCardHtml(pid, cfg, pv){
     var td = pv.today;
     if(td.tokens > 0){
       burnHtml = '<div class="burn-panel">'+
-        '<div class="burn-main">🔥 '+I18N.t('今日燃烧 ')+'<b>'+fmtNum(td.tokens)+'</b>'+I18N.t(' token')+
+        '<div class="burn-main"><span class="burn-fire">🔥</span> '+I18N.t('今日燃烧 ')+'<b>'+fmtNum(td.tokens)+'</b>'+I18N.t(' token')+
         (td.kwh >= 0.01 ? '<span class="burn-mut">· ⚡ '+fmtNum(td.kwh)+I18N.t(' 度电')+'</span>' : '')+
         (td.books >= 0.5 ? '<span class="burn-mut">· 📚 ≈'+td.books+I18N.t(' 本书')+'</span>' : '')+
         '</div>'+
@@ -2648,6 +2710,7 @@ function apiEditRestHtml(pid, cfg, schema, tid, disabled){
 async function runTest(pid){
   try {
     await call('test_provider', pid);          // 立即返回，后端异步测试
+    call('ach_event', 'test').catch(function(){});   // 成就：测试连接计数
     state.testResults[pid] = { ok:null, message:I18N.t('测试中…') };
     renderAll();
     for(var i=0; i<20; i++){                  // 轮询结果（最长 10 秒）

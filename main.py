@@ -123,6 +123,15 @@ class _Api:
         # 主题/供应商变化后立即推送给迷你窗，让悬浮窗即时跟随
         if any(k in patch for k in ("theme", "providers")):
             self._app.pusher.push_once()
+        # 成就：外观/语言行为检测
+        try:
+            if any(k in patch for k in ("theme", "display", "density", "diy", "notify",
+                                        "mini_style", "opacity", "window", "currency", "order")):
+                self._app.kernel.ach_event("appearance")
+            if isinstance(patch.get("ui"), dict) and "lang" in patch["ui"]:
+                self._app.kernel.ach_event("lang")
+        except Exception:
+            pass
         return {"ok": True, "settings": settings}
 
     def remove_provider(self, pid):

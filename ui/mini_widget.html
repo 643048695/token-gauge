@@ -305,6 +305,32 @@ body.style-pet .pet-face{font-size:56px;}
 /* 键盘焦点（可访问性） */
 :focus-visible{outline:none; box-shadow:var(--focus-ring); border-radius:var(--radius-sm,6px);}
 /* 减少动效偏好：全部动画瞬间完成 */
+/* ===== 动态氛围层（2026-08-08 UI 上强度，与主面板同步）===== */
+/* 迷你窗 hud 背景微网格（极淡，不干扰文字；::before 已被顶部高光线占用，用 ::after） */
+.hud::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    linear-gradient(rgba(0,255,156,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,156,.04) 1px, transparent 1px);
+  background-size: 34px 34px;
+  animation: miniGridDrift 20s linear infinite;
+}
+@keyframes miniGridDrift{
+  from{transform:translate(0,0);}
+  to{transform:translate(34px,34px);}
+}
+/* 详情浮层进度条流动光泽 */
+.drow .mini i::after{
+  content:''; position:absolute; top:0; bottom:0; left:-30%; width:22%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  transform:skewX(-18deg);
+  animation: miniFillFlow 2.6s linear infinite;
+  pointer-events:none;
+}
+@keyframes miniFillFlow{
+  from{left:-30%;}
+  to{left:112%;}
+}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important;}
 }
@@ -667,29 +693,9 @@ async function pull() {
     }
   }
 
-  // 立即刷新
-  $('refresh').addEventListener('click', async (ev) => {
-    ev.stopPropagation();
-    const btn = $('refresh');
-    btn.classList.add('spin');
-    try {
-      await pywebview.api.refresh_now();
-      await pull();
-    } catch (e) {
-      setLive('dead');
-    }
-    setTimeout(() => btn.classList.remove('spin'), 600);
-  });
-
-  // 隐藏悬浮窗（×按钮）——修复：原绑定误置于全局 error 监听器内且 $/call 均未定义，永远不生效
-  const minHide = $('minHide');
-  if (minHide) minHide.addEventListener('click', function(){
-    if (window.pywebview && window.pywebview.api) {
-      window.pywebview.api.hide_mini().catch(function(){});
-    }
-  });
-
-  // 点击切换详情浮层（拖动不触发，三重保险）
+  // 立即刷新 + 隐藏悬浮窗：统一走 ensureBtnBindings（双保险：initInteractions 内 + DOMContentLoaded 后各绑一次，__bound 防重）
+    ensureBtnBindings();
+    // 点击切换详情浮层（拖动不触发，三重保险）
   let downX = 0, downY = 0, tracking = false, dragged = false;
   let startWinX = 0, startWinY = 0;
   $('hud').addEventListener('mousedown', (e) => {
@@ -778,10 +784,38 @@ async function pull() {
   };
   }  /* initInteractions 结束 */
 
+  /* 兜底按钮绑定（双保险）：即使 initInteractions 中途异常，刷新/隐藏按钮也保证可用。
+     使用 window.__mini.pull（initInteractions 完成后才存在，点击时必然已就绪）。 */
+  function ensureBtnBindings(){
+    const r = document.getElementById('refresh');
+    if (r && !r.__bound) {
+      r.__bound = true;
+      r.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        r.classList.add('spin');
+        try {
+          if (window.pywebview && window.pywebview.api) await window.pywebview.api.refresh_now();
+          if (window.__mini && window.__mini.pull) await window.__mini.pull();
+        } catch (e) { /* 无 API（演示）静默 */ }
+        setTimeout(() => r.classList.remove('spin'), 600);
+      });
+    }
+    const h = document.getElementById('minHide');
+    if (h && !h.__bound) {
+      h.__bound = true;
+      h.addEventListener('click', function(){
+        if (window.pywebview && window.pywebview.api) {
+          window.pywebview.api.hide_mini().catch(function(){});
+        }
+      });
+    }
+  }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function(){ try { initInteractions(); } catch(e) { window.__initErr = window.__initErr || ('init:' + e.message); } });
+    document.addEventListener('DOMContentLoaded', function(){ try { ensureBtnBindings(); } catch(e) {} });
   } else {
     try { initInteractions(); } catch(e) { window.__initErr = window.__initErr || ('init:' + e.message); }
+    try { ensureBtnBindings(); } catch(e) {}
   }
 
 </script>

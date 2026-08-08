@@ -116,7 +116,7 @@ class TestAchievements(unittest.TestCase):
             self.assertIn(n["id"], state["unlocked"])
         # 进度接口
         full = ach.get_achievements(settings, snaps)
-        self.assertEqual(full["total"], 23)
+        self.assertEqual(full["total"], 37)
         self.assertEqual(full["unlocked_count"], len(first))
 
     def test_progress_bars(self):
@@ -128,6 +128,52 @@ class TestAchievements(unittest.TestCase):
         self.assertFalse(burn_bil["unlocked"])
         self.assertGreater(burn_bil["progress"], 0)
         self.assertLess(burn_bil["progress"], burn_bil["target"])
+
+    def test_new_achievements(self):
+        """新增 14 个成就：白热化/一掷千金/今日之王/早鸟/十全十美/供应商控/手动大师/测试狂人/外观控/语言达人/第一滴血/试金石/半年/周年。"""
+        # 时段与天数
+        settings = {"ui": {}, "providers": {}}
+        snaps = {"ocg": [_snap(30, i) for i in range(366)]}   # 366 天连续 → 半年/周年
+        ids = {n["id"] for n in ach.check_and_unlock(settings, snaps)}
+        self.assertIn("stick_180", ids)
+        self.assertIn("stick_365", ids)
+        self.assertIn("spend_100", ids)   # 366 天×30% ≈ $216 ≥ $100（跨月累计正确）
+        # 早鸟
+        snaps2 = {"ocg": [_snap(5, 2, hour=7)]}
+        ids2 = {n["id"] for n in ach.check_and_unlock(settings, snaps2)}
+        self.assertIn("stick_early", ids2)
+        # 配置类：10 供应商 + 3 API
+        provs = {}
+        for i in range(10):
+            provs[f"p{i}"] = {"enabled": True, "type": "deepseek",
+                              "config": {"api_key": f"sk-{i}"}}
+        settings3 = {"ui": {"onboarded": True}, "providers": provs}
+        ids3 = {n["id"] for n in ach.check_and_unlock(settings3, {})}
+        self.assertIn("setup_10", ids3)
+        self.assertIn("setup_apix3", ids3)
+        self.assertNotIn("setup_dual", ids3)   # 无 cookie 型
+        # 行为类：刷新/测试/外观/语言
+        for _ in range(10):
+            ach.record_flag("refresh")
+        ach.record_flag("test")
+        ach.record_flag("appearance")
+        ach.record_flag("lang")
+        ids4 = {n["id"] for n in ach.check_and_unlock(settings, {})}
+        self.assertIn("action_refresh1", ids4)
+        self.assertIn("explore_refresh", ids4)
+        self.assertIn("action_test1", ids4)
+        self.assertIn("explore_theme", ids4)
+        self.assertIn("explore_lang", ids4)
+        self.assertNotIn("explore_test", ids4)   # 只测了 1 次 < 10
+        # 今日之王：单日增量 5% → 150 万 token ≥ 100 万
+        snaps5 = {"ocg": [_snap(50, 2), _snap(55, 1), _snap(56, 0)]}
+        ids5 = {n["id"] for n in ach.check_and_unlock(settings, snaps5)}
+        self.assertIn("burn_day_mil", ids5)
+        self.assertNotIn("burn_99pct", ids5)     # 56% < 99%
+        # 白热化：单月 100%（spend_100 已由 366 天阶段解锁，这里只验白热化）
+        snaps6 = {"ocg": [_snap(100, 40), _snap(100, 2)]}
+        ids6 = {n["id"] for n in ach.check_and_unlock(settings, snaps6)}
+        self.assertIn("burn_99pct", ids6)
 
 
 if __name__ == "__main__":
