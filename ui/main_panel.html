@@ -789,28 +789,27 @@ input[type=range]:disabled{opacity:.4;}
   *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important;}
 }
 
-/* ===== 顶部 Token 燃烧 Ticker（2026-08-08 方案H） ===== */
+/* ===== 顶部 Token 燃烧 Ticker（2026-08-08 方案H；v2 精简+全主题变量，paper 浅色主题可用） ===== */
 .ticker-bar{
-  position:relative; height:50px; display:flex; align-items:center; gap:14px;
-  padding:0 16px; overflow:hidden;
-  background:linear-gradient(180deg, rgba(0,255,156,.05), rgba(0,0,0,0.14));
+  position:relative; height:46px; display:flex; align-items:center; gap:20px;
+  padding:0 18px; overflow:hidden;
+  background:var(--card);
   border-bottom:1px solid var(--border);
   font-family:var(--font-num);
 }
-.ticker-bar canvas{position:absolute; inset:0; pointer-events:none;}
-.tk-live{display:flex; align-items:center; gap:6px; font-size:9px; letter-spacing:2px; color:var(--accent); position:relative; z-index:1;}
-.tk-live .dot{width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--glow); animation:tkDot 1.2s ease-in-out infinite;}
-@keyframes tkDot{0%,100%{transform:scale(1); opacity:.75;}50%{transform:scale(1.5); opacity:1;}}
-.tk-num{font-size:26px; font-weight:800; color:var(--accent); text-shadow:0 0 14px var(--glow); font-variant-numeric:tabular-nums; letter-spacing:1px; position:relative; z-index:1; white-space:nowrap;}
+.ticker-bar::before{content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:linear-gradient(180deg, var(--accent), transparent); opacity:.55;}
+.tk-num{font-size:25px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums;
+  letter-spacing:1px; position:relative; z-index:1; white-space:nowrap;}
 .tk-cell{display:flex; flex-direction:column; gap:2px; position:relative; z-index:1;}
-.tk-cell .k{font-size:9.5px; color:var(--muted); letter-spacing:1.5px; font-weight:600;}
-.tk-cell .v{font-size:12.5px; color:#eafff6; font-variant-numeric:tabular-nums; text-shadow:0 0 6px rgba(0,255,156,.25); font-weight:700;}
+.tk-cell .k{font-size:9px; color:var(--muted); letter-spacing:1.5px; font-weight:600;}
+.tk-cell .v{font-size:13px; color:var(--text); font-variant-numeric:tabular-nums; font-weight:700;}
 .tk-cell .v b{color:var(--accent);}
-.tk-sep{width:1px; align-self:stretch; background:var(--border); position:relative; z-index:1;}
-.tk-right{margin-left:auto; display:flex; gap:14px; position:relative; z-index:1;}
-/* 状态标签（非按钮：去掉边框/胶囊感，纯文字；hover 提示说明） */
-.tk-flag{font-size:10px; letter-spacing:2px; color:var(--warn); position:relative; z-index:1; text-shadow:0 0 8px rgba(255,196,0,.4); white-space:nowrap; cursor:help; opacity:.95;}
-.tk-flag.ok{color:var(--accent); text-shadow:0 0 8px var(--glow);}
+.tk-right{margin-left:auto; display:flex; gap:16px; align-items:center; position:relative; z-index:1;}
+/* 状态标签（非按钮：纯文字；hover 提示说明） */
+.tk-flag{font-size:10px; letter-spacing:2px; color:var(--warn); position:relative; z-index:1;
+  white-space:nowrap; cursor:help; opacity:.95;}
+.tk-flag.ok{color:var(--accent);}
 /* 数字等宽（对齐整齐） */
 .meta-v,.bal-amount,.te-row b,.lg-row b,.pct,.spark-val,.sb-val,.dstat b,.stat-v{font-variant-numeric:tabular-nums;}
 /* 卡片微反馈（hover 抬升 + 阴影，克制） */
@@ -1050,16 +1049,12 @@ body::before{
   </button>
 </header>
 
-<!-- 顶部 Token 燃烧 Ticker（2026-08-08 方案H：数字滚动+能量化类比；尊重 reduced-motion） -->
+<!-- 顶部 Token 燃烧 Ticker（方案H v2：精简 + 全主题适配；尊重 reduced-motion） -->
 <div class="ticker-bar" id="tickerBar" hidden>
-  <span class="tk-live"><span class="dot"></span>LIVE</span>
   <span class="tk-num" id="tkNum">—</span>
   <span class="tk-cell"><span class="k" data-i18n="今日已烧">今日已烧</span><span class="v" id="tkToday">—</span></span>
   <span class="tk-cell"><span class="k" data-i18n="昨日">昨日</span><span class="v" id="tkYest">—</span></span>
-  <div class="tk-sep"></div>
   <span class="tk-cell"><span class="k" data-i18n="均速">均速</span><span class="v" id="tkSpeed">—</span></span>
-  <span class="tk-cell"><span class="k" data-i18n="≈ 度电">≈ 度电</span><span class="v" id="tkKwh">—</span></span>
-  <span class="tk-cell"><span class="k" data-i18n="≈ 书本">≈ 书本</span><span class="v" id="tkBooks">—</span></span>
   <div class="tk-right">
     <span class="tk-flag ok" id="tkFlag2" title="当前消耗状态标签：引擎全开 / 正常巡航 / 待机 / 停烧"></span>
   </div>
@@ -2322,8 +2317,9 @@ function tkRender(){
   var raw = Math.round(shown).toLocaleString('en-US');
   var num = $('#tkNum');
   if(num.textContent !== raw){ num.textContent = raw; }
-  $('#tkKwh').textContent = (shown / 1e6).toFixed(1);
-  $('#tkBooks').textContent = (shown / 185000).toFixed(1);
+  var kwh = $('#tkKwh'), books = $('#tkBooks');
+  if(kwh) kwh.textContent = (shown / 1e6).toFixed(1);
+  if(books) books.textContent = (shown / 185000).toFixed(1);
   var sp = tkState.speed;
   $('#tkSpeed').innerHTML = sp.toFixed(1) + ' <b>token/s</b>';
   var flag = $('#tkFlag2');
@@ -2387,7 +2383,7 @@ function statsSectionHtml(v, s){
   }
   var mx = Math.max.apply(null, total.concat([0.01]));
   var bw = 54, bh = 150, wBar = DAYS*bw + 44, topBar = 14;
-  var bar = '<svg class="stats-bar" viewBox="0 0 '+wBar+' '+(bh+26)+'" xmlns="http://www.w3.org/2000/svg">';
+  var bar = '<svg class="stats-bar" viewBox="0 0 '+wBar+' '+(bh+34)+'" xmlns="http://www.w3.org/2000/svg">';
   for(var g=0; g<4; g++){
     var gy = topBar + (bh - 10) * g / 3;
     bar += '<line class="sb-grid" x1="30" y1="'+gy+'" x2="'+(wBar-10)+'" y2="'+gy+'"/>';
@@ -2400,7 +2396,7 @@ function statsSectionHtml(v, s){
       /* 今日柱背景光（能量汇聚感） */
       bar += '<rect x="'+(32 + d2*bw - 6)+'" y="'+topBar+'" width="'+(bw - 8)+'" height="'+(bh - 10)+'" fill="var(--accent)" opacity="0.05" rx="8"/>';
     }
-    bar += '<text class="sb-day'+(isTodayD?' today':'')+'" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+18)+'" font-size="9" text-anchor="middle">'+lbl+'</text>';
+    bar += '<text class="sb-day'+(isTodayD?' today':'')+'" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+24)+'" font-size="9" text-anchor="middle">'+lbl+'</text>';
     var cum = 0;
     var x = 32 + d2*bw;
     var _bs = themeBarStyle();

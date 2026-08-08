@@ -239,23 +239,29 @@ class Kernel:
         today0 = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         yest0 = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         pct_snaps = [s for s in snaps if (s.get("monthly_pct") or 0) > 0]
-        if pct_snaps:
-            before = [s for s in pct_snaps if (s.get("ts") or 0) < today0]
-            today = [s for s in pct_snaps if (s.get("ts") or 0) >= today0]
+        # 优先 rolling（5h 滚动）口径：粒度细，凌晨/当天刚用就能感知；monthly 兜底
+        r_snaps = [s for s in snaps if s.get("rolling_pct") is not None]
+        use_rolling = bool(r_snaps)
+        seq = r_snaps if use_rolling else pct_snaps
+        if seq:
+            before = [s for s in seq if (s.get("ts") or 0) < today0]
+            today = [s for s in seq if (s.get("ts") or 0) >= today0]
             # 昨日增量（昨日 0 点前最后一条 → 昨日最后一条），key 带 yesterday_ 前缀避免冲突
-            yest = [s for s in pct_snaps if yest0 <= (s.get("ts") or 0) < today0]
-            y_before = [s for s in pct_snaps if (s.get("ts") or 0) < yest0]
+            yest = [s for s in seq if yest0 <= (s.get("ts") or 0) < today0]
+            y_before = [s for s in seq if (s.get("ts") or 0) < yest0]
             yesterday = {"yesterday_tokens": 0, "yesterday_usd": 0.0, "yesterday_kwh": 0.0, "yesterday_books": 0.0}
             if yest:
-                y_start = y_before[-1]["monthly_pct"] if y_before else yest[0]["monthly_pct"]
-                y_delta = max(0.0, float(yest[-1]["monthly_pct"]) - float(y_start))
+                y_start = y_before[-1]["rolling_pct"] if (use_rolling and y_before) else (y_before[-1]["monthly_pct"] if y_before else (yest[0]["rolling_pct"] if use_rolling else yest[0]["monthly_pct"]))
+                y_key = "rolling_pct" if use_rolling else "monthly_pct"
+                y_delta = max(0.0, float(yest[-1][y_key]) - float(y_start))
                 y_tokens = int(y_delta / 100.0 * MONTHLY_LIMIT_USD / DEFAULT_PRICE * 1_000_000)
                 yp = self._burn_pack(y_tokens, round(y_delta / 100.0 * MONTHLY_LIMIT_USD, 2))
                 yesterday = {"yesterday_" + k: v for k, v in yp.items() if k in ("tokens", "usd", "kwh", "books")}
             if not today:
                 return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0, "delta_pct": 0.0, **yesterday}
-            pct_start = before[-1]["monthly_pct"] if before else today[0]["monthly_pct"]
-            pct_end = today[-1]["monthly_pct"]
+            key = "rolling_pct" if use_rolling else "monthly_pct"
+            pct_start = before[-1][key] if before else today[0][key]
+            pct_end = today[-1][key]
             delta = max(0.0, float(pct_end) - float(pct_start))
             tokens = int(delta / 100.0 * MONTHLY_LIMIT_USD / DEFAULT_PRICE * 1_000_000)
             usd = round(delta / 100.0 * MONTHLY_LIMIT_USD, 2)
