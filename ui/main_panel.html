@@ -992,14 +992,9 @@ body::before{
 .ach-toast-icon{font-size:24px;flex:none;}
 .ach-toast-title{font-size:10.5px;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px;}
 .ach-toast-name{font-size:13px;font-weight:700;color:var(--text);}
-/* 成就解锁爆发（2026-08-08 方案C：图标弹跳 + 光环扩散，尊重 reduced-motion） */
+/* 成就解锁爆发（2026-08-08 方案C：图标弹跳；光环已删——浅色主题下深色圆环观感"大黑圈"） */
 .ach-toast.show .ach-toast-icon{animation:achPop .5s cubic-bezier(.2,1.6,.4,1);}
 @keyframes achPop{0%{transform:scale(0);}60%{transform:scale(1.4);}100%{transform:scale(1);}}
-.ach-toast.show::before{
-  content:''; position:absolute; left:14px; top:50%; width:34px; height:34px; border-radius:50%;
-  border:2px solid var(--accent); transform:translateY(-50%); animation:achRing .6s ease-out forwards; opacity:0;
-}
-@keyframes achRing{0%{transform:translateY(-50%) scale(.3); opacity:.9;}100%{transform:translateY(-50%) scale(2.8); opacity:0;}}
 
 /* ===== 正在消耗的供应商卡片（2026-08-08 方案B：呼吸辉光+顶部光带+活跃点+数字呼吸） ===== */
 .pcard.active{border-color:rgba(0,255,156,.45); animation:cardBreath 2.2s ease-in-out infinite;}
