@@ -193,10 +193,15 @@ class OpenCodeGoProvider(Provider):
 
         # ---- 落快照 + 推算 meta ----
         if record:
-            store.append(self.id, result)
+            store.append(self._snap_id(), result)
         current_pct = items["monthly"]["usage_percent"]
         result["meta"] = self._build_meta(current_pct, now)
         return result
+
+    def _snap_id(self) -> str:
+        """快照文件标识：优先用实例 pid（kernel 注入，多实例隔离），
+        未注入时退回类 id（单实例兼容，行为与旧版一致）。"""
+        return getattr(self, "pid", None) or self.id
 
     def _fail(self, error: str, cookie_valid: bool, now: int) -> dict:
         """构造失败结果：结构完整（INTERFACES.md §2 要求 ok:false 仍带全字段）。"""
@@ -216,7 +221,7 @@ class OpenCodeGoProvider(Provider):
 
     def _build_meta(self, current_pct: int, now: int) -> dict:
         """今日用量 + 三层速度推算 + 月度金额 + token 估算。"""
-        snaps = store.snapshots(self.id, hours=720)  # 30 天快照
+        snaps = store.snapshots(self._snap_id(), hours=720)  # 30 天快照
         used_usd = round(current_pct / 100.0 * MONTHLY_LIMIT_USD, 2)
         # token 估算：按常用模型输出费率（默认 DeepSeek V4 Flash）
         est_model = str((self.config or {}).get("est_model") or "deepseek-v4-flash")

@@ -242,9 +242,13 @@ class ApiProvider(Provider):
 
         remaining = extracted.get("remaining")
         if remaining is None:
-            return self._fail(
-                f"未从响应提取到 remaining（模板 {tmpl.get('name', template)} "
-                f"可能待校准或接口结构变化）。响应：{_preview(data)}")
+            # 无限额度（如 OpenRouter 套餐 limit_remaining/limit 为 null）：按 0 显示
+            if tmpl.get("infinite"):
+                remaining = 0.0
+            else:
+                return self._fail(
+                    f"未从响应提取到 remaining（模板 {tmpl.get('name', template)} "
+                    f"可能待校准或接口结构变化）。响应：{_preview(data)}")
 
         used = extracted.get("used")
         limit = extracted.get("limit")
@@ -306,6 +310,11 @@ class ApiProvider(Provider):
 
     # ------------------------------------------------------------ 余额消耗推算
 
+    def _snap_id(self) -> str:
+        """快照文件标识：优先用实例 pid（kernel 注入，多实例隔离），
+        未注入时退回模板/类 id（单实例兼容，行为与旧版一致）。"""
+        return getattr(self, "pid", None) or self.id
+
     def _finalize(self, result: dict, record: bool) -> None:
         """成功后：落快照（余额型/中转站型），并给 meta 附消耗速度/还能撑。"""
         bal = result.get("balance") or {}
@@ -313,7 +322,7 @@ class ApiProvider(Provider):
         if not isinstance(amount, (int, float)):
             return
         if record:
-            store.append(self.id, result)
+            store.append(self._snap_id(), result)
         try:
             result["meta"]["speed"] = self._speed_meta(float(amount), int(time.time()))
         except Exception as _e: log.debug(f"api_provider.py 异常: {_e}")
@@ -321,7 +330,7 @@ class ApiProvider(Provider):
     def _speed_meta(self, balance: float, now: int) -> dict:
         """余额消耗速度：按日取当日最小余额，相邻日差值（消耗为正）取日均，
         再算还能撑天数。充值跳升自动跳过；样本不足返回 data_ready:false。"""
-        snaps = store.snapshots(self.id, hours=720)
+        snaps = store.snapshots(self._snap_id(), hours=720)
         day_min = {}
         for s in snaps:
             b = s.get("balance")
@@ -609,7 +618,7 @@ class ApiProvider(Provider):
         remaining = _to_number(_resolve_path(obj, hit["remaining"]))
         if remaining is None:
             return self._fail(f"探测命中 {path} 但剩余量字段无法解析，"
-                              f"响应：{_preview(data)}")
+                              f"响应：{_preview(obj)}")
         used = _to_number(_resolve_path(obj, hit["used"])) if hit.get("used") else None
         limit = _to_number(_resolve_path(obj, hit["limit"])) if hit.get("limit") else None
         if limit is None and used is not None:

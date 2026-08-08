@@ -689,61 +689,6 @@ class DashboardApp:
         except Exception as e:
             log.warning(f"_mini_toolwindow 异常: {e}")
 
-    def _apply_mini_style_size(self, style):
-        """按形态调整迷你窗：ball/pet 小窗 + 圆形窗口区域（SetWindowRgn），classic 恢复方形。"""
-        try:
-            win = self.cfg.get("window", {}) or {}
-            round_ = style in ("ball", "pet")
-            if round_:
-                w, h = 148, 150
-            else:
-                w = int(win.get("mini_width", 300))
-                h = int(win.get("mini_height", 170))
-            hwnd = self._window_hwnd(self.mini_window)
-            if not hwnd:
-                return
-            import ctypes
-            u32 = ctypes.windll.user32
-            # 只改尺寸、不动位置（SWP_NOMOVE | SWP_NOZORDER）——防漂移到左上角
-            u32.SetWindowPos(hwnd, 0, 0, 0, w, h, 0x0004 | 0x0010)
-            # 圆形窗口区域：球/宠物形态窗口外形为椭圆（点击/区域都在圆内）
-            if round_:
-                rgn = u32.CreateEllipticRgn(0, 0, w, h)
-            else:
-                rgn = u32.CreateRectRgn(0, 0, w, h)
-            if rgn:
-                u32.SetWindowRgn(hwnd, rgn, True)
-            # resize 后重新定位到角落（防位置漂移）
-            try:
-                self._move_mini_to_corner(self.cfg)
-            except Exception:
-                pass
-            log.debug(f"mini_style={style} 窗口 {w}x{h} 圆形={round_}")
-        except Exception as e:
-            log.warning(f"_apply_mini_style_size 异常: {e}")
-
-    def _mini_color_key(self, *_a, **_k):
-        """迷你窗真透明：WS_EX_NOREDIRECTIONBITMAP（Win10 1809+）。
-
-        pywebview 6.2.1 的 transparent 只设 WebView2 DefaultBackgroundColor，
-        Win11 下窗口层仍显示主题色（GitHub #1611）。NOREDIRECTIONBITMAP 让
-        DirectComposition 内容（WebView2）直接合成到 DWM，配合页面透明区域
-        即实现真正的透明窗口（color-key 对 WebView2 无效，已弃用）。
-        """
-        try:
-            hwnd = self._window_hwnd(self.mini_window)
-            if not hwnd:
-                return
-            import ctypes
-            u32 = ctypes.windll.user32
-            GWL_EXSTYLE = -20
-            WS_EX_NOREDIRECTIONBITMAP = 0x00200000
-            style = u32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            u32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_NOREDIRECTIONBITMAP)
-            log.debug("mini NOREDIRECTIONBITMAP 透明已启用")
-        except Exception as e:
-            log.warning(f"_mini_color_key 异常: {e}")
-
     def _on_mini_loaded(self, settings):
         """迷你窗 loaded 时（窗口线程）记录 hwnd 并定位到角落。"""
         try:

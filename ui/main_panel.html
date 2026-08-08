@@ -2168,6 +2168,11 @@ async function saveAddProvider(){
   var typeObj = (providerTypesCache || []).find(function(t){ return t.id === typeId; });
   var isApi = !!(typeObj && (typeObj.schema || []).some(function(f){ return f.key === 'api_key'; }));
   var key = isApi ? ($('#apKey').value.trim() || typeId) : typeId;
+  /* 防呆：标识被误贴成 API Key / Cookie 时阻止提交（否则密钥明文出现在 config 键名） */
+  if(isApi && /^(sk-|Fe26\.|eyJ)/i.test(key)){
+    toast(I18N.t('「标识」看起来是 API Key/Cookie——请填英文短名（如 deepseek-main），密钥填在下方 API Key 框'), 'warn');
+    return;
+  }
   var providers = deepCopy(state.settings.providers || {});
   if(providers[key]){
     toast(I18N.t('该标识的供应商已存在，可直接在下方列表编辑'), 'warn');

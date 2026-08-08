@@ -182,6 +182,7 @@ TEMPLATES = {
         "site": "https://openrouter.ai",
         "name": "OpenRouter",
         "kind": "relay",
+        "infinite": True,   # 套餐可能无额度上限（limit_remaining/limit 为 null），按 0 显示
         "url": "https://openrouter.ai/api/v1/key",
         "method": "GET",
         "auth": "bearer",

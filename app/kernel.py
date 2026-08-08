@@ -93,6 +93,11 @@ class Kernel:
                 continue
             try:
                 inst = cls(pcfg.get("config", {}) or {})
+                # 注入实例 pid：快照落盘/读取按实例隔离（多实例同模板不串数据）
+                try:
+                    inst.pid = pid
+                except Exception:
+                    pass
             except Exception as exc:  # noqa: BLE001
                 msg = f"provider 初始化失败：{type(exc).__name__}: {exc}"
                 self._provider_errors[pid] = msg

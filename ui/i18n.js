@@ -87,6 +87,7 @@ window.I18N = (function () {
     '已添加供应商：': 'Provider added: ',
     '已删除 ': 'Deleted ',
     '该标识的供应商已存在，可直接在下方列表编辑': 'Provider ID exists, edit it in the list below',
+    '「标识」看起来是 API Key/Cookie——请填英文短名（如 deepseek-main），密钥填在下方 API Key 框': 'That ID looks like an API key/cookie — use a short English name (e.g. deepseek-main); put the secret in the API Key field below',
     '请选择供应商类型': 'Select a provider type',
     '工作区 ID': 'Workspace ID',
     '认证 Cookie': 'Auth Cookie',

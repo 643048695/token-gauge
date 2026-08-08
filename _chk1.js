@@ -1,1 +1,0 @@
-window.addEventListener("error",function(e){document.title="ERRCATCH:"+(e.message||e.error||"unknown");});
