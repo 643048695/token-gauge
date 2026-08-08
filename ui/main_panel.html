@@ -745,6 +745,15 @@ input[type=range]:disabled{opacity:.4;}
 .mot-bench-l{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center;}
 .mot-bench-t{font-size:10px; color:var(--muted); letter-spacing:.5px;}
 .mot-bench-t b{color:var(--text); font-variant-numeric:tabular-nums;}
+/* 基准 5 级阶梯行（2026-08-09：入门/活跃/中位数/月度满额/前10%） */
+.mot-bt-row{display:flex; align-items:center; gap:6px; height:17px; font-size:9px; color:var(--muted);}
+.mot-bt-ic{width:14px; text-align:center; font-size:10px; flex:none;}
+.mot-bt-name{width:36px; flex:none; font-size:8.5px; letter-spacing:.3px; overflow:hidden; white-space:nowrap;}
+.mot-bt-bar{flex:1; height:4px; background:var(--bg-hi); border-radius:99px; overflow:hidden;}
+.mot-bt-bar i{display:block; height:100%; background:var(--border); border-radius:99px; transition:width .4s;}
+.mot-bt-row.done .mot-bt-bar i{background:var(--accent);}
+.mot-bt-st{width:34px; text-align:right; font-size:8.5px; font-variant-numeric:tabular-nums; flex:none;}
+.mot-bt-row.done .mot-bt-st{color:var(--accent); font-weight:700;}
 .mot-src{font-size:8.5px; color:var(--muted); opacity:.7;}
 .mot-bar{height:5px; border-radius:3px; background:rgba(255,255,255,0.06); margin-top:5px; overflow:hidden;}
 .mot-fill{
@@ -2359,10 +2368,28 @@ function motivateCardHtml(m, todayKwh){
     '</div>'+
     '<div class="mot-bench">'+
       '<div class="mot-bench-l">'+
-        '<div class="mot-bench-t">⚡ '+I18N.t('行业基准：普通开发者月烧 ')+'<b>'+fmt(m.median_tokens)+'</b> token'+
-        (m.benchmark_note ? ' <span class="mot-src">('+esc(m.benchmark_note)+')</span>' : '')+'</div>'+
-        '<div class="mot-bar"><div class="mot-fill" style="width:'+pct+'%"></div></div>'+
-        '<div class="mot-tip">'+I18N.t('已达成中位数 ')+pct+'%'+(left > 0 ? I18N.t(' · 再烧 ')+fmt(left)+I18N.t(' token 即可追平普通开发者') : I18N.t(' · 已超过普通开发者！'))+'</div>'+
+        /* 基准 5 级阶梯（2026-08-09 用户方案：从低到高，照顾轻度玩家——低档目标低，轻度用户也有达成感）
+           Lv1 入门 500万 / Lv2 活跃 2500万 / Lv3 中位数(Jellyfish) / Lv4 月度满额($60) / Lv5 P90 */
+        (function(){
+          var goals = [
+            { icon: '🌱', name: I18N.t('入门'),   goal: 5000000 },
+            { icon: '🔥', name: I18N.t('活跃'),   goal: 25000000 },
+            { icon: '🏅', name: I18N.t('中位数'), goal: m.median_tokens || 51000000 },
+            { icon: '💯', name: I18N.t('月度满额'), goal: Math.round(m.month_tokens / Math.max(1, m.month_pct) * 100) },
+            { icon: '🚀', name: I18N.t('前 10%'),  goal: m.p90_tokens || 380000000 },
+          ];
+          return goals.map(function(t){
+            var tp = Math.min(100, Math.round(m.month_tokens / (t.goal || 1) * 100));
+            var done = m.month_tokens >= t.goal;
+            var leftV = Math.max(0, t.goal - m.month_tokens);
+            return '<div class="mot-bt-row'+(done?' done':'')+'" title="'+esc(t.name+'：'+fmt(t.goal)+' token/月')+'">'+
+              '<span class="mot-bt-ic">'+t.icon+'</span>'+
+              '<span class="mot-bt-name">'+esc(t.name)+'</span>'+
+              '<span class="mot-bt-bar"><i style="width:'+tp+'%"></i></span>'+
+              '<span class="mot-bt-st">'+(done ? '✓' : fmt(leftV))+'</span>'+
+            '</div>';
+          }).join('');
+        })()+
       '</div>'+
       motTierHtml(todayKwh)+
     '</div>'+
