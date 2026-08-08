@@ -781,6 +781,28 @@ input[type=range]:disabled{opacity:.4;}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important;}
 }
+
+/* ===== 顶部 Token 燃烧 Ticker（2026-08-08 方案H） ===== */
+.ticker-bar{
+  position:relative; height:50px; display:flex; align-items:center; gap:14px;
+  padding:0 16px; overflow:hidden;
+  background:linear-gradient(180deg, rgba(0,255,156,.05), rgba(0,0,0,0.14));
+  border-bottom:1px solid var(--border);
+  font-family:Consolas,"JetBrains Mono",monospace;
+}
+.ticker-bar canvas{position:absolute; inset:0; pointer-events:none;}
+.tk-live{display:flex; align-items:center; gap:6px; font-size:9px; letter-spacing:2px; color:var(--accent); position:relative; z-index:1;}
+.tk-live .dot{width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--glow); animation:tkDot 1.2s ease-in-out infinite;}
+@keyframes tkDot{0%,100%{transform:scale(1); opacity:.75;}50%{transform:scale(1.5); opacity:1;}}
+.tk-num{font-size:24px; font-weight:800; color:var(--accent); text-shadow:0 0 14px var(--glow); font-variant-numeric:tabular-nums; letter-spacing:1px; position:relative; z-index:1; white-space:nowrap;}
+.tk-cell{display:flex; flex-direction:column; gap:1px; position:relative; z-index:1;}
+.tk-cell .k{font-size:8px; color:var(--muted); letter-spacing:1.5px;}
+.tk-cell .v{font-size:11px; color:var(--text); font-variant-numeric:tabular-nums;}
+.tk-cell .v b{color:var(--accent);}
+.tk-sep{width:1px; align-self:stretch; background:var(--border); position:relative; z-index:1;}
+.tk-right{margin-left:auto; display:flex; gap:14px; position:relative; z-index:1;}
+.tk-flag{font-size:9px; letter-spacing:2px; color:var(--warn); border:1px solid rgba(255,196,0,.35); border-radius:99px; padding:2px 9px; position:relative; z-index:1; text-shadow:0 0 8px rgba(255,196,0,.4); white-space:nowrap;}
+.tk-flag.ok{color:var(--accent); border-color:rgba(0,255,156,.3); text-shadow:0 0 8px var(--glow);}
 /* 数字等宽（对齐整齐） */
 .meta-v,.bal-amount,.te-row b,.lg-row b,.pct,.spark-val,.sb-val,.dstat b,.stat-v{font-variant-numeric:tabular-nums;}
 /* 卡片微反馈（hover 抬升 + 阴影，克制） */
@@ -980,6 +1002,21 @@ body::before{
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
   </button>
 </header>
+
+<!-- 顶部 Token 燃烧 Ticker（2026-08-08 方案H：数字滚动+能量粒子+能量化类比；尊重 reduced-motion） -->
+<div class="ticker-bar" id="tickerBar" hidden>
+  <canvas id="tkCanvas"></canvas>
+  <span class="tk-live"><span class="dot"></span>LIVE</span>
+  <span class="tk-num" id="tkNum">—</span>
+  <span class="tk-cell"><span class="k" data-i18n="今日已烧">今日已烧</span><span class="v" id="tkToday">—</span></span>
+  <div class="tk-sep"></div>
+  <span class="tk-cell"><span class="k" data-i18n="均速">均速</span><span class="v" id="tkSpeed">—</span></span>
+  <span class="tk-cell"><span class="k" data-i18n="≈ 度电">≈ 度电</span><span class="v" id="tkKwh">—</span></span>
+  <span class="tk-cell"><span class="k" data-i18n="≈ 书本">≈ 书本</span><span class="v" id="tkBooks">—</span></span>
+  <div class="tk-right">
+    <span class="tk-flag ok" id="tkFlag2"></span>
+  </div>
+</div>
 
 <main>
   <!-- 导航 -->
@@ -1581,6 +1618,7 @@ async function fetchView(){
     renderAll();
     updateHeader();
     loadAchievements(false);   /* 抓取循环可能解锁了 burn 类成就 → 差异 toast */
+    tkCalibrate(v);            /* Ticker 校准：今日 token + 均速 */
     lastViewOkAt = Date.now();
     /* 成功：清掉失败重试定时器 */
     if(viewRetryTimer){ clearInterval(viewRetryTimer); viewRetryTimer = null; }
@@ -2172,6 +2210,93 @@ function motivateCardHtml(m){
       '<div class="mot-tip">'+I18N.t('已达成中位数 ')+pct+'%'+(left > 0 ? I18N.t(' · 再烧 ')+fmt(left)+I18N.t(' token 即可追平普通开发者') : I18N.t(' · 已超过普通开发者！'))+'</div>'+
     '</div>'+
   '</div>';
+}
+
+/* ---- 顶部 Token 燃烧 Ticker（2026-08-08 方案H） ---- */
+var tkState = { base: 0, speed: 0, lastTick: 0, calibAt: 0, raf: 0, parts: [] };
+function tkReduceMotion(){
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function tkCalibrate(v){
+  /* 今日 token 汇总（quota 型有 today_tokens；balance 型跳过）+ 均速估算 */
+  var total = 0, day0 = new Date(); day0.setHours(0, 0, 0, 0);
+  var elapsed = Math.max(60, (Date.now() - day0.getTime()) / 1000);
+  var provs = (v && v.providers) || {};
+  Object.keys(provs).forEach(function(pid){
+    var p = provs[pid];
+    var tt = p && p.meta && p.meta.today && p.meta.today.today_tokens;
+    if(tt != null) total += Number(tt);
+  });
+  tkState.base = total;
+  tkState.speed = total / elapsed;      /* 今日平均 token/s */
+  tkState.calibAt = Date.now();
+  var bar = $('#tickerBar');
+  if(!bar) return;
+  if(total <= 0){ bar.hidden = true; return; }
+  bar.hidden = false;
+  $('#tkToday').textContent = fmtTokens(total);
+  tkRender();
+}
+function tkRender(){
+  var shown = tkState.base + tkState.speed * (Date.now() - tkState.calibAt) / 1000;
+  /* 大数字用千分位原始值（万位取整会吞掉滚动效果）；今日已烧列用 fmtTokens 概览 */
+  var raw = Math.round(shown).toLocaleString('en-US');
+  var num = $('#tkNum');
+  if(num.textContent !== raw){ num.textContent = raw; }
+  $('#tkKwh').textContent = (shown / 1e6).toFixed(1);
+  $('#tkBooks').textContent = (shown / 185000).toFixed(1);
+  var sp = tkState.speed;
+  $('#tkSpeed').innerHTML = sp.toFixed(1) + ' <b>token/s</b>';
+  var flag = $('#tkFlag2');
+  if(flag){
+    var t = sp > 15 ? I18N.t('引擎全开') : sp > 4 ? I18N.t('正常巡航') : sp > 0.3 ? I18N.t('待机') : I18N.t('停烧');
+    flag.textContent = t;
+    flag.className = 'tk-flag' + (sp > 0.3 ? ' ok' : '');
+  }
+}
+function tkStartParticles(){
+  var cv = $('#tkCanvas');
+  if(!cv || tkReduceMotion()) return;         /* reduced-motion：不启动粒子 */
+  var ctx = cv.getContext('2d');
+  if(!ctx) return;                            /* canvas 不可用（jsdom/异常环境）时跳过 */
+  function resize(){
+    var bar = $('#tickerBar');
+    cv.width = bar.clientWidth; cv.height = bar.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  var last = 0;
+  function loop(ts){
+    tkState.raf = requestAnimationFrame(loop);
+    var dt = Math.min(0.05, (ts - last) / 1000 || 0.016); last = ts;
+    var heat = Math.min(1, tkState.speed / 30);
+    var W = cv.width, H = cv.height;
+    var n = Math.round(heat * 10 * dt * 60);
+    for(var i = 0; i < n; i++){
+      tkState.parts.push({ x: Math.random() * W, y: H + 4,
+        vy: -(14 + Math.random() * 26 * heat), vx: (Math.random() - 0.5) * 12 * heat,
+        life: 1.4 + Math.random() * 1.2, size: 0.8 + Math.random() * 1.8, t: Math.random() });
+    }
+    ctx.clearRect(0, 0, W, H);
+    var parts = tkState.parts;
+    for(var j = parts.length - 1; j >= 0; j--){
+      var p = parts[j];
+      p.life -= dt; p.y += p.vy * dt; p.x += p.vx * dt;
+      if(p.life <= 0 || p.y < -6){ parts.splice(j, 1); continue; }
+      var al = Math.min(1, p.life / 0.5) * (0.18 + heat * 0.5);
+      ctx.fillStyle = p.t < 0.6
+        ? 'rgba(0,255,156,' + al.toFixed(2) + ')'
+        : 'rgba(0,201,255,' + (al * 0.8).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  tkState.raf = requestAnimationFrame(loop);
+}
+function tkTick(){
+  /* 数字滚动刷新（100ms；reduced-motion 只静态显示） */
+  if(tkReduceMotion()){ tkRender(); return; }
+  tkRender();
+  setTimeout(tkTick, 100);
 }
 
 function statsSectionHtml(v, s){
@@ -3394,6 +3519,9 @@ async function init(){
   updateCountdownUI();
   renderAll();
   I18N.apply();
+  /* Ticker：数字滚动 + 粒子启动（一次性；校准在 fetchView 成功时） */
+  tkTick();
+  tkStartParticles();
 
   /* 导航 */
   $$('#nav .nav-item').forEach(function(btn){
