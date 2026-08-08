@@ -745,19 +745,20 @@ input[type=range]:disabled{opacity:.4;}
 .mot-bench-l{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center;}
 .mot-bench-t{font-size:10px; color:var(--muted); letter-spacing:.5px;}
 .mot-bench-t b{color:var(--text); font-variant-numeric:tabular-nums;}
-/* 基准渐进解锁条（2026-08-09 v4：紧凑排版；条更大；填充全范围；流动光带） */
-.mot-lad-passed{font-size:9.5px; color:var(--accent); letter-spacing:.5px; margin-bottom:2px; display:block; line-height:1;}
-.mot-lad-passed i{font-style:normal; margin-right:1px;}
-.mot-lad-passed em{font-style:normal; color:var(--muted); margin-left:4px; font-size:9px;}
+/* 基准渐进解锁条（2026-08-09 v5：按 UI 标准校准——层级清晰、图标呼吸感、垂直对齐） */
+.mot-lad-passed{font-size:9.5px; color:var(--accent); letter-spacing:.5px; margin-bottom:4px; display:block; line-height:1.2;}
+.mot-lad-passed i{font-style:normal; font-size:10.5px; margin-right:2.5px; vertical-align:-1px;}
+.mot-lad-passed em{font-style:normal; color:var(--muted); margin-left:6px; font-size:9.5px;}
 .mot-lad-passed.dim{color:var(--muted); opacity:.7;}
-.mot-lad-tier{display:flex; align-items:center; gap:5px; font-size:10px; color:var(--text); line-height:1;}
-.mot-lad-tier b{color:var(--accent); font-weight:700; flex:none;}
+.mot-lad-tier{display:flex; align-items:center; gap:5px; font-size:10.5px; color:var(--text); line-height:1.2;}
+.mot-lad-tier .tier-ic{font-style:normal; font-size:12.5px; line-height:1; flex:none;}
+.mot-lad-tier b{color:var(--accent); font-weight:700; flex:none; font-size:10.5px; letter-spacing:.3px;}
 .mot-lad-bar{flex:1; position:relative; height:10px; border-radius:99px; background:var(--border); overflow:hidden;}
 .mot-lad-bar i{position:absolute; top:0; left:0; height:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); border-radius:99px; transition:width .4s; overflow:hidden;}
 .mot-lad-bar i::after{content:''; position:absolute; top:0; bottom:0; width:34px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); animation:ladShine 1.5s linear infinite;}
 @keyframes ladShine{0%{left:-40px;}100%{left:110%;}}
 @media (prefers-reduced-motion: reduce){.mot-lad-bar i::after{animation:none;}}
-.mot-lad-pct{flex:none; font-size:10px; color:var(--text); font-variant-numeric:tabular-nums; min-width:26px; text-align:right;}
+.mot-lad-pct{flex:none; font-size:10.5px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; min-width:32px; text-align:right;}
 .mot-lad-unlock{flex:none; font-size:9px; color:var(--warn); font-weight:700; animation:unlockPulse 1.6s ease-in-out infinite;}
 @keyframes unlockPulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 .mot-src{font-size:8.5px; color:var(--muted); opacity:.7;}
@@ -2398,7 +2399,7 @@ function motivateCardHtml(m, todayKwh){
             ? '<span class="mot-lad-passed">'+done.map(function(g){ return '<i>'+g.icon+'</i>'; }).join('')+'<em>'+I18N.t('已点亮 ')+doneCount+I18N.t(' 档')+'</em></span>'
             : '<span class="mot-lad-passed dim">'+I18N.t('尚未点亮任何档位 · 继续燃烧！')+'</span>';
           var tierRow = next
-            ? '<div class="mot-lad-tier">'+next.icon+'<b>'+esc(next.name)+'</b>'+
+            ? '<div class="mot-lad-tier"><i class="tier-ic">'+next.icon+'</i><b>'+esc(next.name)+'</b>'+
               '<span class="mot-lad-bar"><i style="width:'+fillW.toFixed(1)+'%"></i></span>'+
               '<span class="mot-lad-pct">'+pctShown+'%</span>'+
               (unlock ? '<span class="mot-lad-unlock">🎉 '+I18N.t('解锁 ')+unlock.icon+' '+esc(unlock.name)+'</span>' : '')+
