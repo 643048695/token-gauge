@@ -741,6 +741,21 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 @keyframes pageIn{from{opacity:0; transform:translateY(5px);}to{opacity:1; transform:none;}}
 /* 图表网格线统一 */
 .sb-grid{stroke:var(--grid-line);}
+/* ===== 质感层（2026-08-08 美化：呼吸状态灯 / 进度条光泽 / 品牌光点，尊重 reduced-motion） ===== */
+/* 状态灯呼吸：live 灯缓慢明暗，增强"活着"的观感（与迷你窗 logo 呼吸节奏一致 2.4s） */
+@keyframes healthPulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+.health-dot.live{animation:healthPulse 2.4s ease-in-out infinite;}
+/* 标题栏品牌光点：与迷你窗 logo 呼吸同步节奏，跨屏一致 */
+.logo-dot{animation:healthPulse 2.4s ease-in-out infinite;}
+/* 进度条顶部光泽：叠加在全部主题的 fill 上（主题层不覆盖 ::after，零冲突） */
+.bar .fill{position:relative;}
+.bar .fill::after{
+  content:''; position:absolute; left:2px; right:2px; top:1px; height:38%;
+  background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+  border-radius:inherit; pointer-events:none;
+}
+/* 卡片 hover 光晕微增强：边框变亮同时带一层柔和辉光（克制） */
+.pcard:hover{box-shadow:var(--shadow-sm), 0 0 18px var(--glow);}
 </style>
 <script src="i18n.js"></script>
 </head>
