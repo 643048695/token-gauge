@@ -19,7 +19,7 @@ window.I18N = (function () {
     '入门': 'Starter',
     '活跃': 'Active',
     '中位数': 'Median',
-    '月度满额': 'Monthly cap',
+    '月度额度': 'Monthly quota',
     '前 10%': 'Top 10%',
     '已点亮 ': 'Lit ',
     ' 档 · 下一档：': ' tiers · Next: ',

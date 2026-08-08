@@ -745,21 +745,18 @@ input[type=range]:disabled{opacity:.4;}
 .mot-bench-l{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center;}
 .mot-bench-t{font-size:10px; color:var(--muted); letter-spacing:.5px;}
 .mot-bench-t b{color:var(--text); font-variant-numeric:tabular-nums;}
-/* 基准渐进解锁条（2026-08-09 v6：超越多少人社交激励；字号放大；空隙收紧） */
-.mot-lad-passed{font-size:10.5px; color:var(--accent); letter-spacing:.4px; margin-bottom:3px; display:block; line-height:1.3;}
-.mot-lad-passed i{font-style:normal; font-size:11.5px; margin-right:2px; vertical-align:-1px;}
-.mot-lad-passed em{font-style:normal; color:var(--text); margin-left:5px; font-size:10.5px; font-weight:600;}
+/* 基准渐进解锁条（2026-08-09 v7：无 emoji 纯文字；字号加大） */
+.mot-lad-passed{font-size:12px; color:var(--accent); letter-spacing:.4px; margin-bottom:3px; display:block; line-height:1.3; font-weight:600;}
 .mot-lad-passed.dim{color:var(--muted); opacity:.7;}
-.mot-lad-tier{display:flex; align-items:center; gap:4px; font-size:11.5px; color:var(--text); line-height:1.2;}
-.mot-lad-tier .tier-ic{font-style:normal; font-size:14px; line-height:1; flex:none;}
-.mot-lad-tier b{color:var(--accent); font-weight:700; flex:none; font-size:11.5px; letter-spacing:.3px;}
-.mot-lad-bar{flex:1; position:relative; height:11px; border-radius:99px; background:var(--border); overflow:hidden;}
+.mot-lad-tier{display:flex; align-items:center; gap:5px; font-size:13px; color:var(--text); line-height:1.2;}
+.mot-lad-tier b{color:var(--accent); font-weight:700; flex:none; font-size:13px; letter-spacing:.3px;}
+.mot-lad-bar{flex:1; position:relative; height:12px; border-radius:99px; background:var(--border); overflow:hidden;}
 .mot-lad-bar i{position:absolute; top:0; left:0; height:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); border-radius:99px; transition:width .4s; overflow:hidden;}
 .mot-lad-bar i::after{content:''; position:absolute; top:0; bottom:0; width:34px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); animation:ladShine 1.5s linear infinite;}
 @keyframes ladShine{0%{left:-40px;}100%{left:110%;}}
 @media (prefers-reduced-motion: reduce){.mot-lad-bar i::after{animation:none;}}
-.mot-lad-pct{flex:none; font-size:11.5px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; min-width:32px; text-align:right;}
-.mot-lad-unlock{flex:none; font-size:9.5px; color:var(--warn); font-weight:700; animation:unlockPulse 1.6s ease-in-out infinite;}
+.mot-lad-pct{flex:none; font-size:13px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; min-width:36px; text-align:right;}
+.mot-lad-unlock{flex:none; font-size:10.5px; color:var(--warn); font-weight:700; animation:unlockPulse 1.6s ease-in-out infinite;}
 @keyframes unlockPulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 .mot-src{font-size:8.5px; color:var(--muted); opacity:.7;}
 .mot-bar{height:5px; border-radius:3px; background:rgba(255,255,255,0.06); margin-top:5px; overflow:hidden;}
@@ -2378,11 +2375,11 @@ function motivateCardHtml(m, todayKwh){
         /* 基准渐进解锁条（2026-08-09 v3：只显示当前档附近，隐藏未解锁；条从档内 50% 起，≥80% 解锁下一档——避免长条挫败感） */
         (function(){
           var goals = [
-            { icon: '🌱', name: I18N.t('入门'),   goal: 5000000 },
-            { icon: '🔥', name: I18N.t('活跃'),   goal: 25000000 },
-            { icon: '🏅', name: I18N.t('中位数'), goal: m.median_tokens || 51000000 },
-            { icon: '💯', name: I18N.t('月度满额'), goal: Math.round(m.month_tokens / Math.max(1, m.month_pct) * 100) },
-            { icon: '🚀', name: I18N.t('前 10%'),  goal: m.p90_tokens || 380000000 },
+            { name: I18N.t('入门'),   goal: 5000000 },
+            { name: I18N.t('活跃'),   goal: 25000000 },
+            { name: I18N.t('中位数'), goal: m.median_tokens || 51000000 },
+            { name: I18N.t('月度额度'), goal: Math.round(m.month_tokens / Math.max(1, m.month_pct) * 100) },
+            { name: I18N.t('前 10%'),  goal: m.p90_tokens || 380000000 },
           ];
           var cur = m.month_tokens || 0;
           var done = goals.filter(function(g){ return cur >= g.goal; });          /* 已超越档 */
@@ -2400,16 +2397,15 @@ function motivateCardHtml(m, todayKwh){
             : cur >= med ? Math.round(50 + (cur - med) / (p90 - med) * 40)
             : Math.max(1, Math.round(cur / med * 50));
           var beatN = Math.round(12000 * pctile / 100);
-          /* 已超越行：档位里程碑图标 + 社交激励（超越多少开发者） */
+          /* 已超越行：社交激励（无 emoji，纯文字） */
           var passed = doneCount > 0
-            ? '<span class="mot-lad-passed">'+done.map(function(g){ return '<i>'+g.icon+'</i>'; }).join('')+
-              '<em>'+I18N.t('已超越 ')+pctile+I18N.t(' 的开发者 · 约 ')+beatN.toLocaleString('en-US')+I18N.t(' 人')+'</em></span>'
+            ? '<span class="mot-lad-passed">'+I18N.t('已超越 ')+pctile+I18N.t(' 的开发者 · 约 ')+beatN.toLocaleString('en-US')+I18N.t(' 人')+'</span>'
             : '<span class="mot-lad-passed dim">'+I18N.t('尚未点亮任何档位 · 继续燃烧！')+'</span>';
           var tierRow = next
-            ? '<div class="mot-lad-tier"><i class="tier-ic">'+next.icon+'</i><b>'+esc(next.name)+'</b>'+
+            ? '<div class="mot-lad-tier"><b>'+esc(next.name)+'</b>'+
               '<span class="mot-lad-bar"><i style="width:'+fillW.toFixed(1)+'%"></i></span>'+
               '<span class="mot-lad-pct">'+pctShown+'%</span>'+
-              (unlock ? '<span class="mot-lad-unlock">🎉 '+I18N.t('解锁 ')+unlock.icon+' '+esc(unlock.name)+'</span>' : '')+
+              (unlock ? '<span class="mot-lad-unlock">'+I18N.t('解锁 ')+esc(unlock.name)+'</span>' : '')+
               '</div>'
             : '<div class="mot-lad-tier">✅ '+I18N.t('已点亮全部 5 档！')+'</div>';
           return passed + tierRow;
