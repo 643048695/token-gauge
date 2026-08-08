@@ -362,6 +362,8 @@ window.I18N = (function () {
     '接入起': 'since setup',
     '昨日': 'Yesterday',
     '⚡ 烧掉的电够': '⚡ Your power could',
+    '点击切换档位（测试模式）': 'Click to cycle tiers (test mode)',
+    '测试档位 · 点击返回真实': 'TEST · click to restore real',
     '📱 手机充电': '📱 Phone charges',
     '☕ 煮咖啡': '☕ Coffees brewed',
     '🍞 烤面包': '🍞 Toasts popped',
