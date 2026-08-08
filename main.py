@@ -191,6 +191,12 @@ class _Api:
         return {"done": True, "ok": r["ok"], "message": r["message"],
                 "latency_ms": r.get("latency_ms")}
 
+    def get_achievements(self):
+        return self._app.kernel.achievements_state()
+
+    def ach_event(self, name, value=None):
+        return self._app.kernel.ach_event(name, value)
+
     def get_provider_types(self):
         return self._app.kernel.get_provider_types()
 
@@ -380,6 +386,11 @@ class DashboardApp:
         return False
 
     def hide_main(self):
+        """隐藏主窗口到托盘（成就 flag + 窗口隐藏）。"""
+        try:
+            self.kernel.ach_event("hide_tray")
+        except Exception:
+            pass
         if self.main_window is not None:
             try:
                 self.main_window.hide()
@@ -415,6 +426,10 @@ class DashboardApp:
             # 拖动走顶部 .pywebview-drag-region 拖拽区，避免整窗 easy_drag 拦截 resize 把手
             js_api=self.api,
         )
+        try:
+            self.kernel.ach_event("mini")
+        except Exception:
+            pass
         # 窗口创建后统一用 move 定位（move 的坐标换算已实测：输入 = 物理 / scale）
         try:
             self.mini_window.events.loaded += lambda: (
@@ -952,6 +967,7 @@ class DashboardApp:
     # ---------- 启动 ----------
     def run(self):
         self.kernel.start()
+        self.kernel.check_achievements()   # 启动即检查成就（历史数据解锁 + 记录基线）
         self.create_main_window()
         # 迷你窗启动时总是创建（webview.start 前创建可靠），开关只控制显隐
         self.create_mini_window()

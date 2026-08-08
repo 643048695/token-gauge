@@ -216,6 +216,46 @@ class Kernel:
             # 线程池未启动（stop 后 / 单测直调）时同步执行
             for pid in targets:
                 self._fetch_one(pid)
+        # 抓取完成后检查成就（消耗/坚持/配置类都依赖最新快照）
+        self.check_achievements()
+
+    def _snapshots_map(self) -> dict:
+        """全部 provider 的快照历史（成就统计用）。"""
+        from app import store
+        out = {}
+        for pid in self._provider_order():
+            try:
+                snaps = store.snapshots(pid)
+                if snaps:
+                    out[pid] = snaps
+            except Exception:
+                continue
+        return out
+
+    def check_achievements(self) -> list:
+        """计算并解锁新成就，返回新解锁列表（抓取后/启动时调用）。"""
+        from app import achievements
+        try:
+            return achievements.check_and_unlock(self.config, self._snapshots_map())
+        except Exception:
+            return []
+
+    def achievements_state(self) -> dict:
+        """成就全量列表 + 解锁状态 + 进度（供 UI）。"""
+        from app import achievements
+        try:
+            return achievements.get_achievements(self.config, self._snapshots_map())
+        except Exception as e:  # noqa: BLE001
+            return {"list": [], "total": 0, "unlocked_count": 0, "error": str(e)}
+
+    def ach_event(self, name: str, value=None) -> list:
+        """行为类成就上报（页面访问/托盘/迷你窗等），返回新解锁列表。"""
+        from app import achievements
+        try:
+            achievements.record_flag(name, value)
+        except Exception:
+            pass
+        return self.check_achievements()
 
     def _fetch_one(self, pid: str) -> None:
         """抓取单个 provider：更新缓存、记录状态、触发通知判断。异常不冒泡。"""
