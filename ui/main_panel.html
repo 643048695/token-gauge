@@ -936,6 +936,45 @@ body::before{
 .ach-toast-icon{font-size:24px;flex:none;}
 .ach-toast-title{font-size:10.5px;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px;}
 .ach-toast-name{font-size:13px;font-weight:700;color:var(--text);}
+/* 成就解锁爆发（2026-08-08 方案C：图标弹跳 + 光环扩散，尊重 reduced-motion） */
+.ach-toast.show .ach-toast-icon{animation:achPop .5s cubic-bezier(.2,1.6,.4,1);}
+@keyframes achPop{0%{transform:scale(0);}60%{transform:scale(1.4);}100%{transform:scale(1);}}
+.ach-toast.show::before{
+  content:''; position:absolute; left:14px; top:50%; width:34px; height:34px; border-radius:50%;
+  border:2px solid var(--accent); transform:translateY(-50%); animation:achRing .6s ease-out forwards; opacity:0;
+}
+@keyframes achRing{0%{transform:translateY(-50%) scale(.3); opacity:.9;}100%{transform:translateY(-50%) scale(2.8); opacity:0;}}
+
+/* ===== 正在消耗的供应商卡片（2026-08-08 方案B：呼吸辉光+顶部光带+活跃点+数字呼吸） ===== */
+.pcard.active{border-color:rgba(0,255,156,.45); animation:cardBreath 2.2s ease-in-out infinite;}
+@keyframes cardBreath{0%,100%{box-shadow:0 0 6px rgba(0,255,156,.15);}50%{box-shadow:0 0 22px rgba(0,255,156,.45);}}
+.pcard.active::before{
+  content:''; position:absolute; left:0; right:0; top:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:topSweep 2.2s ease-in-out infinite;
+}
+@keyframes topSweep{0%,100%{opacity:.3; transform:scaleX(.4);}50%{opacity:1; transform:scaleX(1);}}
+.pcard.active .lim .pct{animation:pctGlow 2.2s ease-in-out infinite;}
+@keyframes pctGlow{0%,100%{text-shadow:0 0 6px rgba(0,255,156,.4);}50%{text-shadow:0 0 18px rgba(0,255,156,.9);}}
+
+/* ===== 阈值流光预警（2026-08-08 方案G：>80% 橙流光扫过，>95% 红呼吸脉冲） ===== */
+.lim .bar{position:relative; overflow:hidden;}
+.lim .bar.warn::after,.lim .bar.danger::after{
+  content:''; position:absolute; top:0; bottom:0; width:40px;
+  background:linear-gradient(105deg, transparent, rgba(255,255,255,.5), transparent);
+  animation:shineMove 1.8s linear infinite;
+}
+@keyframes shineMove{0%{left:-50px;}100%{left:110%;}}
+.lim .bar.danger .fill{animation:dangerPulse 1.6s ease-in-out infinite;}
+@keyframes dangerPulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+
+/* ===== 环形数据弧流光（2026-08-08 方案E：白色光点沿占比弧流动，数据驱动） ===== */
+.arc-flow{
+  fill:none; stroke:#ffffff; stroke-width:3; stroke-linecap:round;
+  stroke-dasharray:10 241; stroke-dashoffset:0; opacity:.85;
+  animation:arcFlow 2.4s linear infinite;
+}
+@keyframes arcFlow{0%{stroke-dashoffset:0;}100%{stroke-dashoffset:-251;}}
 /* ---------- 今日燃烧面板（供应商卡片，成就感能量化类比） ---------- */
 .burn-panel{
   margin:2px 12px 8px;padding:7px 10px;
@@ -1753,9 +1792,16 @@ function renderDashboard(){
     return;
   }
   /* 流式布局：一行两张，内容往下滚动 */
+  /* 正在消耗判定（方案B）：今日 token 最高的供应商为活跃卡 */
+  var activePid = null, maxTt = 0;
+  Object.keys(v.providers || {}).forEach(function(pid){
+    var p = v.providers[pid];
+    var tt = p && p.meta && p.meta.today && p.meta.today.today_tokens;
+    if(tt != null && Number(tt) > maxTt){ maxTt = Number(tt); activePid = pid; }
+  });
   var cardsHtml = pidList.map(function(pid){
     try {
-      return dashCardHtml(pid, s.providers[pid], v.providers ? v.providers[pid] : null);
+      return dashCardHtml(pid, s.providers[pid], v.providers ? v.providers[pid] : null, activePid === pid);
     } catch(e) {
       return I18N.t('<div class="card pcard failed"><div class="card-meta"><span class="chip danger">渲染异常: ')+esc(e.message)+'</span></div></div>';
     }
@@ -1874,7 +1920,7 @@ function burnStatus(pv){
   if(pct >= 10) return '🏃 ' + I18N.t('高速巡航');
   return '🌱 ' + I18N.t('怠速运转');
 }
-function dashCardHtml(pid, cfg, pv){
+function dashCardHtml(pid, cfg, pv, isActive){
   cfg = cfg || { enabled:true, name:pid, config:{} };
   var st = statusOf(pv, cfg);
   var off = cfg.enabled === false;
@@ -1901,7 +1947,7 @@ function dashCardHtml(pid, cfg, pv){
       return '<div class="lim">'+
         '<div class="lim-top"><span class="lbl">'+esc(I18N.t(l.label))+'</span>'+
         '<span class="pct">'+l.used_pct+'%</span></div>'+
-        '<div class="bar"><div class="fill" style="width:'+Math.min(100,Math.max(0,l.used_pct))+'%;'+pctFillStyle(l.used_pct)+'"></div></div>'+
+        '<div class="bar '+pctClass(l.used_pct)+'"><div class="fill" style="width:'+Math.min(100,Math.max(0,l.used_pct))+'%;'+pctFillStyle(l.used_pct)+'"></div></div>'+
         '<div class="lim-reset">'+fmtReset(l.reset_in_sec)+I18N.t(' 后重置</div>')+
       '</div>';
     }).join('');
@@ -1972,7 +2018,7 @@ function dashCardHtml(pid, cfg, pv){
     }
   }
 
-  return '<div class="card pcard '+st.key+'" data-pid="'+esc(pid)+'">'+
+  return '<div class="card pcard '+(isActive?'active ':'')+st.key+'" data-pid="'+esc(pid)+'">'+
     '<span class="drag-grip no-drag" title="'+I18N.t('拖动排序')+'">⠿</span>'+
     '<div class="pcard-head">'+
       '<span class="health-dot '+st.key+'"></span>'+
@@ -2212,8 +2258,8 @@ function motivateCardHtml(m){
   '</div>';
 }
 
-/* ---- 顶部 Token 燃烧 Ticker（2026-08-08 方案H） ---- */
-var tkState = { base: 0, speed: 0, lastTick: 0, calibAt: 0, raf: 0, parts: [] };
+/* ---- 顶部 Token 燃烧 Ticker（2026-08-08 方案H，背景=森林砍伐/工业烟囱交替） ---- */
+var tkState = { base: 0, speed: 0, calibAt: 0, raf: 0, scene: 0, sceneT: 0, last: 0, trees: [], puffs: [] };
 function tkReduceMotion(){
   return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -2254,9 +2300,77 @@ function tkRender(){
     flag.className = 'tk-flag' + (sp > 0.3 ? ' ok' : '');
   }
 }
-function tkStartParticles(){
+/* ---- Ticker 背景场景：0=森林砍伐 1=工业烟囱（20s 轮换 + 交叉淡入淡出） ---- */
+function tkDrawTree(ctx, x, groundY, s, ang){
+  ctx.save(); ctx.translate(x, groundY);
+  if(ang > 0){ ctx.translate(0, -6 * s); ctx.rotate(ang); ctx.translate(0, 6 * s); }
+  ctx.fillStyle = 'rgba(120,200,150,.85)'; ctx.fillRect(-2.5 * s, -9 * s, 5 * s, 9 * s);
+  ctx.fillStyle = 'rgba(0,255,156,.16)'; ctx.strokeStyle = 'rgba(0,255,156,.75)'; ctx.lineWidth = 1.1;
+  ctx.shadowColor = 'rgba(0,255,156,.5)'; ctx.shadowBlur = 5;
+  ctx.beginPath(); ctx.moveTo(0, -31 * s); ctx.lineTo(10 * s, -13 * s); ctx.lineTo(-10 * s, -13 * s); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -22 * s); ctx.lineTo(8 * s, -5 * s); ctx.lineTo(-8 * s, -5 * s); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+function tkDrawForest(ctx, W, H, heat, dt){
+  var trees = tkState.trees;
+  if(!trees.length){
+    var gap = W / 7;
+    for(var i = 0; i < 6; i++) trees.push({ x: gap * (i + 1), size: 0.55 + Math.random() * 0.25, state: 'stand', t: 0, dur: 0.8 + Math.random() * 0.4, regen: 0 });
+  }
+  ctx.fillStyle = 'rgba(0,255,156,.14)'; ctx.fillRect(0, H - 10, W, 2);
+  var cutEvery = 3.2 - heat * 1.0;    /* 树木烧速 ×0.5（原 ×2.0） */
+  for(var j = 0; j < trees.length; j++){
+    var t = trees[j];
+    if(t.state === 'stand' && heat > 0.02){ t.t += dt; if(t.t >= cutEvery){ t.state = 'falling'; t.t = 0; } }
+    else if(t.state === 'falling'){ t.t += dt / t.dur; if(t.t >= 1){ t.state = 'gone'; t.regen = 0; } }
+    else if(t.state === 'gone'){ t.regen += dt; if(t.regen >= 2.5){ t.state = 'stand'; t.t = 0; } }
+    if(t.state === 'stand') tkDrawTree(ctx, t.x, H - 10, t.size, 0);
+    else if(t.state === 'falling') tkDrawTree(ctx, t.x, H - 10, t.size, Math.min(1, t.t) * Math.PI / 2 * 0.9);
+    else {
+      ctx.fillStyle = 'rgba(120,200,150,.5)'; ctx.fillRect(t.x - 3, H - 13, 6, 3);
+      ctx.fillStyle = 'rgba(0,255,156,.25)'; ctx.beginPath(); ctx.arc(t.x, H - 13, 2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+function tkDrawFactory(ctx, W, H, heat, dt){
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,255,156,.4)'; ctx.shadowBlur = 7;
+  ctx.strokeStyle = 'rgba(0,255,156,.7)'; ctx.lineWidth = 1.4;
+  ctx.fillStyle = 'rgba(0,255,156,.08)';
+  ctx.beginPath(); ctx.moveTo(W * 0.2, H - 14); ctx.lineTo(W * 0.2, H - 46); ctx.lineTo(W * 0.42, H - 46); ctx.lineTo(W * 0.42, H - 14); ctx.closePath(); ctx.fill(); ctx.stroke();
+  var stacks = [{ x: W * 0.36, w: 14 }, { x: W * 0.62, w: 17 }];
+  for(var k = 0; k < stacks.length; k++){
+    var s = stacks[k];
+    ctx.beginPath(); ctx.moveTo(s.x - s.w / 2, H - 14); ctx.lineTo(s.x - s.w / 2, H - 62); ctx.lineTo(s.x + s.w / 2, H - 62); ctx.lineTo(s.x + s.w / 2, H - 14); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = 'rgba(255,140,40,' + (0.25 + heat * 0.5) + ')';
+  ctx.fillRect(W * 0.26, H - 38, 7, 7); ctx.fillRect(W * 0.33, H - 38, 7, 7);
+  ctx.restore();
+  /* 冒烟 ∝ 烧速 */
+  if(heat > 0.02){
+    for(var m = 0; m < stacks.length; m++){
+      if(Math.random() < 0.08 + heat * 0.5){
+        tkState.puffs.push({ x: stacks[m].x + (Math.random() - 0.5) * 4, y: H - 64,
+          vy: -(8 + heat * 20), vx: (Math.random() - 0.5) * (2 + heat * 7),
+          life: 1.6 + heat * 1.2, size: (2.5 + Math.random() * 3) * (0.5 + heat), t: Math.random() });
+      }
+    }
+  }
+  var puffs = tkState.puffs;
+  for(var n = puffs.length - 1; n >= 0; n--){
+    var p = puffs[n];
+    p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.985;
+    p.size += dt * (2.2 + heat * 5);
+    if(p.life <= 0 || p.y < -14){ puffs.splice(n, 1); continue; }
+    var al = Math.min(1, p.life / 0.8) * (0.2 + heat * 0.35);
+    ctx.fillStyle = heat > 0.6 ? 'rgba(235,245,255,' + al.toFixed(2) + ')' : 'rgba(190,215,205,' + (al * 0.8).toFixed(2) + ')';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function tkStartScenes(){
   var cv = $('#tkCanvas');
-  if(!cv || tkReduceMotion()) return;         /* reduced-motion：不启动粒子 */
+  if(!cv || tkReduceMotion()) return;         /* reduced-motion：不启动场景动画 */
   var ctx = cv.getContext('2d');
   if(!ctx) return;                            /* canvas 不可用（jsdom/异常环境）时跳过 */
   function resize(){
@@ -2265,29 +2379,36 @@ function tkStartParticles(){
   }
   resize();
   window.addEventListener('resize', resize);
-  var last = 0;
+  var SCENE_MS = 20000;                       /* 每 20s 轮换场景 */
+  var FADE = 700;                             /* 交叉淡入淡出 700ms */
   function loop(ts){
     tkState.raf = requestAnimationFrame(loop);
-    var dt = Math.min(0.05, (ts - last) / 1000 || 0.016); last = ts;
+    var dt = Math.min(0.05, (ts - tkState.last) / 1000 || 0.016); tkState.last = ts;
     var heat = Math.min(1, tkState.speed / 30);
     var W = cv.width, H = cv.height;
-    var n = Math.round(heat * 10 * dt * 60);
-    for(var i = 0; i < n; i++){
-      tkState.parts.push({ x: Math.random() * W, y: H + 4,
-        vy: -(14 + Math.random() * 26 * heat), vx: (Math.random() - 0.5) * 12 * heat,
-        life: 1.4 + Math.random() * 1.2, size: 0.8 + Math.random() * 1.8, t: Math.random() });
+    /* 场景轮换计时：sceneT 0→SCENE_MS 切下一个 */
+    tkState.sceneT += ts - (tkState._prev || ts);
+    tkState._prev = ts;
+    if(tkState.sceneT >= SCENE_MS){
+      tkState.scene = (tkState.scene + 1) % 2;
+      tkState.sceneT = 0;
+      tkState._fadeT = 0;
     }
     ctx.clearRect(0, 0, W, H);
-    var parts = tkState.parts;
-    for(var j = parts.length - 1; j >= 0; j--){
-      var p = parts[j];
-      p.life -= dt; p.y += p.vy * dt; p.x += p.vx * dt;
-      if(p.life <= 0 || p.y < -6){ parts.splice(j, 1); continue; }
-      var al = Math.min(1, p.life / 0.5) * (0.18 + heat * 0.5);
-      ctx.fillStyle = p.t < 0.6
-        ? 'rgba(0,255,156,' + al.toFixed(2) + ')'
-        : 'rgba(0,201,255,' + (al * 0.8).toFixed(2) + ')';
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+    if(tkState._fadeT !== undefined && tkState._fadeT < FADE){
+      /* 过渡：旧场景淡出 + 新场景淡入（画两层） */
+      var f = Math.min(1, tkState._fadeT / FADE);
+      ctx.save(); ctx.globalAlpha = 1 - f;
+      if(tkState.scene === 0) tkDrawFactory(ctx, W, H, heat, dt); else tkDrawForest(ctx, W, H, heat, dt);
+      ctx.restore();
+      ctx.save(); ctx.globalAlpha = f;
+      if(tkState.scene === 0) tkDrawForest(ctx, W, H, heat, dt); else tkDrawFactory(ctx, W, H, heat, dt);
+      ctx.restore();
+      tkState._fadeT += ts - (tkState._prev2 || ts);
+      tkState._prev2 = ts;
+    } else {
+      tkState._fadeT = FADE;
+      if(tkState.scene === 0) tkDrawForest(ctx, W, H, heat, dt); else tkDrawFactory(ctx, W, H, heat, dt);
     }
   }
   tkState.raf = requestAnimationFrame(loop);
@@ -2419,6 +2540,10 @@ function statsSectionHtml(v, s){
         + ' stroke-dashoffset="'+(-offset).toFixed(2)+'" transform="rotate(-90 70 70)"><title>'+esc(r.name)+'</title></circle>';
       offset += dash;
     });
+    /* 环形数据弧流光（方案E：白色光点沿占比弧流动） */
+    if(offset > 0){
+      pieSvg += '<circle cx="70" cy="70" r="'+R+'" class="arc-flow" transform="rotate(-90 70 70)"></circle>';
+    }
     /* 中心：今日总消耗（深色大数值，在亮色太阳核心上对比清晰） */
     pieSvg += '<text x="70" y="60" text-anchor="middle" font-size="9.5" fill="var(--muted)">'+I18N.t('今日消耗')+'</text>';
     pieSvg += '<text x="70" y="86" text-anchor="middle" font-size="17" font-weight="800" fill="var(--accent)" style="font-family:Consolas,monospace">'+fmtStatNum(pieTotal)+'</text>';
@@ -3519,9 +3644,9 @@ async function init(){
   updateCountdownUI();
   renderAll();
   I18N.apply();
-  /* Ticker：数字滚动 + 粒子启动（一次性；校准在 fetchView 成功时） */
+  /* Ticker：数字滚动 + 背景场景启动（一次性；校准在 fetchView 成功时） */
   tkTick();
-  tkStartParticles();
+  tkStartScenes();
 
   /* 导航 */
   $$('#nav .nav-item').forEach(function(btn){

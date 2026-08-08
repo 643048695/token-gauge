@@ -435,8 +435,8 @@ class DashboardApp:
     def create_mini_window(self, settings=None):
         settings = settings or self.cfg
         win = settings.get("window", {})
-        w = int(win.get("mini_width", 300))
-        h = int(win.get("mini_height", 170))
+        w = int(win.get("mini_width", 340))
+        h = int(win.get("mini_height", 180))
         # 缓存破坏：URL 带文件 mtime 版本号，WebView2 磁盘缓存旧页面时强制重新加载
         _mini_html = os.path.join(BASE_DIR, "ui", "mini_widget.html")
         try:
@@ -588,8 +588,8 @@ class DashboardApp:
             return
         try:
             win = settings.get("window", {})
-            nw_log = int(win.get("mini_width", 300))
-            nh_log = int(win.get("mini_height", 170))
+            nw_log = int(win.get("mini_width", 340))
+            nh_log = int(win.get("mini_height", 180))
             hwnd = self._window_hwnd(self.mini_window)
             scale = self._get_scale(hwnd)
             phys_w = int(round(nw_log * scale))

@@ -29,10 +29,10 @@
     background: var(--bg);
     border: 1px solid var(--line);
     border-radius: 10px;
-    padding: 8px 12px 6px;
+    padding: 6px 10px 4px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
     position: relative;
     z-index: 1;    /* 抬升内容层：主题 body::before 网格（8bit 等 z-index:0）不再遮挡内容 */
     box-shadow: 0 0 18px var(--glow), inset 0 0 24px var(--panel);
@@ -140,7 +140,7 @@
   }
   .today .big {
     font-family: Consolas, "JetBrains Mono", monospace;
-    font-size: clamp(24px, 15vh, 33px); font-weight: 800;
+    font-size: clamp(22px, 14vh, 30px); font-weight: 800;
     color: var(--accent);
     text-shadow: 0 0 12px var(--glow), 0 0 28px var(--glow);
     font-variant-numeric: tabular-nums;

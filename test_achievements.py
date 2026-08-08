@@ -63,10 +63,14 @@ class TestAchievements(unittest.TestCase):
         new = ach.check_and_unlock(settings, snaps)
         ids = {n["id"] for n in new}
         self.assertIn("stick_night", ids)         # 凌晨 1 点
-        # 周末：从今天往前找周六日
+        # 周末：从今天往前找周六日（用上一个周末，避开与其他用例快照（昨天/前天）重叠）
         d = datetime.now()
         while d.weekday() < 5:
             d -= timedelta(days=1)
+        d -= timedelta(days=7)
+        # 其他用例的快照可能落在周末已解锁 stick_weekend → 本用例独立验证 flag：重置状态
+        if os.path.exists(ach.STATE_FILE):
+            os.remove(ach.STATE_FILE)
         snaps2 = {"ocg": [_snap(5, (datetime.now() - d).days, hour=10)]}
         ids2 = {n["id"] for n in ach.check_and_unlock(settings, snaps2)}
         self.assertIn("stick_weekend", ids2)
