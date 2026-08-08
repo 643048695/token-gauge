@@ -713,6 +713,45 @@ input[type=range]:disabled{opacity:.4;}
 #dashGrid > .pcard{break-inside:avoid; margin-bottom:var(--gap); min-width:0;}
 @media (max-width:640px){#dashGrid{columns:1;}}
 
+/* 成就激励卡片（2026-08-08）：燃烧引擎通栏卡 */
+.motivate-card{
+  margin-top:12px; border:1px solid var(--border); border-radius:var(--radius);
+  background:linear-gradient(135deg, rgba(0,255,156,0.05), rgba(0,201,255,0.03) 55%, transparent);
+  padding:10px 14px 12px; position:relative; overflow:hidden;
+}
+.motivate-card::before{
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:linear-gradient(180deg, var(--accent), var(--accent2));
+  box-shadow:0 0 12px var(--glow);
+}
+.mot-head{display:flex; align-items:center; gap:8px; font-size:12px; letter-spacing:2px; font-weight:700; color:var(--text);}
+.mot-icon{font-size:15px;}
+.mot-tier{
+  margin-left:auto; font-size:10px; font-weight:800; letter-spacing:2px;
+  color:var(--accent); border:1px solid var(--line); border-radius:999px; padding:1px 9px;
+  text-shadow:0 0 8px var(--glow);
+}
+.mot-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-top:9px;}
+.mot-cell{
+  border:1px solid var(--border); border-radius:8px; padding:6px 8px;
+  background:rgba(255,255,255,0.02); text-align:center;
+}
+.mot-cell b{display:block; font-size:16px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; text-shadow:0 0 8px var(--glow);}
+.mot-cell span{display:block; font-size:9px; color:var(--muted); margin-top:1px; letter-spacing:1px;}
+.mot-bench{margin-top:9px;}
+.mot-bench-t{font-size:10px; color:var(--muted); letter-spacing:.5px;}
+.mot-bench-t b{color:var(--text); font-variant-numeric:tabular-nums;}
+.mot-src{font-size:8.5px; color:var(--muted); opacity:.7;}
+.mot-bar{height:5px; border-radius:3px; background:rgba(255,255,255,0.06); margin-top:5px; overflow:hidden;}
+.mot-fill{
+  height:100%; border-radius:3px;
+  background:linear-gradient(90deg, var(--accent), var(--accent2));
+  box-shadow:0 0 8px var(--glow);
+  transition:width .5s ease;
+}
+.mot-tip{font-size:9.5px; color:var(--accent); margin-top:4px; letter-spacing:.5px; opacity:.9;}
+@media (max-width:640px){.mot-grid{grid-template-columns:repeat(2,1fr);}}
+
 /* ---- 今日消耗成就行 ---- */
 .achv{display:flex; align-items:center; gap:8px; margin:2px 0 8px; padding:8px 11px; border:1px solid var(--line); border-radius:10px; background:linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.01));}
 .achv.muted{opacity:.55; justify-content:center;}
@@ -982,6 +1021,7 @@ body::before{
         <span class="badge" id="dataBadge" data-i18n="示例数据">示例数据</span>
       </div>
       <div id="dashStatus"></div>
+      <div id="motivateCard"></div>
       <div class="grid" id="dashGrid"></div>
     </div>
 
@@ -1243,6 +1283,13 @@ var MOCK = {
   ok: true,
   fetched_at: NOW,
   refresh_interval_sec: 300,
+  motivate: {
+    total_tokens: 320000000, total_usd: 128.5, month_pct: 59,
+    month_tokens: 17700000, month_kwh: 17.7, month_books: 95.7,
+    streak_days: 14, days_total: 120,
+    median_tokens: 51000000, p90_tokens: 380000000,
+    benchmark_note: 'Jellyfish 2026Q1 · 12000 dev',
+  },
   providers: {
     'opencode-go': {
       provider:'opencode-go', ok:true, fetched_at:NOW, cookie_valid:true,
@@ -1655,6 +1702,10 @@ function renderDashboard(){
       '<span class="status-msg '+msgCls+'">'+msg+'</span>'+
       '<button class="btn sm btn-refresh-all" id="btnRefreshAll" '+(disabled?'disabled':'')+'>'+ICONS.zap+I18N.t('全部刷新</button>')+
     '</div>';
+
+  /* 成就激励卡片（本月燃烧/连续天数/行业基准） */
+  var mc = $('#motivateCard');
+  if(mc) mc.innerHTML = motivateCardHtml(v.motivate);
 
   /* 卡片（任务A：每页 2 张分页） */
   var grid = $('#dashGrid');
@@ -2089,7 +2140,40 @@ function fmtStatNum(n){
   if(Math.abs(n) >= 1000) return (n/1000).toFixed(1)+'K';
   return (Math.round(n*10)/10)+'';
 }
-/* ---- 3D 球体太阳（3 风格 GIF：plasma 等离子 / lava 熔岩 / cyber 赛博）---- */
+/* ---- 成就激励卡片（仪表盘，2026-08-08）：本月燃烧 + 连续天数 + 行业基准 ---- */
+function motivateCardHtml(m){
+  if(!m || !m.month_tokens) return '';
+  var fmt = function(n){
+    n = Number(n) || 0;
+    if(n >= 100000000) return (Math.round(n/10000000)/10)+'亿';
+    if(n >= 10000) return (Math.round(n/1000)/10)+'万';
+    if(n % 1 !== 0) return String(Math.round(n * 10) / 10);
+    return String(Math.round(n));
+  };
+  var tier = m.month_pct >= 90 ? { n: I18N.t('太阳核心'), i: '☀️' }
+    : m.month_pct >= 60 ? { n: I18N.t('星际熔炉'), i: '🌋' }
+    : m.month_pct >= 30 ? { n: I18N.t('火力引擎'), i: '🔥' }
+    : m.month_pct > 0 ? { n: I18N.t('燃烧新星'), i: '✨' } : { n: I18N.t('待机'), i: '💤' };
+  var pct = Math.min(100, Math.round(m.month_tokens / (m.median_tokens || 1) * 100));
+  var left = Math.max(0, (m.median_tokens || 0) - m.month_tokens);
+  var cell = function(v, l){ return '<div class="mot-cell"><b>'+esc(v)+'</b><span>'+esc(l)+'</span></div>'; };
+  return '<div class="motivate-card">'+
+    '<div class="mot-head"><span class="mot-icon">'+tier.i+'</span><span class="mot-title">'+I18N.t('燃烧引擎')+'</span><span class="mot-tier">'+tier.n+'</span></div>'+
+    '<div class="mot-grid">'+
+      cell(fmt(m.month_tokens), I18N.t('本月燃烧 token'))+
+      cell(fmt(m.month_kwh), I18N.t('约消耗 度电'))+
+      cell(fmt(m.month_books), I18N.t('约等于 本书'))+
+      cell(m.streak_days + (m.streak_days > 1 ? I18N.t(' 天') : I18N.t(' 天')), I18N.t('连续燃烧'))+
+    '</div>'+
+    '<div class="mot-bench">'+
+      '<div class="mot-bench-t">⚡ '+I18N.t('行业基准：普通开发者月烧 ')+'<b>'+fmt(m.median_tokens)+'</b> token'+
+      (m.benchmark_note ? ' <span class="mot-src">('+esc(m.benchmark_note)+')</span>' : '')+'</div>'+
+      '<div class="mot-bar"><div class="mot-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="mot-tip">'+I18N.t('已达成中位数 ')+pct+'%'+(left > 0 ? I18N.t(' · 再烧 ')+fmt(left)+I18N.t(' token 即可追平普通开发者') : I18N.t(' · 已超过普通开发者！'))+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
 function statsSectionHtml(v, s){
   var dm = (s.diy && s.diy.modules) || {};
   var balMod = dm.balance || { chart:true };

@@ -356,7 +356,7 @@ class Kernel:
     # ------------------------------------------------------------ 视图
 
     def get_view(self) -> dict:
-        """全视图：{ok, fetched_at, refresh_interval_sec, providers, settings, theme_css}。"""
+        """全视图：{ok, fetched_at, refresh_interval_sec, providers, settings, theme_css, motivate}。"""
         now = time.time()
         interval = self._interval_sec()
         with self._lock:
@@ -396,7 +396,37 @@ class Kernel:
             "providers": providers_view,
             "settings": self.config,
             "theme_css": theme_css,
+            "motivate": self._motivate_pack(),
         }
+
+    def _motivate_pack(self) -> dict:
+        """成就激励卡片数据（仪表盘）：累计/本月燃烧 + 连续天数 + 行业基准。
+
+        基准来源：Jellyfish《State of AI in Software Engineering》2026Q1——
+        12,000 开发者实测，中位（P50）月烧约 5100 万 token，P90 约 3.8 亿。
+        换算口径与成就系统一致：1M token ≈ 1 度电；1 本 ≈ 18.5 万 token。
+        """
+        try:
+            from app import achievements as _ach
+            st = _ach.compute_stats(self.config, self._snapshots_map())
+            month_pct = float(st.get("month_pct") or 0)
+            month_tokens = int(MONTHLY_LIMIT_USD / DEFAULT_PRICE * 1_000_000 * month_pct / 100.0)
+            total_tokens = int(st.get("tokens") or 0)
+            return {
+                "total_tokens": total_tokens,
+                "total_usd": round(float(st.get("usd") or 0), 2),
+                "month_pct": round(month_pct, 1),
+                "month_tokens": month_tokens,
+                "month_kwh": round(month_tokens / 1_000_000, 1),
+                "month_books": round(month_tokens / 185_000, 1),
+                "streak_days": int(st.get("days_streak") or 0),
+                "days_total": int(st.get("days_total") or 0),
+                "median_tokens": 51_000_000,
+                "p90_tokens": 380_000_000,
+                "benchmark_note": "Jellyfish 2026Q1 · 12000 dev",
+            }
+        except Exception:
+            return {}
 
     def _build_provider_view(self, pid: str, interval: int,
                              now: float) -> dict | None:
