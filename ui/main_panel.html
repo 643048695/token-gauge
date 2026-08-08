@@ -741,8 +741,7 @@ input[type=range]:disabled{opacity:.4;}
 }
 .mot-cell b{display:block; font-size:16px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; text-shadow:0 0 8px var(--glow);}
 .mot-cell span{display:block; font-size:9px; color:var(--muted); margin-top:1px; letter-spacing:1px;}
-.mot-bench{margin-top:9px; display:flex; gap:18px; align-items:stretch;}
-.mot-bench-l{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center;}
+.mot-bench{margin-top:9px;}
 .mot-bench-t{font-size:10px; color:var(--muted); letter-spacing:.5px;}
 .mot-bench-t b{color:var(--text); font-variant-numeric:tabular-nums;}
 .mot-src{font-size:8.5px; color:var(--muted); opacity:.7;}
@@ -754,38 +753,6 @@ input[type=range]:disabled{opacity:.4;}
   transition:width .5s ease;
 }
 .mot-tip{font-size:9.5px; color:var(--accent); margin-top:4px; letter-spacing:.5px; opacity:.9;}
-
-/* ===== 碳足迹阶梯（2026-08-09：按今日电量分档切换元素） ===== */
-.mot-tier-box{
-  flex:0 0 auto; width:168px; border-left:1px dashed var(--border); padding-left:16px;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-}
-.tt-stage{width:74px; height:58px; display:flex; align-items:flex-end; justify-content:center;}
-.tt-svg{width:100%; height:100%; overflow:visible;}
-.tt-svg *{stroke:var(--text); fill:var(--text); opacity:.92;}
-.tt-svg .tt-leaf{fill:var(--accent); stroke:var(--accent);}
-.tt-svg .tt-fan ellipse{fill:none; stroke:var(--accent);}
-.tt-svg .tt-fan circle{fill:var(--accent); stroke:none;}
-.tt-svg .tt-bolt{fill:var(--warn); stroke:var(--warn);}
-.tt-svg .tt-win{fill:var(--accent); stroke:var(--accent); opacity:.85;}
-.tt-svg .tt-smoke circle{fill:none; stroke:var(--muted); opacity:.65;}
-.tt-label{font-size:10px; color:var(--text); font-weight:700; letter-spacing:1px;}
-.tt-note{font-size:8.5px; color:var(--muted); letter-spacing:.5px; text-align:center;}
-
-/* 阶梯动画（克制；reduced-motion 全局已停） */
-@keyframes ttSway{0%,100%{transform:rotate(-4deg);}50%{transform:rotate(4deg);}}
-.tt-leaf-l{transform-origin:32px 34px; animation:ttSway 3.2s ease-in-out infinite;}
-.tt-leaf-r{transform-origin:32px 42px; animation:ttSway 3.2s ease-in-out infinite reverse;}
-@keyframes ttSpin{to{transform:rotate(360deg);}}
-.tt-fan{transform-origin:32px 16px; animation:ttSpin 2.6s linear infinite;}
-.mot-tier-box[data-tier="lv3"] .tt-car{animation:ttSway 2.8s ease-in-out infinite;}
-@keyframes ttSmoke{0%{transform:translate(0,0) scale(.6); opacity:0;}25%{opacity:.8;}100%{transform:translate(4px,-14px) scale(1.3); opacity:0;}}
-.tt-smoke circle:nth-child(1){animation:ttSmoke 2.2s ease-out infinite;}
-.tt-smoke circle:nth-child(2){animation:ttSmoke 2.2s ease-out .7s infinite;}
-.tt-smoke circle:nth-child(3){animation:ttSmoke 2.2s ease-out 1.4s infinite;}
-@keyframes ttPulse{0%,100%{opacity:.55;}50%{opacity:1;}}
-.tt-bolt{animation:ttPulse 1.8s ease-in-out infinite; filter:drop-shadow(0 0 6px var(--warn-glow));}
-@media (max-width:1100px){.mot-tier-box{display:none;}}
 .mot-energy{margin-top:8px; padding-top:7px; border-top:1px dashed rgba(255,255,255,.08); display:flex; gap:12px; flex-wrap:wrap; align-items:baseline;}
 .mot-energy .mot-e-t{font-size:9.5px; color:var(--muted); letter-spacing:1.5px; font-weight:700;}
 .mot-energy .mot-e-i{font-size:10.5px; color:var(--text); font-variant-numeric:tabular-nums;}
@@ -1822,18 +1789,9 @@ function renderDashboard(){
       '<button class="btn sm btn-refresh-all" id="btnRefreshAll" '+(disabled?'disabled':'')+'>'+ICONS.zap+I18N.t('全部刷新</button>')+
     '</div>';
 
-  /* 成就激励卡片（本月燃烧/连续天数/行业基准/碳足迹阶梯） */
+  /* 成就激励卡片（本月燃烧/连续天数/行业基准） */
   var mc = $('#motivateCard');
-  if(mc){
-    /* 今日电量（碳足迹阶梯数据源）：汇总各供应商今日 token → 度电 */
-    var tkTodayTotal = 0;
-    Object.keys(v.providers || {}).forEach(function(pid){
-      var p = v.providers[pid];
-      var tt = p && p.today && p.today.tokens;
-      if(tt != null) tkTodayTotal += Number(tt);
-    });
-    mc.innerHTML = motivateCardHtml(v.motivate, tkTodayTotal / 1e6);
-  }
+  if(mc) mc.innerHTML = motivateCardHtml(v.motivate);
 
   /* 卡片（任务A：每页 2 张分页） */
   var grid = $('#dashGrid');
@@ -2281,30 +2239,8 @@ function fmtStatNum(n){
   if(Math.abs(n) >= 1000) return (n/1000).toFixed(1)+'K';
   return (Math.round(n*10)/10)+'';
 }
-/* ---- 成就激励卡片（仪表盘）：本月燃烧 + 连续天数 + 行业基准 + 碳足迹阶梯 ---- */
-/* 碳足迹阶梯：按今日电量 kwh 分档切换拟物元素（2026-08-09 用户方案：阶梯+切换） */
-function motTierHtml(kwh){
-  kwh = Number(kwh) || 0;
-  var tier, label, note;
-  if(kwh >= 50){ tier = 'lv5'; label = I18N.t('⚡ 全负荷'); note = I18N.t('今日 ≈ 满负荷运转'); }
-  else if(kwh >= 10){ tier = 'lv4'; label = I18N.t('🏭 重工业'); note = I18N.t('今日 ≈ 工厂开工'); }
-  else if(kwh >= 3){ tier = 'lv3'; label = I18N.t('🚗 上路行驶'); note = I18N.t('今日 ≈ 汽车行驶 ')+Math.max(1, Math.round(kwh*0.785/0.15))+I18N.t(' 公里'); }
-  else if(kwh >= 1){ tier = 'lv2'; label = I18N.t('🌬️ 风扇转动'); note = I18N.t('今日 ≈ 风扇转 ')+Math.round(kwh*20)+I18N.t(' 小时'); }
-  else { tier = 'lv1'; label = I18N.t('🌱 萌芽'); note = I18N.t('今日电量还很少'); }
-  var el = {
-    lv1: '<svg class="tt-svg" viewBox="0 0 64 64"><path class="tt-stem" d="M32 58 C32 44 32 36 32 26" fill="none" stroke-width="2.5"/><path class="tt-leaf tt-leaf-l" d="M32 34 C22 34 18 26 22 18 C30 18 32 26 32 34Z"/><path class="tt-leaf tt-leaf-r" d="M32 42 C42 42 46 34 42 26 C34 26 32 34 32 42Z"/><ellipse class="tt-soil" cx="32" cy="58" rx="12" ry="3"/></svg>',
-    lv2: '<svg class="tt-svg" viewBox="0 0 64 64"><rect class="tt-base" x="14" y="52" width="36" height="6" rx="2"/><rect class="tt-pole" x="30.5" y="24" width="3" height="28"/><g class="tt-fan"><ellipse cx="32" cy="16" rx="15" ry="4"/><ellipse cx="32" cy="16" rx="15" ry="4" transform="rotate(120 32 16)"/><ellipse cx="32" cy="16" rx="15" ry="4" transform="rotate(240 32 16)"/><circle cx="32" cy="16" r="3"/></g></svg>',
-    lv3: '<svg class="tt-svg" viewBox="0 0 64 64"><g class="tt-car"><path d="M8 34 L16 22 L34 22 L44 34 L52 34 A4 4 0 0 1 56 38 L56 42 L8 42 Z" fill="none" stroke-width="2.5"/><rect x="14" y="25" width="10" height="8" rx="1"/><rect x="28" y="25" width="10" height="8" rx="1"/><circle cx="20" cy="44" r="4.5"/><circle cx="44" cy="44" r="4.5"/><rect class="tt-pipe" x="48" y="30" width="6" height="3"/></g><g class="tt-smoke"><circle cx="56" cy="27" r="2.5"/><circle cx="59" cy="22" r="2"/><circle cx="61" cy="17" r="1.5"/></g></svg>',
-    lv4: '<svg class="tt-svg" viewBox="0 0 64 64"><rect class="tt-plant" x="6" y="34" width="34" height="22" rx="1"/><rect class="tt-stack" x="48" y="18" width="12" height="38"/><rect class="tt-stack" x="26" y="26" width="8" height="30"/><rect class="tt-win" x="10" y="38" width="6" height="5"/><rect class="tt-win" x="20" y="38" width="6" height="5"/><g class="tt-smoke"><circle cx="54" cy="14" r="2.5"/><circle cx="57" cy="9" r="2"/><circle cx="59" cy="5" r="1.5"/></g></svg>',
-    lv5: '<svg class="tt-svg" viewBox="0 0 64 64"><path class="tt-bolt" d="M36 6 L16 38 L30 38 L26 58 L48 26 L34 26 Z"/></svg>'
-  }[tier];
-  return '<div class="mot-tier-box" data-tier="'+tier+'">'+
-    '<div class="tt-stage">'+el+'</div>'+
-    '<div class="tt-label">'+label+'</div>'+
-    '<div class="tt-note">'+note+'</div>'+
-  '</div>';
-}
-function motivateCardHtml(m, todayKwh){
+/* ---- 成就激励卡片（仪表盘，2026-08-08）：本月燃烧 + 连续天数 + 行业基准 ---- */
+function motivateCardHtml(m){
   if(!m || !m.month_tokens) return '';
   var fmt = function(n){
     n = Number(n) || 0;
@@ -2329,13 +2265,10 @@ function motivateCardHtml(m, todayKwh){
       cell(m.streak_days + (m.streak_days > 1 ? I18N.t(' 天') : I18N.t(' 天')), I18N.t('连续燃烧'))+
     '</div>'+
     '<div class="mot-bench">'+
-      '<div class="mot-bench-l">'+
-        '<div class="mot-bench-t">⚡ '+I18N.t('行业基准：普通开发者月烧 ')+'<b>'+fmt(m.median_tokens)+'</b> token'+
-        (m.benchmark_note ? ' <span class="mot-src">('+esc(m.benchmark_note)+')</span>' : '')+'</div>'+
-        '<div class="mot-bar"><div class="mot-fill" style="width:'+pct+'%"></div></div>'+
-        '<div class="mot-tip">'+I18N.t('已达成中位数 ')+pct+'%'+(left > 0 ? I18N.t(' · 再烧 ')+fmt(left)+I18N.t(' token 即可追平普通开发者') : I18N.t(' · 已超过普通开发者！'))+'</div>'+
-      '</div>'+
-      motTierHtml(todayKwh)+
+      '<div class="mot-bench-t">⚡ '+I18N.t('行业基准：普通开发者月烧 ')+'<b>'+fmt(m.median_tokens)+'</b> token'+
+      (m.benchmark_note ? ' <span class="mot-src">('+esc(m.benchmark_note)+')</span>' : '')+'</div>'+
+      '<div class="mot-bar"><div class="mot-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="mot-tip">'+I18N.t('已达成中位数 ')+pct+'%'+(left > 0 ? I18N.t(' · 再烧 ')+fmt(left)+I18N.t(' token 即可追平普通开发者') : I18N.t(' · 已超过普通开发者！'))+'</div>'+
     '</div>'+
     /* 能量足迹（成就感知）：烧掉的电够做什么（1 度电 ≈ 手机充 50 次 / LED 亮 100 小时 / 空调 1.5 小时，公开科普口径） */
     '<div class="mot-energy">'+
