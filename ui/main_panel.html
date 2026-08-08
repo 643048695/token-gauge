@@ -745,15 +745,19 @@ input[type=range]:disabled{opacity:.4;}
 .mot-bench-l{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center;}
 .mot-bench-t{font-size:10px; color:var(--muted); letter-spacing:.5px;}
 .mot-bench-t b{color:var(--text); font-variant-numeric:tabular-nums;}
-/* 基准渐进解锁条（2026-08-09 v3：只显示当前档；条从档内 50% 起；≥80% 解锁下一档） */
-.mot-lad-passed{font-size:9px; color:var(--accent); letter-spacing:.5px; margin-bottom:3px; display:block;}
+/* 基准渐进解锁条（2026-08-09 v4：紧凑排版；条更大；填充全范围；流动光带） */
+.mot-lad-passed{font-size:9.5px; color:var(--accent); letter-spacing:.5px; margin-bottom:2px; display:block; line-height:1;}
+.mot-lad-passed i{font-style:normal; margin-right:1px;}
+.mot-lad-passed em{font-style:normal; color:var(--muted); margin-left:4px; font-size:9px;}
 .mot-lad-passed.dim{color:var(--muted); opacity:.7;}
-.mot-lad-tier{display:flex; align-items:center; gap:6px; font-size:9.5px; color:var(--text);}
+.mot-lad-tier{display:flex; align-items:center; gap:5px; font-size:10px; color:var(--text); line-height:1;}
 .mot-lad-tier b{color:var(--accent); font-weight:700; flex:none;}
-.mot-lad-bar{flex:1; position:relative; height:6px; border-radius:99px; background:var(--border); overflow:hidden;}
-.mot-lad-bar::before{content:''; position:absolute; left:50%; top:-3px; width:2px; height:12px; background:var(--muted); opacity:.55; border-radius:1px; z-index:1;}
-.mot-lad-bar i{position:absolute; top:0; left:0; height:100%; background:var(--accent); border-radius:99px; transition:width .4s;}
-.mot-lad-pct{flex:none; font-size:9px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:26px; text-align:right;}
+.mot-lad-bar{flex:1; position:relative; height:10px; border-radius:99px; background:var(--border); overflow:hidden;}
+.mot-lad-bar i{position:absolute; top:0; left:0; height:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); border-radius:99px; transition:width .4s; overflow:hidden;}
+.mot-lad-bar i::after{content:''; position:absolute; top:0; bottom:0; width:34px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); animation:ladShine 1.5s linear infinite;}
+@keyframes ladShine{0%{left:-40px;}100%{left:110%;}}
+@media (prefers-reduced-motion: reduce){.mot-lad-bar i::after{animation:none;}}
+.mot-lad-pct{flex:none; font-size:10px; color:var(--text); font-variant-numeric:tabular-nums; min-width:26px; text-align:right;}
 .mot-lad-unlock{flex:none; font-size:9px; color:var(--warn); font-weight:700; animation:unlockPulse 1.6s ease-in-out infinite;}
 @keyframes unlockPulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 .mot-src{font-size:8.5px; color:var(--muted); opacity:.7;}
@@ -2388,14 +2392,14 @@ function motivateCardHtml(m, todayKwh){
           var tp = next ? (cur - prevGoal) / span : 1;                            /* 档内进度 0-1+ */
           var pctShown = Math.min(100, Math.round(tp * 100));
           var unlock = (tp >= 0.8 && next) ? goals[doneCount + 1] : null;         /* ≥80% 解锁下一档 */
-          var fillW = Math.min(100, Math.max(0, (tp - 0.5) / 0.5 * 100));         /* 条从档内 50% 起显示 */
+          var fillW = Math.min(100, Math.max(0, tp * 100));                       /* 填充=档内全范围 0-100% */
           /* 已超越档：一行小图标汇总（隐藏未解锁） */
           var passed = doneCount > 0
-            ? '<span class="mot-lad-passed">'+done.map(function(g){ return g.icon; }).join(' ')+' '+I18N.t('已点亮 ')+doneCount+I18N.t(' 档')+'</span>'
+            ? '<span class="mot-lad-passed">'+done.map(function(g){ return '<i>'+g.icon+'</i>'; }).join('')+'<em>'+I18N.t('已点亮 ')+doneCount+I18N.t(' 档')+'</em></span>'
             : '<span class="mot-lad-passed dim">'+I18N.t('尚未点亮任何档位 · 继续燃烧！')+'</span>';
           var tierRow = next
-            ? '<div class="mot-lad-tier">'+next.icon+' <b>'+esc(next.name)+'</b>'+
-              '<span class="mot-lad-bar"><i style="left:50%;width:'+fillW.toFixed(1)+'%"></i></span>'+
+            ? '<div class="mot-lad-tier">'+next.icon+'<b>'+esc(next.name)+'</b>'+
+              '<span class="mot-lad-bar"><i style="width:'+fillW.toFixed(1)+'%"></i></span>'+
               '<span class="mot-lad-pct">'+pctShown+'%</span>'+
               (unlock ? '<span class="mot-lad-unlock">🎉 '+I18N.t('解锁 ')+unlock.icon+' '+esc(unlock.name)+'</span>' : '')+
               '</div>'
