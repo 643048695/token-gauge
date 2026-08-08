@@ -2396,8 +2396,8 @@ function motivateCardHtml(m, todayKwh){
           var fillW = Math.min(100, Math.max(0, tp * 100));                       /* 填充=档内全范围 0-100% */
           /* 超越多少人（Jellyfish 2026Q1：中位 5100万=50%位、P90 3.8亿=90%位，样本 12000 开发者；线性插值） */
           var med = goals[2].goal, p90 = goals[4].goal;
-          var pctile = cur >= p90 ? Math.min(99, 90 + (cur - p90) / p90 * 9)
-            : cur >= med ? 50 + (cur - med) / (p90 - med) * 40
+          var pctile = cur >= p90 ? Math.min(99, Math.round(90 + (cur - p90) / p90 * 9))
+            : cur >= med ? Math.round(50 + (cur - med) / (p90 - med) * 40)
             : Math.max(1, Math.round(cur / med * 50));
           var beatN = Math.round(12000 * pctile / 100);
           /* 已超越行：档位里程碑图标 + 社交激励（超越多少开发者） */
