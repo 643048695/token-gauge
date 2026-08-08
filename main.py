@@ -104,6 +104,11 @@ class _Api:
         self._app.kernel.refresh_now(provider_id)
         return {"refreshing": True}
 
+    def mini_ping(self, tag):
+        """迷你窗诊断探针：前端上报桥状态/按钮点击（记日志，便于定位真实环境问题）。"""
+        log.info("MINI-PROBE %s", str(tag)[:160])
+        return {"ok": True}
+
     def get_settings(self):
         return self._app.kernel.get_settings()
 

@@ -811,8 +811,6 @@ body::before{
 .pcard:hover::after{left:135%;}
 /* 动态燃烧太阳（统计区环形图 2026-08-08）：核心脉动 + 日冕光线公转 */
 .sun-core{transform-origin:70px 70px; animation:sunPulse 3.2s ease-in-out infinite;}
-.sun-rays{transform-origin:70px 70px; animation:sunSpin 26s linear infinite;}
-.sun-ray{stroke:var(--accent); stroke-width:1.6; opacity:.45; stroke-linecap:round;}
 .sun-switch{margin-left:8px; padding:2px 7px; border-radius:6px; border:1px solid var(--line);
   background:transparent; cursor:pointer; font-size:11px; line-height:1.2; transition:all .15s;}
 .sun-switch:hover{border-color:var(--accent); box-shadow:0 0 8px var(--glow);}
@@ -820,7 +818,6 @@ body::before{
   0%,100%{transform:scale(1); filter:drop-shadow(0 0 6px rgba(0,255,156,.5));}
   50%{transform:scale(1.07); filter:drop-shadow(0 0 16px rgba(0,255,156,.85));}
 }
-@keyframes sunSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 /* 成就解锁数字 pulse（成就页总览数字轻微呼吸） */
 .ach-ov-num{animation:healthPulse 3s ease-in-out infinite;}
 /* ---------- 成就页（2026-08-08） ---------- */
@@ -2256,15 +2253,6 @@ function statsSectionHtml(v, s){
     var pieSvg = '<svg viewBox="0 0 140 140" style="width:150px;height:150px;display:block;margin:0 auto;">'+
       /* 动态燃烧的太阳（3D 球体 3 风格，defs 在 sunGroupHtml 内生成） */
       '';
-    /* 日冕光线：8 条旋转的光线（慢速公转） */
-    pieSvg += '<g class="sun-rays">';
-    for(var ri = 0; ri < 8; ri++){
-      var ang = ri * 45, rad = ang * Math.PI / 180;
-      var x1 = (70 + Math.cos(rad) * 33).toFixed(1), y1 = (70 + Math.sin(rad) * 33).toFixed(1);
-      var x2 = (70 + Math.cos(rad) * 41).toFixed(1), y2 = (70 + Math.sin(rad) * 41).toFixed(1);
-      pieSvg += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" class="sun-ray"/>';
-    }
-    pieSvg += '</g>';
     /* 能量光环底座 */
     pieSvg += '<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="var(--accent)" stroke-width="21" opacity="0.07"/>';
     var offset = 0;

@@ -51,6 +51,8 @@
     transition: background .15s ease;
   }
   .drag-top:hover { background: rgba(255, 255, 255, 0.08); }
+  /* 按钮组抬升到拖拽区之上（否则点击被 drag-top 拦截，按钮永久失效） */
+  .topbtns{position:relative; z-index:10;}
   /* 右下角 resize 把手 */
   .resize-handle {
     position: absolute; right: 2px; bottom: 2px;
@@ -96,7 +98,8 @@
     letter-spacing: 2px;
     color: var(--muted);
     position: relative;
-    z-index: 8;   /* 高于拖拽区，保证按钮可点 */
+    /* z-index 不设（auto）：若设 8 会创建层叠上下文困住内部 topbtns(z10)，
+       导致按钮整体低于 drag-top(z9) 被拦截点击——drag-top 透明，logo 区仍可拖 */
   }
   .logo { display: flex; align-items: center; gap: 6px; }
   .logo .dot {
@@ -409,6 +412,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
   window.__miniRefresh = function(){
     if (window.__miniBusy) return;
     window.__miniBusy = true;
+    if (window.__miniProbe) window.__miniProbe('refresh-click');
     var r = document.getElementById('refresh');
     if (r) r.classList.add('spin');
     var done = function(){ window.__miniBusy = false; if (r) setTimeout(function(){ r.classList.remove('spin'); }, 600); };
@@ -422,6 +426,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
     task.then(done, done);
   };
   window.__miniHide = function(){
+    if (window.__miniProbe) window.__miniProbe('hide-click');
     if (window.pywebview && window.pywebview.api && window.pywebview.api.hide_mini) {
       window.pywebview.api.hide_mini().catch(function(){});
     }
@@ -429,6 +434,20 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 
    window.__initErr = null;
   window.addEventListener('error', function(e){ if(!window.__initErr) window.__initErr = 'evt:' + e.message; });
+  /* ===== 诊断探针（2026-08-08）：上报桥状态与按钮点击到后端日志 ===== */
+  (function(){
+    var probe = function(tag){
+      try{
+        if(window.pywebview && window.pywebview.api && window.pywebview.api.mini_ping){
+          window.pywebview.api.mini_ping(tag).catch(function(){});
+        }
+      }catch(e){}
+    };
+    window.__miniProbe = probe;
+    probe('boot:' + (window.pywebview && window.pywebview.api ? 'api-ok' : 'NO-API') +
+      '|' + String(location.href).slice(-24) +
+      '|err:' + (window.__initErr || 'none'));
+  })();
 
   /* DOM 交互绑定统一延迟到 DOM 就绪（WebView2 解析时序下立即执行可能取不到元素） */
   function initInteractions(){
