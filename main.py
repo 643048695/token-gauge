@@ -426,9 +426,15 @@ class DashboardApp:
         win = settings.get("window", {})
         w = int(win.get("mini_width", 300))
         h = int(win.get("mini_height", 170))
+        # 缓存破坏：URL 带文件 mtime 版本号，WebView2 磁盘缓存旧页面时强制重新加载
+        _mini_html = os.path.join(BASE_DIR, "ui", "mini_widget.html")
+        try:
+            _mini_html = "%s?v=%d" % (_mini_html, int(os.path.getmtime(_mini_html)))
+        except Exception:
+            pass
         self.mini_window = webview.create_window(
             "OC-GO Mini",
-            os.path.join(BASE_DIR, "ui", "mini_widget.html"),
+            _mini_html,
             width=w, height=h,
             frameless=True,
             # 不置顶：悬浮窗只待在桌面层，不盖在游戏/其他软件上层
@@ -812,6 +818,12 @@ class DashboardApp:
                 self.create_mini_window()
         else:
             self._win32_show(self._window_hwnd(self.mini_window), True)
+            # JS 桥自检：显示时若 pywebview.api 未就绪则重载页面（修复按钮/数据失效）
+            try:
+                self.mini_window.evaluate_js(
+                    "if(!(window.pywebview&&window.pywebview.api)){location.reload();}")
+            except Exception:
+                pass
 
     def hide_mini(self):
         if self.mini_window is not None:
