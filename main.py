@@ -337,11 +337,17 @@ class DashboardApp:
             self.main_window.events.closing += self._on_main_closing
         except Exception as _e: log.debug(f"main.py 异常: {_e}")
 
-    def _on_main_closing(self, event):
+    def _on_main_closing(self):
+        """关闭按钮（含 Alt+F4）统一走隐藏到托盘。
+
+        pywebview 6.2 closing 事件回调**无参数**（与 loaded 同坑）：签名带 event
+        会抛 TypeError，隐藏逻辑不执行、窗口直接关闭。取消关闭 = handler 有返回值
+        （返回 False 也会被收集进返回值集合，非空集合即触发 args.Cancel=True）。
+        """
         try:
-            event.preventDefault()
+            self.hide_main()
         except Exception as _e: log.debug(f"main.py 异常: {_e}")
-        self.hide_main()
+        return False
 
     def hide_main(self):
         if self.main_window is not None:
