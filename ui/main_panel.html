@@ -808,6 +808,18 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
 .ach-toast-icon{font-size:24px;flex:none;}
 .ach-toast-title{font-size:10.5px;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px;}
 .ach-toast-name{font-size:13px;font-weight:700;color:var(--text);}
+/* ---------- 今日燃烧面板（供应商卡片，成就感能量化类比） ---------- */
+.burn-panel{
+  margin:2px 12px 8px;padding:7px 10px;
+  background:rgba(0,255,156,.05);border:1px solid rgba(0,255,156,.18);border-radius:8px;
+  display:flex;flex-direction:column;gap:3px;
+}
+.burn-panel.idle{background:var(--card-hi);border-color:var(--border);}
+.burn-main{font-size:11.5px;color:var(--text);line-height:1.5;}
+.burn-main b{color:var(--accent);font-family:Consolas,monospace;}
+.burn-sub{font-size:10.5px;color:var(--accent);line-height:1.4;}
+.burn-mut{color:var(--muted);font-weight:400;}
+.burn-panel.idle .burn-sub{color:var(--muted);}
 /* ===== 凭据获取引导浮层（2026-08-08） ===== */
 .guide-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
 .guide-modal{width:min(560px,86vw);max-height:82vh;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 24px var(--glow);padding:18px 20px 14px;position:relative;}
@@ -1669,6 +1681,19 @@ function pagerGo(i){
   $$('#dashDots .pager-dot').forEach(function(d, di){ d.classList.toggle('active', di === i); });
 }
 
+/* 马力状态文案（成就感拟人）：按月度用量% 分级 */
+function burnStatus(pv){
+  var pct = 0;
+  ((pv && pv.limits) || []).forEach(function(l){
+    if(/monthly/i.test(String(l.label)) || l.id === 'monthly'){ pct = l.used_pct || 0; }
+  });
+  if(!pct && pv && pv.meta) pct = pv.meta.usage_percent || 0;
+  if(!pct) return '💤 ' + I18N.t('静默待命');
+  if(pct >= 80) return '🔥 ' + I18N.t('正在最大马力燃烧');
+  if(pct >= 40) return '⚡ ' + I18N.t('引擎全开');
+  if(pct >= 10) return '🏃 ' + I18N.t('高速巡航');
+  return '🌱 ' + I18N.t('怠速运转');
+}
 function dashCardHtml(pid, cfg, pv){
   cfg = cfg || { enabled:true, name:pid, config:{} };
   var st = statusOf(pv, cfg);
@@ -1748,6 +1773,25 @@ function dashCardHtml(pid, cfg, pv){
 
   var trHtml = tr ? '<div class="test-result '+(tr.ok===null?'running':(tr.ok?'ok':'fail'))+'">'+(tr.ok===null?I18N.t('测试中'):(tr.ok?I18N.t('连接成功'):I18N.t('失败')))+' · '+esc(tr.message)+'</div>' : '';
 
+  /* 今日燃烧面板：能量化类比（成就感）——token / 度电 / 书 / 马力状态 / 均速 */
+  var burnHtml = '';
+  if(pv && pv.today && !off){
+    var td = pv.today;
+    if(td.tokens > 0){
+      burnHtml = '<div class="burn-panel">'+
+        '<div class="burn-main">🔥 '+I18N.t('今日燃烧 ')+'<b>'+fmtNum(td.tokens)+'</b>'+I18N.t(' token')+
+        (td.kwh >= 0.01 ? '<span class="burn-mut">· ⚡ '+fmtNum(td.kwh)+I18N.t(' 度电')+'</span>' : '')+
+        (td.books >= 0.5 ? '<span class="burn-mut">· 📚 ≈'+td.books+I18N.t(' 本书')+'</span>' : '')+
+        '</div>'+
+        '<div class="burn-sub">'+burnStatus(pv)+
+        (td.per_sec > 0 ? '<span class="burn-mut"> · '+I18N.t('均速 ')+fmtNum(td.per_sec)+I18N.t(' token/s')+'</span>' : '')+
+        '</div>'+
+      '</div>';
+    } else {
+      burnHtml = '<div class="burn-panel idle"><div class="burn-sub">'+burnStatus(pv)+'</div></div>';
+    }
+  }
+
   return '<div class="card pcard '+st.key+'" data-pid="'+esc(pid)+'">'+
     '<span class="drag-grip no-drag" title="'+I18N.t('拖动排序')+'">⠿</span>'+
     '<div class="pcard-head">'+
@@ -1762,6 +1806,7 @@ function dashCardHtml(pid, cfg, pv){
     (cookieBad ? '<div class="cookie-bar">'+ICONS.warn+I18N.t('Cookie 已失效，请到「供应商」页更新凭据</div>')
       .replace('</div>', '')+helpBtnHtml(guideFor(pid, cfg), I18N.t('如何获取？'))+'</div>' : '')+
     limitsHtml+
+    burnHtml+
     metaChips+
     '<div class="card-foot">'+
       I18N.t('<span class="muted">最后更新 ')+fmtClock(pv ? pv.fetched_at : null)+'</span>'+

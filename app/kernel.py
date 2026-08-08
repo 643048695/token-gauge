@@ -28,6 +28,10 @@ from concurrent.futures import ThreadPoolExecutor
 from app import settings
 from app.notifier import Notifier
 
+# 燃烧/成就推算口径（与 opencode_go.py 保持一致）
+MONTHLY_LIMIT_USD = 60.0   # opencode Go 月度限额（美元）
+DEFAULT_PRICE = 2.0        # 默认输出费率（美元/百万 token，DeepSeek V4 Flash 口径）
+
 
 class Kernel:
     """调度内核：负责 provider 实例化、周期/手动抓取、缓存与视图组装。"""
@@ -219,6 +223,60 @@ class Kernel:
         # 抓取完成后检查成就（消耗/坚持/配置类都依赖最新快照）
         self.check_achievements()
 
+    def _today_burn(self, snaps: list) -> dict:
+        """今日消耗推算：{tokens, usd, kwh}。
+
+        - opencode 类（有 monthly_pct）：今日增量 = 最新 pct − 今日 0 点前最后一条的 pct
+          （今日全部快照 → 以今日首条为基准，只算今日内的增长）
+        - API 类（仅 balance）：今日余额差值 → 按 $2/M 费率折算（v0.1 简化口径）
+        - 1M token ≈ 1 度电（比喻换算，非精确能耗）
+        """
+        if not snaps:
+            return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0}
+        from datetime import datetime
+        today0 = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        pct_snaps = [s for s in snaps if (s.get("monthly_pct") or 0) > 0]
+        if pct_snaps:
+            before = [s for s in pct_snaps if (s.get("ts") or 0) < today0]
+            today = [s for s in pct_snaps if (s.get("ts") or 0) >= today0]
+            if not today:
+                return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0}
+            pct_start = before[-1]["monthly_pct"] if before else today[0]["monthly_pct"]
+            pct_end = today[-1]["monthly_pct"]
+            delta = max(0.0, float(pct_end) - float(pct_start))
+            tokens = int(delta / 100.0 * MONTHLY_LIMIT_USD / DEFAULT_PRICE * 1_000_000)
+            usd = round(delta / 100.0 * MONTHLY_LIMIT_USD, 2)
+            return self._burn_pack(tokens, usd)
+        # API 类：余额差值（原币种金额 → 按 $2/M 与 7.2 汇率折算）
+        bal_snaps = [(s.get("ts") or 0, s.get("balance") or 0) for s in snaps if "balance" in s]
+        bal_snaps.sort()
+        if len(bal_snaps) >= 2:
+            today_b = [b for t, b in bal_snaps if t >= today0]
+            if not today_b:
+                return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0}
+            before_b = [b for t, b in bal_snaps if t < today0]
+            base = before_b[-1] if before_b else today_b[0]
+            diff = max(0.0, float(base) - float(today_b[-1]))
+            if diff <= 0:
+                return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0}
+            usd = round(diff / 7.2, 2)
+            tokens = int(usd / DEFAULT_PRICE * 1_000_000)
+            return self._burn_pack(tokens, usd)
+        return {"tokens": 0, "usd": 0.0, "kwh": 0.0, "books": 0.0}
+
+    def _burn_pack(self, tokens: int, usd: float) -> dict:
+        """燃烧数据包装：度电（1M≈1 度）、书籍（1 本≈18.5 万 token，业界通用口径）、均速。"""
+        from datetime import datetime
+        today0 = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        secs = max(1, int(time.time() - today0))
+        return {
+            "tokens": tokens,
+            "usd": usd,
+            "kwh": round(tokens / 1_000_000, 2),
+            "books": round(tokens / 185_000, 1),
+            "per_sec": round(tokens / secs, 1),
+        }
+
     def _snapshots_map(self) -> dict:
         """全部 provider 的快照历史（成就统计用）。"""
         from app import store
@@ -307,6 +365,14 @@ class Kernel:
             for pid in self._provider_order():
                 r = self._build_provider_view(pid, interval, now)
                 if r is not None:
+                    # 今日燃烧（成就感的能量化类比：token/度电/书）
+                    try:
+                        from app import store
+                        snaps = store.snapshots(pid)
+                        if snaps:
+                            r["today"] = self._today_burn(snaps)
+                    except Exception:
+                        pass
                     providers_view[pid] = r
                     ts = self._last_success_at.get(pid)
                     if ts and (fetched_at is None or ts > fetched_at):
