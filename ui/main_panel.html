@@ -2374,14 +2374,15 @@ function motivateCardHtml(m, todayKwh){
       '<div class="mot-bench-l">'+
         /* 基准渐进解锁条（2026-08-09 v3：只显示当前档附近，隐藏未解锁；条从档内 50% 起，≥80% 解锁下一档——避免长条挫败感） */
         (function(){
+          var cur = m.month_tokens || 0;
           var goals = [
             { name: I18N.t('入门'),   goal: 5000000 },
             { name: I18N.t('活跃'),   goal: 25000000 },
             { name: I18N.t('中位数'), goal: m.median_tokens || 51000000 },
-            { name: I18N.t('月度额度'), goal: Math.round(m.month_tokens / Math.max(1, m.month_pct) * 100) },
+            /* 本月消耗：滚动目标 = 当前值 ×1.1 向上取整到整亿（无 $60 概念，持续刷新自己的月度记录） */
+            { name: I18N.t('本月消耗'), goal: Math.max(100000000, Math.ceil(cur * 1.1 / 100000000) * 100000000) },
             { name: I18N.t('前 10%'),  goal: m.p90_tokens || 380000000 },
           ];
-          var cur = m.month_tokens || 0;
           var done = goals.filter(function(g){ return cur >= g.goal; });          /* 已超越档 */
           var doneCount = done.length;
           var next = goals[doneCount];                                            /* 当前档（进行中） */
