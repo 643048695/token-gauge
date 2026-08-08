@@ -762,6 +762,7 @@ def _make_template_provider(tid: str):
     t = tpl.TEMPLATES.get(tid, {})
     tname = t.get("name", tid)
     tguide = t.get("guide", "")
+    tsite = t.get("site", "")
 
     class _TemplateProvider(ApiProvider):
         id = tid
@@ -769,6 +770,7 @@ def _make_template_provider(tid: str):
         plan_name = tname
         template_id = tid
         cred_guide = tguide  # 凭据引导 id（api-key 等），前端 ❓ 弹获取指引
+        site = tsite        # 官网（卡片 🌐 按钮）
         schema = _build_template_schema(tid)
 
     _TemplateProvider.__name__ = f"TemplateProvider_{tid}"

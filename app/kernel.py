@@ -401,6 +401,13 @@ class Kernel:
     def _build_provider_view(self, pid: str, interval: int,
                              now: float) -> dict | None:
         """组装单个 provider 的视图结果（含 stale 标注与占位）。"""
+        # 官网 URL：类型固有属性（不依赖抓取结果，未抓取/失败也显示官网按钮）
+        site = ""
+        try:
+            p = self._providers.get(pid)
+            site = getattr(p, "site", "") or ""
+        except Exception:
+            pass
         if pid not in self._cache:
             # 尚未抓取过（例如刚启用），给占位结果，避免前端缺字段
             return {
@@ -408,6 +415,7 @@ class Kernel:
                 "error": "尚未抓取", "cookie_valid": False,
                 "fetched_at": None,
                 "limits": [], "balance": {}, "meta": {},
+                "site": site,
             }
         r = self._cache[pid]
         # 最近一次尝试失败且存在成功历史 → 展示成功缓存并标注
@@ -420,7 +428,10 @@ class Kernel:
             err = self._last_error.get(pid)
             if err:
                 out["last_error"] = err
+            out["site"] = site or out.get("site") or ""
             return out
+        r = dict(r)
+        r["site"] = site or r.get("site") or ""
         return r
 
     def _load_theme_css(self) -> str:
@@ -502,6 +513,7 @@ class Kernel:
                 "plan_name": getattr(cls, "plan_name", ""),
                 "schema": list(getattr(cls, "schema", [])),
                 "guide": getattr(cls, "cred_guide", "") or None,
+                "site": getattr(cls, "site", "") or None,
             })
         return types
 
