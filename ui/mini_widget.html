@@ -568,7 +568,7 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
                      : pctVal != null && pctVal >= 80 ? 'background:var(--warn);box-shadow:0 0 5px var(--warn);'
                      : '';
       row.innerHTML =
-        '<span class="label">' + esc(l.label || l.id) + '</span>' +
+        '<span class="label">' + I18N.t(esc(l.label || l.id)) + '</span>' +
         '<span class="mini"><i style="width:' + p + '%' + (barColor ? ';' + barColor : '') + '"></i></span>' +
         '<b>' + (pctVal == null ? '--' : Math.round(pctVal) + '%') + '</b>' +
         '<span class="reset">' + fmtReset(l.reset_in_sec) + '</span>';

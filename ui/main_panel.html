@@ -1100,7 +1100,7 @@ body::before{
   <span class="tk-cell"><span class="k" data-i18n="昨日">昨日</span><span class="v" id="tkYest">—</span></span>
   <span class="tk-cell"><span class="k" data-i18n="均速">均速</span><span class="v" id="tkSpeed">—</span></span>
   <div class="tk-right">
-    <span class="tk-flag ok" id="tkFlag2" title="当前消耗状态标签：引擎全开 / 正常巡航 / 待机 / 停烧"></span>
+    <span class="tk-flag ok" id="tkFlag2" data-i18n-title="当前消耗状态标签：引擎全开 / 正常巡航 / 待机 / 停烧" title="当前消耗状态标签：引擎全开 / 正常巡航 / 待机 / 停烧"></span>
   </div>
 </div>
 
@@ -1710,6 +1710,7 @@ async function fetchView(){
       I18N.setLang(v.settings.ui.lang);
       I18N.apply();
       if(window.renderAll) renderAll();
+      if(typeof tkCalibrate === 'function') tkCalibrate(v);   /* Ticker 数字按新语言重格式化（90 万→900K） */
     }
     lastViewOkAt = Date.now();
     /* 成功：清掉失败重试定时器 */
@@ -2311,7 +2312,7 @@ document.addEventListener('click', function(e){
     box.setAttribute('data-tier', realT.key);
     box.querySelector('.tt-stage').innerHTML = TT_ELS[realT.key];
     box.querySelector('.tt-label').textContent = I18N.t(realT.name);
-    box.querySelector('.tt-note').textContent = I18N.t(realT.note.replace('{v}', String(rv)));
+    box.querySelector('.tt-note').textContent = I18N.t(realT.notePre) + rv + I18N.t(realT.notePost);
     if(badge) badge.hidden = true;
   } else {
     var t = TT_TIERS[next];
@@ -2319,7 +2320,7 @@ document.addEventListener('click', function(e){
     box.setAttribute('data-tier', t.key);
     box.querySelector('.tt-stage').innerHTML = TT_ELS[t.key];
     box.querySelector('.tt-label').textContent = I18N.t(t.name);
-    box.querySelector('.tt-note').textContent = I18N.t(t.note.replace('{v}', String(v)));
+    box.querySelector('.tt-note').textContent = I18N.t(t.notePre) + v + I18N.t(t.notePost);
     if(badge) badge.hidden = false;
   }
 });
@@ -2333,12 +2334,12 @@ var TT_ELS = {
   lv6: '<svg class="tt-svg" viewBox="0 0 64 64"><g class="tt-atom-orbit"><ellipse cx="32" cy="32" rx="22" ry="8"/><ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(60 32 32)"/><ellipse cx="32" cy="32" rx="22" ry="8" transform="rotate(120 32 32)"/></g><g class="tt-atom-e"><circle cx="54" cy="32" r="2"/></g><circle class="tt-atom-nucleus" cx="32" cy="32" r="4.5"/></svg>'
 };
 var TT_TIERS = [
-  { min: 0,   key: 'lv1', name: '📱 手机充电', note: '今日 ≈ 充 {v} 次手机',   per: 50 },
-  { min: 1,   key: 'lv2', name: '☕ 煮咖啡',   note: '今日 ≈ 煮 {v} 杯咖啡',   per: 20 },
-  { min: 3,   key: 'lv3', name: '🍞 烤面包',   note: '今日 ≈ 烤 {v} 次面包',   per: 2.5 },
-  { min: 10,  key: 'lv4', name: '🚗 开车',     note: '今日 ≈ 开车 {v} 公里',   per: 6.7 },
-  { min: 50,  key: 'lv5', name: '🖥️ 服务器跑', note: '今日 ≈ 服务器跑 {v} 天', per: 0.42 },
-  { min: 200, key: 'lv6', name: '⚛️ 核能',     note: '今日 ≈ 核电站发电 {v} 秒', per: 0.0036 },
+  { min: 0,   key: 'lv1', name: '📱 手机充电', notePre: '今日 ≈ 充 ', notePost: ' 次手机',   per: 50 },
+  { min: 1,   key: 'lv2', name: '☕ 煮咖啡',   notePre: '今日 ≈ 煮 ', notePost: ' 杯咖啡',   per: 20 },
+  { min: 3,   key: 'lv3', name: '🍞 烤面包',   notePre: '今日 ≈ 烤 ', notePost: ' 次面包',   per: 2.5 },
+  { min: 10,  key: 'lv4', name: '🚗 开车',     notePre: '今日 ≈ 开车 ', notePost: ' 公里',   per: 6.7 },
+  { min: 50,  key: 'lv5', name: '🖥️ 服务器跑', notePre: '今日 ≈ 服务器跑 ', notePost: ' 天', per: 0.42 },
+  { min: 200, key: 'lv6', name: '⚛️ 核能',     notePre: '今日 ≈ 核电站发电 ', notePost: ' 秒', per: 0.0036 },
 ];
 function motTierHtml(kwh){
   kwh = Number(kwh) || 0;
@@ -2348,7 +2349,7 @@ function motTierHtml(kwh){
   return '<div class="mot-tier-box" data-tier="'+t.key+'" data-real-kwh="'+kwh.toFixed(2)+'" title="'+I18N.t('点击切换档位（测试模式）')+'">'+
     '<div class="tt-stage">'+TT_ELS[t.key]+'</div>'+
     '<div class="tt-label">'+I18N.t(t.name)+'</div>'+
-    '<div class="tt-note">'+I18N.t(t.note.replace('{v}', String(v)))+'</div>'+
+    '<div class="tt-note">'+I18N.t(t.notePre)+v+I18N.t(t.notePost)+'</div>'+
     '<div class="tt-test-badge" hidden>🎛 '+I18N.t('测试档位 · 点击返回真实')+'</div>'+
   '</div>';
 }
@@ -2356,6 +2357,13 @@ function motivateCardHtml(m, todayKwh){
   if(!m || !m.month_tokens) return '';
   var fmt = function(n){
     n = Number(n) || 0;
+    if(I18N.getLang() === 'en'){
+      if(n >= 1000000000) return (Math.round(n/100000000)/10)+'B';
+      if(n >= 1000000) return (Math.round(n/100000)/10)+'M';
+      if(n >= 10000) return Math.round(n/1000)+'K';
+      if(n % 1 !== 0) return String(Math.round(n * 10) / 10);
+      return String(Math.round(n));
+    }
     if(n >= 100000000) return (Math.round(n/10000000)/10)+'亿';
     if(n >= 10000) return (Math.round(n/1000)/10)+'万';
     if(n % 1 !== 0) return String(Math.round(n * 10) / 10);
@@ -3216,8 +3224,8 @@ function renderAppearance(){
         '<div class="diy-grid">'+
         I18N.t('<div class="diy-row"><span class="diy-lbl">余额大卡</span><label class="switch"><input type="checkbox" id="diyBalMain" ')+(diyMods.balance.bal_main?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         I18N.t('<div class="diy-row"><span class="diy-lbl">消耗指标（今日/日均/还能撑）</span><label class="switch"><input type="checkbox" id="diyBalGrid" ')+(diyMods.balance.meta_grid?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
-        I18N.t('<div class="diy-row"><span class="diy-lbl">Token 预估</span><label class="switch"><input type="checkbox" id="diyBalTok" ')+(diyMods.balance.token_est?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
-        I18N.t('<div class="diy-row"><span class="diy-lbl">底部统计区（柱形/扇形）</span><label class="switch"><input type="checkbox" id="diyBalChart" ')+(diyMods.balance.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '<div class="diy-row"><span class="diy-lbl">'+I18N.t('Token 预估')+'</span><label class="switch"><input type="checkbox" id="diyBalTok" '+(diyMods.balance.token_est?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
+        '<div class="diy-row"><span class="diy-lbl">'+I18N.t('底部统计区（柱形/扇形）')+'</span><label class="switch"><input type="checkbox" id="diyBalChart" '+(diyMods.balance.chart?'checked':'')+(disabled?' disabled':'')+'><span class="knob"></span></label></div>'+
         '</div>'+
         I18N.t('<div class="diy-sec">订阅卡（OpenCode Go）</div>')+
         '<div class="diy-grid">'+
@@ -3227,17 +3235,17 @@ function renderAppearance(){
       '</div>'+
     '</div>'+
 
-    I18N.t('<div class="set-group"><div class="set-title">计量单位</div>')+
+    '<div class="set-group"><div class="set-title">'+I18N.t('计量单位')+'</div>'+
       '<div class="card">'+
-        I18N.t('<div style="font-size:11px;color:var(--muted);margin-bottom:8px">金额与消耗显示口径（卡片 + 底部统计区）</div>')+
+        '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+I18N.t('金额与消耗显示口径（卡片 + 底部统计区）')+'</div>'+
         '<div class="opt-group">'+
-          '<button class="opt-btn'+(dUnit==='auto'?' active':'')+'" data-unit="auto" '+(disabled?'disabled':'')+I18N.t('>自动（原币种）</button>')+
-          '<button class="opt-btn'+(dUnit==='usd'?' active':'')+'" data-unit="usd" '+(disabled?'disabled':'')+I18N.t('>美元</button>')+
-          '<button class="opt-btn'+(dUnit==='cny'?' active':'')+'" data-unit="cny" '+(disabled?'disabled':'')+I18N.t('>人民币</button>')+
-          '<button class="opt-btn'+(dUnit==='tokens'?' active':'')+'" data-unit="tokens" '+(disabled?'disabled':'')+I18N.t('>Tokens</button>')+
+          '<button class="opt-btn'+(dUnit==='auto'?' active':'')+'" data-unit="auto" '+(disabled?'disabled':'')+'>'+I18N.t('自动（原币种）')+'</button>'+
+          '<button class="opt-btn'+(dUnit==='usd'?' active':'')+'" data-unit="usd" '+(disabled?'disabled':'')+'>'+I18N.t('美元')+'</button>'+
+          '<button class="opt-btn'+(dUnit==='cny'?' active':'')+'" data-unit="cny" '+(disabled?'disabled':'')+'>'+I18N.t('人民币')+'</button>'+
+          '<button class="opt-btn'+(dUnit==='tokens'?' active':'')+'" data-unit="tokens" '+(disabled?'disabled':'')+'>'+I18N.t('Tokens')+'</button>'+
         '</div>'+
         '<div class="slider-row" style="margin-top:10px">'+
-          I18N.t('<div class="slider-top"><span>汇率 1 USD = ? CNY</span><span class="v">')+fxRate+'</span></div>'+
+          '<div class="slider-top"><span>'+I18N.t('汇率 1 USD = ? CNY')+'</span><span class="v">'+fxRate+'</span></div>'+
           '<input type="number" id="fxRate" min="1" max="30" step="0.1" value="'+fxRate+'" '+(disabled?'disabled':'')+' style="width:100%">'+
         '</div>'+
       '</div>'+
@@ -3529,6 +3537,12 @@ function achLangName(a){ return I18N.getLang() === 'en' ? (a.name_en || a.name) 
 function achLangDesc(a){ return I18N.getLang() === 'en' ? (a.desc_en || a.desc) : a.desc; }
 function fmtNum(n){
   if(n == null) return '0';
+  if(I18N.getLang() === 'en'){
+    if(n >= 1e9) return (n/1e9).toFixed(1).replace(/\.0$/,'') + 'B';
+    if(n >= 1e6) return (n/1e6).toFixed(1).replace(/\.0$/,'') + 'M';
+    if(n >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'') + 'K';
+    return String(n);
+  }
   if(n >= 1e8) return (n/1e8).toFixed(1).replace(/\.0$/,'') + ' 亿';
   if(n >= 1e4) return (n/1e4).toFixed(1).replace(/\.0$/,'') + ' 万';
   return String(n);
@@ -3610,7 +3624,7 @@ function achToast(a){
   t.innerHTML = '<div class="ach-toast-icon">'+(a.icon||'🏆')+'</div>'+
     '<div class="ach-toast-body">'+
       '<div class="ach-toast-title">'+I18N.t('成就已解锁')+'</div>'+
-      '<div class="ach-toast-name">'+esc(a.name)+'</div>'+
+      '<div class="ach-toast-name">'+esc(achLangName(a))+'</div>'+
     '</div>';
   document.body.appendChild(t);
   setTimeout(function(){ t.classList.add('show'); }, 30);
