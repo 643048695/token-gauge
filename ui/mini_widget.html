@@ -20,7 +20,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
   html, body { background: #080e0c; overflow: hidden; height: 100%; }
   body {
-    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    font-family:var(--font-ui);
     color: var(--text);
   }
 
@@ -139,7 +139,7 @@
     overflow: hidden;
   }
   .today .big {
-    font-family: Consolas, "JetBrains Mono", monospace;
+    font-family:var(--font-num);
     font-size: clamp(22px, 14vh, 30px); font-weight: 800;
     color: var(--accent);
     text-shadow: 0 0 12px var(--glow), 0 0 28px var(--glow);
@@ -159,7 +159,7 @@
     display: flex; justify-content: space-between; align-items: baseline;
     font-size: 8.5px; letter-spacing: 1.5px; color: var(--muted);
   }
-  .barhead .val { color: var(--accent); font-family: Consolas, monospace; font-size: 10px; }
+  .barhead .val { color: var(--accent); font-family:var(--font-num); font-size: 10px; }
   .bar {
     height: 5px; border-radius: 3px;
     background: rgba(255, 255, 255, 0.06);
@@ -177,7 +177,7 @@
     display: flex; justify-content: space-between; align-items: baseline;
     font-size: 8px; color: var(--muted); letter-spacing: 0.5px;
   }
-  .barfoot b { color: var(--text); font-weight: 600; font-family: Consolas, monospace; font-size: 9px; }
+  .barfoot b { color: var(--text); font-weight: 600; font-family:var(--font-num); font-size: 9px; }
 
   /* 底部小字 */
   .subrow {
@@ -189,7 +189,7 @@
   }
   .subrow .item { display: flex; gap: 4px; align-items: baseline; white-space: nowrap; }
   .subrow b {
-    font-family: Consolas, monospace; font-weight: 600; color: var(--text);
+    font-family:var(--font-num); font-weight: 600; color: var(--text);
     font-size: 10px; font-variant-numeric: tabular-nums;
   }
   .subrow b.good { color: var(--accent); text-shadow: 0 0 6px var(--glow); }
@@ -231,7 +231,7 @@
   }
   .dstat { display: flex; justify-content: space-between; align-items: baseline; font-size: 9px; color: var(--muted); }
   .dstat b {
-    color: var(--text); font-weight: 600; font-family: Consolas, monospace;
+    color: var(--text); font-weight: 600; font-family:var(--font-num);
     font-size: 10px; font-variant-numeric: tabular-nums;
   }
   .dstat b.good { color: var(--accent); }
@@ -254,7 +254,7 @@
   .drow b {
     width: 34px; text-align: right; flex: none;
     color: var(--text); font-weight: 600;
-    font-family: Consolas, monospace; font-size: 10px;
+    font-family:var(--font-num); font-size: 10px;
     font-variant-numeric: tabular-nums;
   }
   .drow .reset { width: 46px; text-align: right; flex: none; font-size: 8px; }
@@ -290,7 +290,7 @@ body.style-pet .pet-face{font-size:56px;}
 .lb-wave{position:absolute; top:-12px; left:-80px; right:-80px; height:14px; background:radial-gradient(ellipse at center, rgba(255,255,255,.32) 55%, transparent 56%) repeat-x; background-size:46px 14px; animation:lbWave 2.8s linear infinite;}
 @keyframes lbWave{0%{transform:translateX(0);}100%{transform:translateX(46px);}}
 .lb-center{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; pointer-events:none; gap:0;}
-.lb-pct{font-family:Consolas,monospace; font-size:26px; font-weight:700; color:var(--text); text-shadow:0 1px 3px rgba(0,0,0,.45); line-height:1;}
+.lb-pct{font-family:var(--font-num); font-size:26px; font-weight:700; color:var(--text); text-shadow:0 1px 3px rgba(0,0,0,.45); line-height:1;}
 .lb-unit{font-size:10px; color:var(--muted); letter-spacing:1px;}
 
 /* ============ 前端优化层（design-taste：统一状态/焦点/动效/对比度） ============ */
@@ -301,6 +301,9 @@ body.style-pet .pet-face{font-size:56px;}
   --transition:.18s cubic-bezier(.16,1,.3,1);
   --focus-ring:0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
   --grid-line:rgba(128,128,128,.13);
+  /* 字体 token（与主面板一致；主题可覆盖） */
+  --font-ui:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+  --font-num:Consolas,"JetBrains Mono",monospace;
 }
 /* 滚动条（细 + 主题灰） */
 ::-webkit-scrollbar{width:8px;height:8px;}
@@ -498,6 +501,12 @@ input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent)
   function fmtTokens(v) {
     const n = Number(v);
     if (n == null || isNaN(n)) return '—';
+    if (I18N.getLang() === 'en') {
+      if (Math.abs(n) >= 1000000000) return (n / 1000000000).toFixed(1) + 'B';
+      if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (Math.abs(n) >= 10000) return Math.round(n / 1000) + 'K';
+      return Math.round(n) + '';
+    }
     if (Math.abs(n) >= 100000000) return (n / 100000000).toFixed(1) + '亿';
     if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + 'M';
     if (Math.abs(n) >= 10000) return Math.round(n / 10000) + '万';
