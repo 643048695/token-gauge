@@ -682,10 +682,10 @@ input[type=range]:disabled{opacity:.4;}
 .stats-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;min-width:0;}
 .stats-card h4{margin:0 0 10px;font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px;}
 .stats-card h4 .u{color:var(--accent);font-weight:400;}
-.stats-bar{width:100%;display:block;height:auto;}
+.stats-bar{width:100%;display:block;height:auto;aspect-ratio:422/184;}
 /* 任务B：统计区图表主题化 —— SVG 元素用 CSS 变量（--line/--muted/--text/--radius），随 themes.py 5 风格联动 */
 .sb-grid{stroke:var(--line);stroke-width:1;}
-.sb-day{fill:var(--muted);font-family:var(--font-num);}
+.sb-day{fill:var(--muted);font-family:var(--font-num);font-size:10px;}
 .sb-day.today{fill:var(--accent);font-weight:700;}
 .sb-val{fill:var(--text);font-family:var(--font-num);font-size:9px;font-weight:600;}
 .sb-val.today{fill:var(--accent);font-size:12px;font-weight:800;filter:drop-shadow(0 0 4px var(--glow));}
@@ -2515,6 +2515,7 @@ function fitStatChart(){
       }
     });
     svg.setAttribute('viewBox', '0 0 ' + Math.round(w) + ' ' + vb[3]);
+    svg.style.aspectRatio = Math.round(w) + ' / ' + vb[3];   /* 高度同步 viewBox 比例：日期标签（y=174）不被切出可视区 */
   }catch(e){}
 }
 var _fitChartTimer = null;
@@ -2522,6 +2523,16 @@ window.addEventListener('resize', function(){
   clearTimeout(_fitChartTimer);
   _fitChartTimer = setTimeout(function(){ fitStatChart(); }, 200);
 });
+/* 渲染路径全覆盖：dashGrid 内容变化（切页/刷新/语言切换）→ 防抖 fit（幂等：宽度匹配自动跳过） */
+(function(){
+  var grid = document.getElementById('dashGrid');
+  if(grid && window.MutationObserver){
+    new MutationObserver(function(){
+      clearTimeout(_fitChartTimer);
+      _fitChartTimer = setTimeout(fitStatChart, 150);
+    }).observe(grid, { childList: true, subtree: false });
+  }
+})();
 
 function statsSectionHtml(v, s){
   var dm = (s.diy && s.diy.modules) || {};
