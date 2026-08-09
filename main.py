@@ -29,7 +29,10 @@ from app.settings import load as load_settings
 webview.settings['DRAG_REGION_SELECTOR'] = '#titlebar, .pywebview-drag-region'
 webview.settings['DRAG_REGION_DIRECT_TARGET_ONLY'] = True
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(sys.executable)   # 打包后：config/日志存 exe 旁（可写、持久）
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOCK_PORT = 48321  # 单实例锁端口
 UI_STATE_FILE = os.path.join(BASE_DIR, ".ui_state.json")
 
