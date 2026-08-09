@@ -685,7 +685,7 @@ input[type=range]:disabled{opacity:.4;}
 .stats-bar{width:100%;display:block;height:184px;}
 /* 任务B：统计区图表主题化 —— SVG 元素用 CSS 变量（--line/--muted/--text/--radius），随 themes.py 5 风格联动 */
 .sb-grid{stroke:var(--line);stroke-width:1;}
-.sb-day{fill:var(--muted);font-family:var(--font-num);font-size:10px;}
+.sb-day{fill:var(--text);font-family:var(--font-num);font-size:11px;font-weight:600;}
 .sb-day.today{fill:var(--accent);font-weight:700;}
 .sb-val{fill:var(--text);font-family:var(--font-num);font-size:9px;font-weight:600;}
 .sb-val.today{fill:var(--accent);font-size:12px;font-weight:800;filter:drop-shadow(0 0 4px var(--glow));}
@@ -2601,7 +2601,7 @@ function statsSectionHtml(v, s){
       /* 今日柱背景光（能量汇聚感） */
       bar += '<rect x="'+(32 + d2*bw - 6)+'" y="'+topBar+'" width="'+(bw - 8)+'" height="'+(bh - 10)+'" fill="var(--accent)" opacity="0.05" rx="8"/>';
     }
-    bar += '<text class="sb-day'+(isTodayD?' today':'')+'" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+24)+'" font-size="9" text-anchor="middle">'+lbl+'</text>';
+    bar += '<text class="sb-day'+(isTodayD?' today':'')+'" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+22)+'" font-size="11" text-anchor="middle">'+lbl+'</text>';
     var cum = 0;
     var x = 32 + d2*bw;
     var _bs = themeBarStyle();
