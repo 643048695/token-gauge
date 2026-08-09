@@ -682,7 +682,7 @@ input[type=range]:disabled{opacity:.4;}
 .stats-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;min-width:0;}
 .stats-card h4{margin:0 0 10px;font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px;}
 .stats-card h4 .u{color:var(--accent);font-weight:400;}
-.stats-bar{width:100%;display:block;}
+.stats-bar{width:100%;display:block;height:auto;}
 /* 任务B：统计区图表主题化 —— SVG 元素用 CSS 变量（--line/--muted/--text/--radius），随 themes.py 5 风格联动 */
 .sb-grid{stroke:var(--line);stroke-width:1;}
 .sb-day{fill:var(--muted);font-family:var(--font-num);}
@@ -715,6 +715,7 @@ input[type=range]:disabled{opacity:.4;}
 /* 卡片双列流式布局（2026-08-09 修复：columns 多列在定高容器下横向溢出裁切 → flex wrap 纵向可滚动） */
 #dashGrid{display:flex; flex-wrap:wrap; gap:var(--gap); align-items:flex-start;}
 #dashGrid > .pcard{width:calc(50% - var(--gap) / 2); min-width:0; margin:0;}
+#dashGrid > .stats-section{width:100%; flex:0 0 auto;}   /* 统计区（含柱形图）通栏整行，跟随容器宽度动态调整 */
 @media (max-width:760px){#dashGrid > .pcard{width:100%;}}
 
 /* 成就激励卡片（2026-08-08）：燃烧引擎通栏卡 */
@@ -2501,7 +2502,7 @@ function statsSectionHtml(v, s){
     var cur = (pv.balance && pv.balance.currency) || '';
     var today = null, week = null;
     if(kind === 'balance'){ today = sp.today_amount != null ? Number(sp.today_amount) : null; week = (sp.week || []).map(Number); }
-    else if(kind === 'quota'){ today = m.today_tokens != null ? Number(m.today_tokens) : null; week = (m.week_tokens || []).map(Number); }
+    else if(kind === 'quota'){ today = m.today_tokens != null ? Number(m.today_tokens) : (m.today && m.today.today_tokens != null ? Number(m.today.today_tokens) : null); week = (m.week_tokens || []).map(Number); }
     else if(kind === 'relay'){ today = sp.today_amount != null ? Number(sp.today_amount) : null; week = (sp.week || []).map(Number); }
     if(today == null && (!week || !week.length)) return;
     rows.push({ pid: pid, name: cfg.name || pid, color: chartColors[idx % chartColors.length],

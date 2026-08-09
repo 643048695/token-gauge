@@ -237,6 +237,7 @@ class OpenCodeGoProvider(Provider):
         today["today_tokens"] = int(today.get("delta_pct", 0.0) / 100.0 * total_tokens)
         week_tokens = [int(v / 100.0 * total_tokens) for v in week_pct]
         return {
+            "kind": "quota",
             "today": today,
             "speed": self._speed_meta(current_pct, snaps, now),
             "week_pct": week_pct,
