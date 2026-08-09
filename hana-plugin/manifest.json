@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "id": "oc-go-widget",
-  "name": "OC-GO Widget",
+  "name": "TokenGauge Widget",
   "version": "0.1.0",
   "description": "跟随 HanaAgent 生命周期：启动时拉起右下角 OpenCode Go 用量监控小组件，退出时回收进程。",
   "minAppVersion": "0.171.3",

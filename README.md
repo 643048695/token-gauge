@@ -1,6 +1,6 @@
-# OC-GO Dashboard v0.2
+# TokenGauge — LLM 用量余量监控（token 油表）
 
-OpenCode Go 额度监控桌面工具：多供应商额度仪表盘 + 设置中心（主题/透明度/通知 DIY）。
+> 多供应商 LLM 额度/余量监控桌面工具：一眼看清各家模型还剩多少 token、还能烧多久。原名 OC-GO Dashboard。
 
 ## 运行
 

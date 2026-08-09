@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""OC-GO Dashboard 应用包。
+"""TokenGauge 应用包。
 
 多模块架构：
 - settings : 配置读写（config.json）

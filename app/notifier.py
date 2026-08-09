@@ -50,7 +50,7 @@ class Notifier:
         if method == "system":
             try:
                 from winotify import Notification  # 可选依赖
-                toast = Notification(app_id="OC-GO Dashboard",
+                toast = Notification(app_id="TokenGauge",
                                      title=title, msg=body)
                 toast.show()
                 return
@@ -96,7 +96,7 @@ class Notifier:
                 self._fail_streak[provider_id] = streak
                 if streak >= 3 and events.get(EV_FETCH_FAIL, True):
                     self._fire(provider_id, EV_FETCH_FAIL, method,
-                               "OC-GO：连续抓取失败",
+                               "TokenGauge：连续抓取失败",
                                f"已连续 {streak} 次抓取失败，请检查网络或凭据")
             else:
                 # 恢复成功：重置失败计数与去重状态
@@ -107,7 +107,7 @@ class Notifier:
             if result.get("cookie_valid") is False:
                 if events.get(EV_COOKIE_FAIL, True):
                     self._fire(provider_id, EV_COOKIE_FAIL, method,
-                               "OC-GO：凭据失效",
+                               "TokenGauge：凭据失效",
                                "登录凭据已失效，请打开主面板更新")
             else:
                 self._fired.discard((provider_id, EV_COOKIE_FAIL))
@@ -116,11 +116,11 @@ class Notifier:
             if ok and used_pct is not None:
                 if used_pct >= urgent and events.get(EV_URGENT, True):
                     self._fire(provider_id, EV_URGENT, method,
-                               "OC-GO：额度紧急",
+                               "TokenGauge：额度紧急",
                                self._pct_message(used_pct, result))
                 elif used_pct >= threshold and events.get(EV_THRESHOLD, True):
                     self._fire(provider_id, EV_THRESHOLD, method,
-                               "OC-GO：额度预警",
+                               "TokenGauge：额度预警",
                                self._pct_message(used_pct, result))
             # 用量回落 → 解除对应事件的去重标记，允许再次触发
             if used_pct is not None and used_pct < threshold:

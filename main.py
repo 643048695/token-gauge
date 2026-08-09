@@ -1,4 +1,4 @@
-"""OC-GO Dashboard 入口：托盘 + 主面板 + 迷你窗（v0.2 多模块架构）。
+"""TokenGauge 入口：托盘 + 主面板 + 迷你窗（v0.2 多模块架构）。
 
 职责（Agent D，契约 §5/§6）：
 - 从 app.settings 读取 config，实例化 app.kernel.Kernel 并注入 js_api
@@ -226,7 +226,7 @@ class _Api:
     def notify_test(self):
         settings = self._app.kernel.get_settings()
         method = settings.get("notify", {}).get("method", "tray")
-        self._app.kernel.notifier.notify(method, "OC-GO 测试通知", "通知通道工作正常")
+        self._app.kernel.notifier.notify(method, "TokenGauge 测试通知", "通知通道工作正常")
         return {"ok": True}
 
     def get_theme_css(self):
@@ -383,7 +383,7 @@ class DashboardApp:
         else:
             url = os.path.join(BASE_DIR, "ui", "main_panel.html")
         self.main_window = webview.create_window(
-            "OC-GO Dashboard",
+            "TokenGauge",
             url,
             width=w, height=h,
             frameless=True,
@@ -444,7 +444,7 @@ class DashboardApp:
         except Exception:
             pass
         self.mini_window = webview.create_window(
-            "OC-GO Mini",
+            "TokenGauge Mini",
             _mini_html,
             width=w, height=h,
             frameless=True,
@@ -951,7 +951,7 @@ class DashboardApp:
             pystray.MenuItem("退出", quit_app),
         )
         self.tray_icon = pystray.Icon(
-            "oc-go", make_icon(), "OC-GO Dashboard", menu)
+            "token-gauge", make_icon(), "TokenGauge", menu)
         self.kernel.set_tray_icon(self.tray_icon)  # 注入给通知层（气泡用）
         self.tray_icon.run()
 
@@ -1005,7 +1005,7 @@ class DashboardApp:
             ctypes.windll.user32.MessageBoxW(
                 0,
                 f"主面板启动失败：{err}\n\n请确认 WebView2 Runtime 已安装/可初始化（可在「设置-应用」查 Edge WebView2），修复后重启本程序。\n提示框关闭后应用仍在托盘运行。",
-                "OC-GO 额度监控", 0x10)
+                "TokenGauge 额度监控", 0x10)
         except Exception as _e:
             log.error("启动失败提示弹出异常: %s", _e)
 
