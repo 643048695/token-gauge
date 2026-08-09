@@ -4,6 +4,10 @@
 
 ![TokenGauge 截图](assets/screenshot.png)
 
+*主界面（Matrix 主题）· 右下角迷你悬浮窗：*
+
+![TokenGauge 迷你窗](assets/mini.png)
+
 ## 安装
 
 ```bash
