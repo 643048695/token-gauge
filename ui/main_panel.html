@@ -333,6 +333,11 @@ main{display:flex; height:calc(100% - 36px);}
 .card-meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; padding-top:6px; border-top:1px dashed var(--border);}
 .meta-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; margin-top:2px;}
 .meta-grid.tri{grid-template-columns:repeat(3,1fr);}
+/* 余额与计费信息块（balance 型卡片：deepseek 等填充下方空区） */
+.bal-info{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:5px;}
+.bi-row{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;gap:8px;}
+.bi-row span{color:var(--muted);flex:none;}
+.bi-row b{font-weight:600;color:var(--text);font-family:var(--font-num);text-align:right;word-break:break-all;}
 .meta-cell{min-width:0; padding:6px 9px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.03);}
 .meta-k{font-size:9px; color:var(--muted); letter-spacing:.5px;}
 .meta-v{display:block; max-width:100%; font-size:12px; font-weight:600; color:var(--text); font-family:var(--font-num); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -674,7 +679,7 @@ input[type=range]:disabled{opacity:.4;}
 .lang-item:hover{background:var(--line);}
 .lang-item.active{color:var(--accent); font-weight:600;}
 /* ---- 底部统计区（全局消耗汇总） ---- */
-.stats-section{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+.stats-section{margin-top:6px;display:flex;flex-direction:column;gap:6px;}   /* 2026-08-09: margin 14→6/gap 10→6——统计区上移压缩, 日期标签进视口不被切 */
 .stats-head{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
 .stats-head::before{content:'';width:4px;height:12px;background:var(--accent);border-radius:2px;box-shadow:0 0 8px var(--glow);}
 .stats-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;}
@@ -2601,7 +2606,7 @@ function statsSectionHtml(v, s){
       /* 今日柱背景光（能量汇聚感） */
       bar += '<rect x="'+(32 + d2*bw - 6)+'" y="'+topBar+'" width="'+(bw - 8)+'" height="'+(bh - 10)+'" fill="var(--accent)" opacity="0.05" rx="8"/>';
     }
-    bar += '<text class="sb-day'+(isTodayD?' today':'')+'" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+22)+'" font-size="11" text-anchor="middle">'+lbl+'</text>';
+    bar += '<text class="sb-day'+(isTodayD?' today':'')+'" x="'+(32 + d2*bw + bw/2)+'" y="'+(bh+16)+'" font-size="11" text-anchor="middle">'+lbl+'</text>';
     var cum = 0;
     var x = 32 + d2*bw;
     var _bs = themeBarStyle();
@@ -2780,6 +2785,15 @@ function balanceCardHtml(pv, dm){
   }
   if(pv.ok === false){
     h = I18N.t('<div class="card-meta"><span class="chip danger">抓取失败')+(pv.error?': '+esc(pv.error):'')+'</span></div>';
+  }
+  /* 余额与计费信息（balance 型填充卡片下方空区：2026-08-09 deepseek 卡内容少被 grid 等高拉高→下方空一大块） */
+  if(pv.ok !== false && m.kind === 'balance' && amt != null){
+    h += '<div class="bal-info">'+
+      '<div class="bi-row"><span>'+I18N.t('当前余额')+'</span><b>'+moneyUnit(amt, cur, m)+'</b></div>'+
+      '<div class="bi-row"><span>'+I18N.t('计费')+'</span><b>'+((hasPeak && pk.on) ? I18N.t('按输出价 · 高峰×2') : I18N.t('按输出价'))+'</b></div>'+
+      (models.length ? '<div class="bi-row"><span>'+I18N.t('模型费率')+'</span><b>'+models.map(function(x){ return esc(x.name)+' $'+x.output+'/M'; }).join('、')+'</b></div>' : '')+
+      (sp.since_ts ? '<div class="bi-row"><span>'+I18N.t('接入')+'</span><b>'+I18N.t('自 ')+(new Date(sp.since_ts*1000).getMonth()+1)+'-'+(new Date(sp.since_ts*1000).getDate())+I18N.t(' 起 · 数据积累中')+'</b></div>' : '')+
+    '</div>';
   }
   if(!h){
     h = '<div class="diy-empty">'+ICONS.gridOff+'</div>';
