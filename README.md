@@ -2,6 +2,19 @@
 
 > 多供应商 LLM 额度/余量监控桌面工具：一眼看清各家模型还剩多少 token、还能烧多久。原名 OC-GO Dashboard。
 
+![TokenGauge 截图](assets/screenshot.png)
+
+## 安装
+
+```bash
+# Python 3.11+（Windows）
+git clone https://github.com/643048695/token-gauge.git
+cd token-gauge
+pip install -r requirements.txt
+```
+
+首次运行前：复制 `config.example.json` 为 `config.json`，填入供应商凭据（或在界面"供应商"页填写，即时保存）。
+
 ## 运行
 
 ```bash
@@ -56,3 +69,14 @@ ui/mini_widget.html  迷你悬浮窗
 
 - 只读访问 opencode.ai 官方页面，不上传数据到第三方
 - auth_cookie 是账号钥匙，勿外传；失效时界面红色 EXPIRED + 通知提醒，更新 config.json 即可
+- 凭据仅保存在本机 `config.json`（已 gitignore，不会提交）；请勿将 config.json 分享给任何人
+
+## 免责声明
+
+- **非官方工具**：本项目与 OpenCode、DeepSeek 等厂商无任何关联，品牌名与图标归各自所有者。
+- **仅供学习**：opencode-go 适配器以只读方式访问公开页面，属个人实验性实现；使用第三方服务请遵守其服务条款，风险自担。
+- 本项目按 MIT 许可证发布，不提供任何担保。
+
+## License
+
+[MIT](LICENSE)

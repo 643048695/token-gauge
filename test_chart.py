@@ -14,7 +14,7 @@ import sys
 import threading
 import time
 
-BASE = r"C:\Users\A6430\Desktop\oc-go-dashboard"
+BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
 os.chdir(BASE)
 RESULT = os.path.join(BASE, "test_chart_result.txt")
