@@ -2600,10 +2600,19 @@ function statsSectionHtml(v, s){
     var _bs = themeBarStyle();
     var _cw = (bw - 18) * _bs.wd;
     var _gx = ((bw - 18) - _cw) / 2;
+    var zeroDrawn = false;
     rows.forEach(function(r){
       var uv = unitVal(r.aligned[d2], r.cur, r.meta);
       var val = uv ? uv.v : 0;
-      if(val <= 0) return;
+      if(val <= 0){
+        /* 0 值日：淡色基线占位（2026-08-09：7 天柱位从左边开始可见，避免"第一根实柱在中间"误解） */
+        if(!zeroDrawn){
+          zeroDrawn = true;
+          bar += '<rect x="'+x+'" y="'+(topBar + (bh - 10) - 2)+'" width="'+bw+'" height="2" fill="var(--muted)" opacity=".22" rx="1"'+
+            '><title>'+I18N.t('无消耗')+'</title></rect>';
+        }
+        return;
+      }
       var hh = Math.max(2, val / mx * (bh - 10));
       var y = topBar + (bh - 10) - cum - hh;
       var px = x + _gx;
