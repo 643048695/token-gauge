@@ -678,7 +678,7 @@ input[type=range]:disabled{opacity:.4;}
 .stats-head{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
 .stats-head::before{content:'';width:4px;height:12px;background:var(--accent);border-radius:2px;box-shadow:0 0 8px var(--glow);}
 .stats-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;}
-@media(max-width:960px){.stats-grid{grid-template-columns:1fr;}}
+@media(max-width:780px){.stats-grid{grid-template-columns:1fr;}}   /* 2026-08-09: 960→780——主窗口默认920px双列并排, 环形图卡不再被堆叠到视口外裁切 */
 .stats-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;min-width:0;}
 .stats-card h4{margin:0 0 10px;font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px;}
 .stats-card h4 .u{color:var(--accent);font-weight:400;}
@@ -2298,7 +2298,9 @@ function unitVal(amt, cur, meta){
     var v2 = isUsd ? amt * fx : amt;
     return { v: v2, label: '≈¥' + (v2 >= 100 ? v2.toFixed(0) : v2.toFixed(2)) };
   }
-  return { v: Number(amt), label: money(amt, cur) };
+  /* auto：余额型按原币种金额；quota/relay 型（token 语义）显示 token 单位（2026-08-09 修复：token 数被 money() 当美元显示 $4285714.00） */
+  var isTokenKind = meta && (meta.kind === 'quota' || meta.kind === 'relay');
+  return { v: Number(amt), label: isTokenKind ? fmtTokens(Number(amt)) : money(amt, cur) };
 }
 function fmtStatNum(n){
   if(n == null || isNaN(n)) return '—';
