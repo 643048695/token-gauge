@@ -682,7 +682,7 @@ input[type=range]:disabled{opacity:.4;}
 .stats-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;min-width:0;}
 .stats-card h4{margin:0 0 10px;font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px;}
 .stats-card h4 .u{color:var(--accent);font-weight:400;}
-.stats-bar{width:100%;display:block;height:auto;aspect-ratio:422/184;}
+.stats-bar{width:100%;display:block;height:184px;}
 /* 任务B：统计区图表主题化 —— SVG 元素用 CSS 变量（--line/--muted/--text/--radius），随 themes.py 5 风格联动 */
 .sb-grid{stroke:var(--line);stroke-width:1;}
 .sb-day{fill:var(--muted);font-family:var(--font-num);font-size:10px;}
@@ -2581,7 +2581,7 @@ function statsSectionHtml(v, s){
   }
   var mx = Math.max.apply(null, total.concat([0.01]));
   var bw = 54, bh = 150, wBar = DAYS*bw + 44, topBar = 14;
-  var bar = '<svg class="stats-bar" viewBox="0 0 '+wBar+' '+(bh+34)+'" xmlns="http://www.w3.org/2000/svg">';
+  var bar = '<svg class="stats-bar" viewBox="0 0 '+wBar+' '+(bh+34)+'" preserveAspectRatio="xMinYMid meet" xmlns="http://www.w3.org/2000/svg">';
   for(var g=0; g<4; g++){
     var gy = topBar + (bh - 10) * g / 3;
     bar += '<line class="sb-grid" x1="30" y1="'+gy+'" x2="'+(wBar-10)+'" y2="'+gy+'"/>';
