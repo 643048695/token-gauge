@@ -2987,7 +2987,11 @@ async function renderProviders(){
       if(btn.dataset.arm === '1'){
         call('remove_provider', btn.dataset.pid).then(function(){
           toast(I18N.t('已删除 ')+btn.dataset.pid, 'ok');
-          fetchView();
+          /* 本地立即同步（不等 fetchView：抓取循环可能占用 viewFetching 导致跳过，仪表盘/供应商列表会不同步） */
+          if(state.settings && state.settings.providers) delete state.settings.providers[btn.dataset.pid];
+          renderAll();
+          renderProviders();
+          fetchView().catch(function(){});
         });
       } else {
         btn.dataset.arm = '1';
