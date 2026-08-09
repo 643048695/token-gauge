@@ -1734,6 +1734,9 @@ async function fetchView(){
     if(v.settings && v.settings.ui && v.settings.ui.lang && I18N.getLang() !== v.settings.ui.lang){
       I18N.setLang(v.settings.ui.lang);
       I18N.apply();
+      /* 语言按钮文本同步（fetchView 后语言来自后端 settings） */
+      var _lc = document.querySelector('#langCurrent .lc-text');
+      if(_lc) _lc.textContent = (I18N.getLang() === 'en' ? '🌐 English' : '🌐 中文');
       if(window.renderAll) renderAll();
       if(typeof tkCalibrate === 'function') tkCalibrate(v);   /* Ticker 数字按新语言重格式化（90 万→900K） */
     }

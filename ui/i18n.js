@@ -179,6 +179,15 @@ window.I18N = (function () {
     '连接中断': 'Disconnected',
     '数据异常': 'Data error',
     '自 ': 'Since ',
+    /* 2026-08-09 新增：bal-info 余额计费块 / 0 值基线 */
+    '当前余额': 'Balance',
+    '计费': 'Billing',
+    '按输出价': 'At output price',
+    '按输出价 · 高峰×2': 'At output price · peak×2',
+    '模型费率': 'Model rates',
+    '接入': 'Since',
+    ' 起 · 数据积累中': ' · accumulating',
+    '无消耗': 'No burn',
     '每 ': 'Every ',
     '点击收起': 'Click to collapse',
 
