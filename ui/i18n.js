@@ -188,6 +188,10 @@ window.I18N = (function () {
     '接入': 'Since',
     ' 起 · 数据积累中': ' · accumulating',
     '无消耗': 'No burn',
+    /* 2026-08-09 新增：开机自启 + 启动 loading */
+    '启动': 'Startup',
+    '开机自启': 'Start on boot',
+    '登录 Windows 后自动启动': 'Auto-start after Windows login',
     '每 ': 'Every ',
     '点击收起': 'Click to collapse',
 

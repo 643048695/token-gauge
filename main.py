@@ -24,6 +24,7 @@ import webview
 from app.kernel import Kernel
 from app.window_ops import DragController, Pusher
 from app.settings import load as load_settings
+from app import autostart as autostart_mod
 
 # 主面板用 CSS 拖拽区（#titlebar），迷你窗用顶部拖拽区，避免 easy_drag 拦截滑条/把手等交互控件
 webview.settings['DRAG_REGION_SELECTOR'] = '#titlebar, .pywebview-drag-region'
@@ -120,6 +121,23 @@ class _Api:
 
     def get_settings(self):
         return self._app.kernel.get_settings()
+
+    def get_autostart(self):
+        """查询开机自启状态（HKCU Run 键）。"""
+        try:
+            return {"ok": True, "enabled": bool(autostart_mod.is_enabled())}
+        except Exception as e:  # 非 Windows / 权限异常
+            log.warning("autostart query failed: %s", e)
+            return {"ok": False, "enabled": False}
+
+    def set_autostart(self, enabled):
+        """设置开机自启（可选功能，默认关闭）。"""
+        try:
+            autostart_mod.set_enabled(bool(enabled))
+            return {"ok": True, "enabled": bool(enabled)}
+        except Exception as e:
+            log.warning("autostart set failed: %s", e)
+            return {"ok": False, "enabled": autostart_mod.is_enabled()}
 
     def save_settings(self, patch):
         result = self._app.kernel.save_settings(patch)
